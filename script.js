@@ -38,6 +38,24 @@ async function loaded() {
 
     main.removeChild(testCard);
 
+    let [tx, ty] = [0, 0];
+    function setTranslate(x, y) {
+        tx = x;
+        ty = y;
+        main.style.transform = 'translate(' + tx + 'px, ' + ty + 'px)';
+    }
+
+    function centerCard(div, card) {
+        const divRect = div.getBoundingClientRect();
+
+        const [x, y] = [(divRect.left + divRect.right) / 2, 
+                        (divRect.top + divRect.bottom) / 2];
+        const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
+        const [dx, dy] = [cx - x, cy - y];
+
+        setTranslate(tx + dx, ty + dy);
+    }
+
     for (let card of data['cards']) {
         const div = document.createElement('div');
         div.classList.add('card', colors[card['type']]);
@@ -50,20 +68,11 @@ async function loaded() {
         div.style.top = y + "px";
 
         main.appendChild(div);
+
+        div.addEventListener('click', () => {
+            centerCard(div, card);
+        });
     }
-
-    let [tx, ty, ts] = [0, 0, 1];
-
-    /*
-    document.addEventListener('keydown', event => {
-        if (event.key === '-')
-            ts -= .1;
-        if (event.key === '=')
-            ts += .1;
-
-        main.style.transform = 'scale(' + ts + ')';
-    });
-    */
 }
 
 function cubeAdd(a, b) {

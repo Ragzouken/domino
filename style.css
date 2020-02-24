@@ -32,6 +32,17 @@ html {
 .green { background: var(--green-stiple) repeat; }
 .blue  { background: var(--blue-stiple)  repeat; }
 
+body {
+    overflow: hidden;
+}
+
+main {
+    width: 100vw;
+    height: 100vh;
+
+    transform: translate(50%, 50%);
+}
+
 .card {
     padding: 1em;
     width: calc(var(--card-size) - 2em);
@@ -50,12 +61,7 @@ html {
         0 0 3px var(--light), 
         0 0 3px var(--light), 
         0 0 3px var(--light), 
-        0 0 3px var(--light); 
-        /*
-        -2px -2px 0 var(--light), 
-         2px -2px 0 var(--light), 
-        -2px  2px 0 var(--light), 
-         2px  2px 0 var(--light); */
+        0 0 3px var(--light);
 }
 
 .card::selection {

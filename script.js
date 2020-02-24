@@ -43,10 +43,7 @@ async function loaded() {
         div.classList.add('card', colors[card['type']]);
         div.innerHTML = card['text'];
         
-        let [x, y] = hexToPixel(card['coords'], [cardWidth, cardHeight], spacing);
-
-        x += 750;
-        y += 500;
+        const [x, y] = hexToPixel(card['coords'], [cardWidth, cardHeight], spacing);
 
         div.style.position = "absolute";
         div.style.left = x + "px";
@@ -54,6 +51,19 @@ async function loaded() {
 
         main.appendChild(div);
     }
+
+    let [tx, ty, ts] = [0, 0, 1];
+
+    /*
+    document.addEventListener('keydown', event => {
+        if (event.key === '-')
+            ts -= .1;
+        if (event.key === '=')
+            ts += .1;
+
+        main.style.transform = 'scale(' + ts + ')';
+    });
+    */
 }
 
 function cubeAdd(a, b) {

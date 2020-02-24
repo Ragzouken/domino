@@ -1,0 +1,65 @@
+:root {
+    --light: rgb(255, 245, 209);
+    --dark: rgb(240, 248, 255);
+    --red: #d11305;
+    --green: #006951;
+    --blue: #162dab;
+  
+    --red-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHUlEQVQYV2O8JMKapvfm9ywGKGCEMTAEYCoxVAAAT4UIBcKIFHsAAAAASUVORK5CYII=);
+    --green-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkyOJpYJj2pYEBChhhDEwBqEoMFQD4ngYFtMbpQAAAAABJRU5ErkJggg==);
+    --blue-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkSLmZxjBHfRYDFDDCGJgCUJUYKgD+BgYFL5bp8wAAAABJRU5ErkJggg==);
+
+    --stipple-color: var(--red);
+    --stipple-gap: 4px;
+    --stipple-background-size: calc(var(--stipple-gap) * 2) calc(var(--stipple-gap) * 2);
+
+    --stipple-gradient: radial-gradient(var(--stipple-color) 15%, transparent 16%);
+    --stipple-background:
+        var(--stipple-gradient) 0 0,
+        var(--stipple-gradient) var(--stipple-gap) var(--stipple-gap);
+
+    --card-size: 15rem;
+}
+
+html {
+    background: var(--light);
+
+    font-family: lora;
+    font-size: 1.1em;
+}
+
+.red   { background: var(--red-stiple)   repeat; }
+.green { background: var(--green-stiple) repeat; }
+.blue  { background: var(--blue-stiple)  repeat; }
+
+.card {
+    padding: 1em;
+    width: calc(var(--card-size) - 2em);
+    height: calc(var(--card-size) * .6 - 2em);
+
+    display: inline-block;
+    margin: 0 0 1em;
+
+    border-bottom: 2px solid black;
+
+    text-shadow: 
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light),
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light); 
+        /*
+        -2px -2px 0 var(--light), 
+         2px -2px 0 var(--light), 
+        -2px  2px 0 var(--light), 
+         2px  2px 0 var(--light); */
+}
+
+.card::selection {
+    background: Highlight;
+    color: HighlightText;
+    text-shadow: none;
+}

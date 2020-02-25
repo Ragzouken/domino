@@ -46,6 +46,8 @@ body {
     position: absolute;
     cursor: pointer;
 
+    transition: transform .2s ease-in-out;
+
     padding: 1em;
     width: calc(var(--card-size) - 2em);
     height: calc(var(--card-size) * .6 - 2em);

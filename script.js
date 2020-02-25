@@ -15,59 +15,67 @@ async function loaded() {
     testCard.classList.add('card');
     main.appendChild(testCard);
 
-    const cardWidth = testCard.clientWidth;
-    const cardHeight = testCard.clientHeight;
-    const spacing = 32;
+    const grid = new HexGrid([testCard.clientWidth, testCard.clientHeight], [32, 32]);
+    const cellToView = new Map();
+    const elementToView = new Map();
 
     main.removeChild(testCard);
 
-    function setTranslate(x, y) {
+    function setPan(x, y) {
         main.style.transform = `translate(${x}px, ${y}px)`;
     }
 
-    function centerCoords(coords) {
-        const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
-        const [nx, ny] = hexToPixel(coords, [cardWidth, cardHeight], spacing);
-        setTranslate(cx - nx , cy - ny);
+    function moveElementToCell(element, cell) {
+        const view = elementToView.get(element);
+        const coords = coordsToKey(cell);
+
+        view.cell = cell;
+        console.assert(!cellToView.has(coords));
+        cellToView.set(coords, view);
+
+        const [x, y] = grid.cellToPixel(cell);
+        element.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
     }
 
-    function addCard(card) {
+    function centerCell(coords) {
+        const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
+        const [nx, ny] = grid.cellToPixel(coords);
+        setPan(cx - nx , cy - ny);
+    }
+
+    function addCardView(card) {
         const coords = coordsToKey(card['coords']);
 
         if (cards.has(coords)) 
             throw new Error(`A card already exists at ${coords}`);
 
-        const div = document.createElement('div');
-        div.classList.add('card', colors[card['type']]);
-        div.innerHTML = card['text'];
-        div.draggable = true;
+        const element = document.createElement('div');
+        element.classList.add('card', colors[card['type']]);
+        element.innerHTML = card['text'];
+        element.draggable = true;
 
-        div.addEventListener('dragstart', event => {
+        const view = {
+            element: element,
+            cell: coords,
+            card: card,
+        }
+
+        element.addEventListener('dragstart', event => {
             event.dataTransfer.dropEffect = 'move';
-            event.dataTransfer.setData('card-origin-cell', coordsToKey(card['coords']));
-            event.dataTransfer.setData('text/plain', card['text']);
+            event.dataTransfer.setData('card-origin-cell', coordsToKey(view.cell));
+            event.dataTransfer.setData('text/plain', view.card.text);
         });
 
-        main.appendChild(div);
+        main.appendChild(element);
 
-        div.addEventListener('click', () => {
-            centerCoords(card['coords']);
+        element.addEventListener('click', () => {
+            centerCell(view.cell);
         });
 
-        cards.set(coords, {card, div});
-    }
+        cellToView.set(coords, view);
+        elementToView.set(element, view);
 
-    function deleteCard(card) {
-        const key = coordsToKey(card['coords']);
-        const div = cards.get(key).div;
-        div.parentElement.removeChild(div);
-        cards.delete(key);
-    }
-
-    function repositionCard(card) {
-        const [x, y] = hexToPixel(card['coords'], [cardWidth, cardHeight], spacing);
-        div = cards.get(coordsToKey(card['coords'])).div;
-        div.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
+        return element;
     }
 
     function swapCells(a, b) {
@@ -77,25 +85,18 @@ async function loaded() {
         if (akey === bkey)
             return;
         
-        const ac = cards.get(akey);
-        const bc = cards.get(bkey);
+        const aView = cellToView.get(akey);
+        const bView = cellToView.get(bkey);
 
-        if (ac)
-            deleteCard(ac.card);
-        if (bc)
-            deleteCard(bc.card);
+        if (aView)
+            cellToView.delete(akey);
+        if (bView)
+            cellToView.delete(bkey);
 
-        if (ac) {
-            ac.card['coords'] = b;
-            addCard(ac.card);
-            repositionCard(ac.card);
-        }
-
-        if (bc) {
-            bc.card['coords'] = a;
-            addCard(bc.card);
-            repositionCard(bc.card);
-        }
+        if (aView)
+            moveElementToCell(aView.element, b);
+        if (bView)
+            moveElementToCell(bView.element, a);
     }
 
     document.addEventListener('dragover', event => {
@@ -110,19 +111,20 @@ async function loaded() {
 
         const rect = main.getBoundingClientRect();
         const [x, y] = [event.clientX - rect.x, event.clientY - rect.y];
-        const [q, r] = pixelToHex([x, y], [cardWidth, cardHeight], spacing);
+        const [q, r] = grid.pixelToCell([x, y]);
         swapCells(coords, [q, r]);
 
         event.dataTransfer.clearData();
     });
 
     for (let card of data['cards']) {
-        addCard(card);
-        repositionCard(card);
+        const element = addCardView(card);
+        moveElementToCell(element, card['coords']);
+        delete card['coords'];
     }
 
     main.classList.add('skiptransition');
-    centerCoords([0, 0]);
+    centerCell([0, 0]);
     await sleep(10);
     main.classList.remove('skiptransition');
 }
@@ -163,41 +165,51 @@ function keyToCoords(key) {
     return key.split(',').map(i => parseInt(i));
 }
 
-function pixelToHex(pixel, dimensions, spacing=0) {
-    const [x, y] = pixel;
-    const [w, h] = dimensions;
-
-    const q = x / (w + spacing);
-    const r = (y - (q * h + spacing) * .5) / (h + spacing);
-
-    const cx = q;
-    const cy = r;
-    const cz = 0 - cx - cy;
-
-    let rx = Math.round(cx);
-    let ry = Math.round(cy);
-    let rz = Math.round(cz);
-
-    var x_diff = Math.abs(rx - cx);
-    var y_diff = Math.abs(ry - cy);
-    var z_diff = Math.abs(rz - cz);
-
-    if (x_diff > y_diff & x_diff > z_diff) {
-        rx = -ry-rz
-    } else if (y_diff > z_diff) {
-        ry = -rx-rz
-    } else {
-        rz = -rx-ry
+class HexGrid {
+    constructor(cellSize, cellSpacing=[0, 0]) {
+        this.cellSize = cellSize;
+        this.cellSpacing = cellSpacing;
     }
 
-    return [rx, ry];
-}
+    cellToPixel(cellCoords) {
+        const [q, r] = cellCoords;
+        const [w, h] = this.cellSize;
+        const [hs, vs] = this.cellSpacing;
 
-function hexToPixel(coords, dimensions, spacing=0) {
-    const [q, r] = coords;
-    const [w, h] = dimensions;
+        const x = q * (w + hs);
+        const y = q * (h + vs) * .5 + r * (h + vs);
+        return [x, y];
+    }
 
-    const x = q * (w + spacing);
-    const y = q * (h + spacing) * .5 + r * (h + spacing);
-    return [x, y];
+    pixelToCell(pixelCoords) {
+        const [x, y] = pixelCoords;
+        const [w, h] = this.cellSize;
+        const [hs, vs] = this.cellSpacing;
+
+
+        const q = x / (w + hs);
+        const r = (y - (q * h + vs) * .5) / (h + vs);
+
+        const cx = q;
+        const cy = r;
+        const cz = 0 - cx - cy;
+
+        let rx = Math.round(cx);
+        let ry = Math.round(cy);
+        let rz = Math.round(cz);
+
+        var x_diff = Math.abs(rx - cx);
+        var y_diff = Math.abs(ry - cy);
+        var z_diff = Math.abs(rz - cz);
+
+        if (x_diff > y_diff & x_diff > z_diff) {
+            rx = -ry-rz
+        } else if (y_diff > z_diff) {
+            ry = -rx-rz
+        } else {
+            rz = -rx-ry
+        }
+
+        return [rx, ry];
+    }
 }

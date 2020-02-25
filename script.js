@@ -44,11 +44,6 @@ async function loaded() {
     }
 
     function addCardView(card) {
-        const coords = coordsToKey(card['coords']);
-
-        if (cards.has(coords)) 
-            throw new Error(`A card already exists at ${coords}`);
-
         const element = document.createElement('div');
         element.classList.add('card', colors[card['type']]);
         element.innerHTML = card['text'];
@@ -56,7 +51,7 @@ async function loaded() {
 
         const view = {
             element: element,
-            cell: coords,
+            cell: [0, 0],
             card: card,
         }
 
@@ -66,13 +61,24 @@ async function loaded() {
             event.dataTransfer.setData('text/plain', view.card.text);
         });
 
+        // shouldn't need this but it's more foolproof...
+        element.addEventListener('drop', event => {
+            event.stopPropagation();
+            event.preventDefault();
+    
+            const key = event.dataTransfer.getData('card-origin-cell');
+            const coords = keyToCoords(key);
+            swapCells(coords, view.cell);
+    
+            event.dataTransfer.clearData();
+        });
+
         main.appendChild(element);
 
         element.addEventListener('click', () => {
             centerCell(view.cell);
         });
 
-        cellToView.set(coords, view);
         elementToView.set(element, view);
 
         return element;

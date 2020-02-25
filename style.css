@@ -30,6 +30,8 @@ html {
 
 main {
     transition: transform .2s ease-in-out;
+    width: 0;
+    height: 0;
 }
 
 .red   { background: var(--red-stiple)   repeat; }
@@ -41,6 +43,7 @@ body {
 }
 
 .card {
+    position: absolute;
     cursor: pointer;
 
     padding: 1em;
@@ -51,8 +54,6 @@ body {
     margin: 0 0 1em;
 
     border-bottom: 2px solid black;
-
-    transform: translate(-50%, -50%);
 
     text-shadow: 
         0 0 3px var(--light), 
@@ -79,4 +80,8 @@ body {
 .card > h3::after {
     font-weight: normal;
     content: " — ";
+}
+
+.skiptransition {
+    transition: none !important;
 }

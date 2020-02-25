@@ -52,6 +52,8 @@ body {
 
     border-bottom: 2px solid black;
 
+    transform: translate(-50%, -50%);
+
     text-shadow: 
         0 0 3px var(--light), 
         0 0 3px var(--light), 
@@ -67,4 +69,14 @@ body {
     background: Highlight;
     color: HighlightText;
     text-shadow: none;
+}
+
+.card > h3 {
+    display: inline;
+    font-size: 1em;
+}
+
+.card > h3::after {
+    font-weight: normal;
+    content: " — ";
 }

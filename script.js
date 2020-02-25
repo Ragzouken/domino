@@ -103,6 +103,8 @@ async function loaded() {
     });
 
     document.addEventListener('drop', event => {
+        event.preventDefault();
+
         const key = event.dataTransfer.getData('card-origin-cell');
         const coords = keyToCoords(key);
 

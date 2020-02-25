@@ -18,7 +18,8 @@
         var(--stipple-gradient) 0 0,
         var(--stipple-gradient) var(--stipple-gap) var(--stipple-gap);
 
-    --card-size: 15rem;
+    --card-width: 15rem;
+    --card-height: calc(var(--card-width) * .6);
 }
 
 html {
@@ -42,9 +43,27 @@ body {
     overflow: hidden;
 }
 
+hr {
+    border-top: 2px solid black;
+}
+
 #debug {
     position: absolute;
     display: none;
+}
+
+#sidebar {
+    position: absolute;
+    margin: 1em;
+    padding: 1em;
+    
+    background: var(--dark);
+}
+
+#content-input {
+    display: block;
+    width: var(--card-width);
+    height: var(--card-height);
 }
 
 .card {
@@ -54,8 +73,8 @@ body {
     transition: transform .2s ease-in-out;
 
     padding: 1em;
-    width: calc(var(--card-size) - 2em);
-    height: calc(var(--card-size) * .6 - 2em);
+    width: calc(var(--card-width) - 2em);
+    height: calc(var(--card-height) - 2em);
 
     display: inline-block;
     margin: 0 0 1em;

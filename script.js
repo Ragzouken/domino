@@ -37,35 +37,105 @@ async function loaded() {
         element.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
     }
 
+    const sidebar = document.querySelector('#sidebar');
+    const delCard = document.querySelector('#del-card');
+    
+    sidebar.addEventListener('dragover', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        event.dataTransfer.dropEffect = 'none';
+    });
+
+    sidebar.addEventListener('drop', event => {
+        event.preventDefault();
+        event.stopPropagation();
+    });
+
+    delCard.addEventListener('dragover', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        event.dataTransfer.dropEffect = 'move';
+    });
+
+    delCard.addEventListener('drop', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (event.dataTransfer.types.includes('card/move')) {
+            const key = event.dataTransfer.getData('card-origin-cell');
+            const view = cellToView.get(key);
+            removeCardView(view);
+        }
+    });
+
+    const addCard = document.querySelector('#add-card');
+    const contentInput = document.querySelector('#content-input');
+    let selectedCard = undefined;
+
+    contentInput.addEventListener('input', () => {
+        if (!selectedCard) return;
+
+        selectedCard.text = contentInput.value;
+        updateAllViewContent();
+    });
+
+    function selectCard(card) {
+        selectedCard = card;
+        contentInput.value = card.text;
+    }
+
+    function updateAllViewContent() {
+        elementToView.forEach((view, element) => {
+            element.innerHTML = view.card.text;
+        });
+    }
+
+    addCard.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('card/new', '');
+        event.dataTransfer.dropEffect = 'move';
+    });
+
     function centerCell(coords) {
         const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
         const [nx, ny] = grid.cellToPixel(coords);
         setPan(cx - nx , cy - ny);
     }
 
-    function addCardView(card) {
+    function addCardView(card, cell) {
         const element = document.createElement('div');
         element.classList.add('card', colors[card['type']]);
         element.innerHTML = card['text'];
         element.draggable = true;
 
-        const view = {
-            element: element,
-            cell: [0, 0],
-            card: card,
-        }
+        const view = { element, cell, card, };
 
         element.addEventListener('dragstart', event => {
             event.dataTransfer.dropEffect = 'move';
             event.dataTransfer.setData('card-origin-cell', coordsToKey(view.cell));
             event.dataTransfer.setData('text/plain', view.card.text);
+            event.dataTransfer.setData('card/move', '');
+        });
+
+        element.addEventListener('dragover', event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!event.dataTransfer.types.includes('card/new'))
+                return;
+
+            event.dataTransfer.dropEffect = 'none';
         });
 
         // shouldn't need this but it's more foolproof...
         element.addEventListener('drop', event => {
             event.stopPropagation();
             event.preventDefault();
-    
+
+            if (!event.dataTransfer.types.includes('card/move'))
+                return;
+
             const key = event.dataTransfer.getData('card-origin-cell');
             const coords = keyToCoords(key);
             swapCells(coords, view.cell);
@@ -76,12 +146,20 @@ async function loaded() {
         main.appendChild(element);
 
         element.addEventListener('click', () => {
+            selectCard(view.card);
             centerCell(view.cell);
         });
 
         elementToView.set(element, view);
+        moveElementToCell(element, cell);
 
-        return element;
+        return view;
+    }
+
+    function removeCardView(view) {
+        view.element.parentNode.removeChild(view.element);
+        elementToView.delete(view.element);
+        cellToView.delete(view.cell);
     }
 
     function swapCells(a, b) {
@@ -107,36 +185,33 @@ async function loaded() {
 
     document.addEventListener('dragover', event => {
         event.preventDefault();
-
-        const key = event.dataTransfer.getData('card-origin-cell');
-        const coords = keyToCoords(key);
-
-        const rect = main.getBoundingClientRect();
-        const [x, y] = [event.clientX - rect.x, event.clientY - rect.y];
-        const [q, r] = grid.pixelDebug([x, y]);
-        const [qr, rr] = grid.pixelToCell([x, y]);
-
-        document.querySelector('#debug').innerHTML = `${x},${y} -> x,${rr} (x,${r})`;
+        event.stopPropagation();
+        event.dataTransfer.dropEffect = 'move';
     });
 
     document.addEventListener('drop', event => {
         event.preventDefault();
 
-        const key = event.dataTransfer.getData('card-origin-cell');
-        const coords = keyToCoords(key);
-
         const rect = main.getBoundingClientRect();
-        const [x, y] = [event.clientX - rect.x, event.clientY - rect.y];
-        const [q, r] = grid.pixelToCell([x, y]);
-        swapCells(coords, [q, r]);
+        const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
+        const dropCell = grid.pixelToCell(dropPixel);
+
+        if (event.dataTransfer.types.includes('card/move')) {
+            const key = event.dataTransfer.getData('card-origin-cell');
+            const originCell = keyToCoords(key);
+
+            swapCells(originCell, dropCell);
+        } else if (event.dataTransfer.types.includes('card/new') 
+                && !cellToView.has(coordsToKey(dropCell))) {
+            const view = addCardView({text: "new card", type: 0}, dropCell);
+            selectCard(view.card);
+        }
 
         event.dataTransfer.clearData();
     });
 
     for (let card of data['cards']) {
-        const element = addCardView(card);
-        moveElementToCell(element, card['coords']);
-        delete card['coords'];
+        addCardView(card, card['coords']);
     }
 
     main.classList.add('skiptransition');

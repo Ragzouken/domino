@@ -107,6 +107,16 @@ async function loaded() {
 
     document.addEventListener('dragover', event => {
         event.preventDefault();
+
+        const key = event.dataTransfer.getData('card-origin-cell');
+        const coords = keyToCoords(key);
+
+        const rect = main.getBoundingClientRect();
+        const [x, y] = [event.clientX - rect.x, event.clientY - rect.y];
+        const [q, r] = grid.pixelDebug([x, y]);
+        const [qr, rr] = grid.pixelToCell([x, y]);
+
+        document.querySelector('#debug').innerHTML = `${x},${y} -> x,${rr} (x,${r})`;
     });
 
     document.addEventListener('drop', event => {
@@ -187,14 +197,24 @@ class HexGrid {
         return [x, y];
     }
 
+    pixelDebug(pixelCoords) {
+        let [x, y] = pixelCoords;
+        const [w, h] = this.cellSize;
+        const [hs, vs] = this.cellSpacing;
+
+        const q = x / (w + hs);
+        const r = (y - (q * (h + vs) * .5)) / (h + vs);
+
+        return [q, r];
+    }
+
     pixelToCell(pixelCoords) {
         const [x, y] = pixelCoords;
         const [w, h] = this.cellSize;
         const [hs, vs] = this.cellSpacing;
 
-
         const q = x / (w + hs);
-        const r = (y - (q * h + vs) * .5) / (h + vs);
+        const r = (y - (q * (h + vs) * .5)) / (h + vs);
 
         const cx = q;
         const cy = r;

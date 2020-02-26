@@ -159,7 +159,7 @@ async function loaded() {
     function removeCardView(view) {
         view.element.parentNode.removeChild(view.element);
         elementToView.delete(view.element);
-        cellToView.delete(view.cell);
+        cellToView.delete(coordsToKey(view.cell));
     }
 
     function swapCells(a, b) {

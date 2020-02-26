@@ -17,8 +17,9 @@ class CardView {
         this.refresh();
     }
 
-    setPosition(x, y) {
-        this.root.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
+    setPosition(x, y, scale=1) {
+        const transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%)) scale(${scale}, ${scale})`;
+        this.root.style.transform = transform;
     }
 
     refresh() {
@@ -44,13 +45,13 @@ async function loaded() {
         main.style.transform = `translate(${x}px, ${y}px)`;
     }
 
-    function moveViewToCell(view, cell) {
+    function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
         console.assert(!cellToView.has(cell));
         cellToView.set(cell, view);
 
         const [x, y] = grid.cellToPixel(cell);
-        view.setPosition(x, y);
+        view.setPosition(x, y, scale);
     }
 
     const sidebar = document.querySelector('#sidebar');
@@ -99,11 +100,16 @@ async function loaded() {
 
     function selectCard(card) {
         selectedCard = card;
-        contentInput.value = card.text;
+
+        contentInput.hidden = card === undefined;
+
+        if (card) {
+            contentInput.value = card.text;
+        }
     }
 
     function updateAllViewContent() {
-        cellToView.forEach((view, cell) => {
+        cellToView.store.forEach((view, cell) => {
             view.refresh();
         });
     }
@@ -168,6 +174,8 @@ async function loaded() {
     function removeCardView(view) {
         main.removeChild(view.root);
         cellToView.delete(view.cell);
+        if (selectedCard === view.card)
+            selectCard(undefined);
     }
 
     function swapCells(a, b) {
@@ -192,7 +200,7 @@ async function loaded() {
         event.dataTransfer.dropEffect = 'move';
     });
 
-    document.addEventListener('drop', event => {
+    document.addEventListener('drop', async event => {
         event.preventDefault();
 
         const rect = main.getBoundingClientRect();
@@ -204,10 +212,25 @@ async function loaded() {
             const originCell = JSON.parse(originJson);
 
             swapCells(originCell, dropCell);
-        } else if (event.dataTransfer.types.includes('card/new') 
-                && !cellToView.has(dropCell)) {
-            const view = addCardView({text: "new card", type: 0}, dropCell);
-            selectCard(view.card);
+        } else if (!cellToView.has(dropCell)) {
+            const types = event.dataTransfer.types;
+            let content = undefined;
+
+            if (types.includes('card/new')) {
+                content = "new card";
+            } else if (types.includes('text/plain')) {
+                content = event.dataTransfer.getData('text/plain');
+            } else if (types.includes('text')) {
+                content = event.dataTransfer.getData('text');
+            }
+
+            if (content) {
+                const view = addCardView({text: content, type: 0}, dropCell);
+                moveViewToCell(view, view.cell, 0);
+                await sleep(10);
+                moveViewToCell(view, view.cell, 1);
+                selectCard(view.card);
+            }
         }
 
         event.dataTransfer.clearData();

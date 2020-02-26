@@ -1,3 +1,5 @@
+[hidden] { display: none !important; }
+
 :root {
     --light: rgb(255, 245, 209);
     --dark: rgb(240, 248, 255);

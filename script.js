@@ -125,6 +125,9 @@ async function loaded() {
             event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
             event.dataTransfer.setData('text/plain', view.card.text);
             event.dataTransfer.setData('card/move', '');
+
+            const [x, y] = [view.root.clientWidth / 2, view.root.clientHeight / 2];
+            event.dataTransfer.setDragImage(view.root, x, y);
         });
 
         view.root.addEventListener('dragover', event => {

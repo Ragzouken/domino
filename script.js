@@ -197,7 +197,8 @@ async function loaded() {
     document.addEventListener('dragover', event => {
         event.preventDefault();
         event.stopPropagation();
-        event.dataTransfer.dropEffect = 'move';
+        event.dataTransfer.dropEffect = 'copy';
+        console.log(event.dataTransfer.types);
     });
 
     document.addEventListener('drop', async event => {
@@ -209,7 +210,6 @@ async function loaded() {
 
         console.log(event.dataTransfer.files);
         console.log(event.dataTransfer.types);
-        console.log(event.dataTransfer.getData('text/uri-list'));
 
         if (event.dataTransfer.types.includes('card/move')) {
             const originJson = event.dataTransfer.getData('card-origin-cell');
@@ -222,6 +222,8 @@ async function loaded() {
 
             if (types.includes('card/new')) {
                 content = "new card";
+            } else if (types.includes('text/html')) {
+                content = event.dataTransfer.getData('text/html');
             } else if (types.includes('text/uri-list')) {
                 content = event.dataTransfer
                     .getData('text/uri-list')

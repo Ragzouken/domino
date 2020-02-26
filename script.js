@@ -3,11 +3,31 @@ const cube_directions = [
     [-1, +1, 0], [-1, 0, +1], [0, -1, +1], 
 ];
 
+const colors = ['red', 'green', 'blue'];
+
+class CardView {
+    constructor(cell, card) {
+        this.cell = cell;
+        this.card = card;
+
+        this.root = document.createElement('div');
+        this.root.classList.add('card', colors[0]);
+        this.root.draggable = true;
+
+        this.refresh();
+    }
+
+    setPosition(x, y) {
+        this.root.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
+    }
+
+    refresh() {
+        this.root.innerHTML = this.card.text;
+    }
+}
+
 async function loaded() {
     const main = document.getElementsByTagName('main')[0];
-    const colors = ['red', 'green', 'blue'];
-    const cards = new Map();
-
     const json = document.getElementById('data').innerText;
     const data = JSON.parse(json);
 
@@ -16,8 +36,7 @@ async function loaded() {
     main.appendChild(testCard);
 
     const grid = new HexGrid([testCard.clientWidth, testCard.clientHeight], [32, 32]);
-    const cellToView = new Map();
-    const elementToView = new Map();
+    const cellToView = new CoordStore();
 
     main.removeChild(testCard);
 
@@ -25,16 +44,13 @@ async function loaded() {
         main.style.transform = `translate(${x}px, ${y}px)`;
     }
 
-    function moveElementToCell(element, cell) {
-        const view = elementToView.get(element);
-        const coords = coordsToKey(cell);
-
+    function moveViewToCell(view, cell) {
         view.cell = cell;
-        console.assert(!cellToView.has(coords));
-        cellToView.set(coords, view);
+        console.assert(!cellToView.has(cell));
+        cellToView.set(cell, view);
 
         const [x, y] = grid.cellToPixel(cell);
-        element.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
+        view.setPosition(x, y);
     }
 
     const sidebar = document.querySelector('#sidebar');
@@ -64,8 +80,8 @@ async function loaded() {
         event.stopPropagation();
 
         if (event.dataTransfer.types.includes('card/move')) {
-            const key = event.dataTransfer.getData('card-origin-cell');
-            const view = cellToView.get(key);
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const view = cellToView.get(JSON.parse(originJson));
             removeCardView(view);
         }
     });
@@ -87,14 +103,13 @@ async function loaded() {
     }
 
     function updateAllViewContent() {
-        elementToView.forEach((view, element) => {
-            element.innerHTML = view.card.text;
+        cellToView.forEach((view, cell) => {
+            view.refresh();
         });
     }
 
     addCard.addEventListener('dragstart', event => {
         event.dataTransfer.setData('card/new', '');
-        event.dataTransfer.dropEffect = 'move';
     });
 
     function centerCell(coords) {
@@ -104,83 +119,68 @@ async function loaded() {
     }
 
     function addCardView(card, cell) {
-        const element = document.createElement('div');
-        element.classList.add('card', colors[card['type']]);
-        element.innerHTML = card['text'];
-        element.draggable = true;
+        const view = new CardView(cell, card);
 
-        const view = { element, cell, card, };
-
-        element.addEventListener('dragstart', event => {
-            event.dataTransfer.dropEffect = 'move';
-            event.dataTransfer.setData('card-origin-cell', coordsToKey(view.cell));
+        view.root.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
             event.dataTransfer.setData('text/plain', view.card.text);
             event.dataTransfer.setData('card/move', '');
         });
 
-        element.addEventListener('dragover', event => {
+        view.root.addEventListener('dragover', event => {
             event.preventDefault();
             event.stopPropagation();
 
-            if (!event.dataTransfer.types.includes('card/new'))
-                return;
-
-            event.dataTransfer.dropEffect = 'none';
+            const newCard = event.dataTransfer.types.includes('card/new');
+            event.dataTransfer.dropEffect = newCard ? 'none' : 'move'; 
         });
 
         // shouldn't need this but it's more foolproof...
-        element.addEventListener('drop', event => {
+        view.root.addEventListener('drop', event => {
             event.stopPropagation();
             event.preventDefault();
 
             if (!event.dataTransfer.types.includes('card/move'))
                 return;
 
-            const key = event.dataTransfer.getData('card-origin-cell');
-            const coords = keyToCoords(key);
-            swapCells(coords, view.cell);
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const cell = JSON.parse(originJson);
+            swapCells(cell, view.cell);
     
             event.dataTransfer.clearData();
         });
 
-        main.appendChild(element);
+        main.appendChild(view.root);
 
-        element.addEventListener('click', () => {
+        view.root.addEventListener('click', () => {
             selectCard(view.card);
             centerCell(view.cell);
         });
 
-        elementToView.set(element, view);
-        moveElementToCell(element, cell);
+        moveViewToCell(view, cell);
 
         return view;
     }
 
     function removeCardView(view) {
-        view.element.parentNode.removeChild(view.element);
-        elementToView.delete(view.element);
-        cellToView.delete(coordsToKey(view.cell));
+        main.removeChild(view.root);
+        cellToView.delete(view.cell);
     }
 
     function swapCells(a, b) {
-        const akey = coordsToKey(a);
-        const bkey = coordsToKey(b);
-
-        if (akey === bkey)
+        if (coordsAreEqual(a, b))
             return;
         
-        const aView = cellToView.get(akey);
-        const bView = cellToView.get(bkey);
+        const aView = cellToView.get(a);
+        const bView = cellToView.get(b);
+
+        cellToView.delete(a);
+        cellToView.delete(b);
 
         if (aView)
-            cellToView.delete(akey);
+            moveViewToCell(aView, b);
         if (bView)
-            cellToView.delete(bkey);
-
-        if (aView)
-            moveElementToCell(aView.element, b);
-        if (bView)
-            moveElementToCell(bView.element, a);
+            moveViewToCell(bView, a);
     }
 
     document.addEventListener('dragover', event => {
@@ -197,12 +197,12 @@ async function loaded() {
         const dropCell = grid.pixelToCell(dropPixel);
 
         if (event.dataTransfer.types.includes('card/move')) {
-            const key = event.dataTransfer.getData('card-origin-cell');
-            const originCell = keyToCoords(key);
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const originCell = JSON.parse(originJson);
 
             swapCells(originCell, dropCell);
         } else if (event.dataTransfer.types.includes('card/new') 
-                && !cellToView.has(coordsToKey(dropCell))) {
+                && !cellToView.has(dropCell)) {
             const view = addCardView({text: "new card", type: 0}, dropCell);
             selectCard(view.card);
         }
@@ -224,38 +224,35 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function cubeAdd(a, b) {
-    return [
-        a[0] + b[0],
-        a[1] + b[1],
-        a[2] + b[2],
-    ];
-}
-
-function cubeScale(cube, scale) {
-    return [
-        cube[0] * scale,
-        cube[1] * scale,
-        cube[2] * scale,
-    ];
-}
-
-function cubeNeighbor(cube, direction) {
-    return cubeAdd(cube, cube_directions[direction])
-}
-
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function coordsAreEqual(a, b) {
+    if (a.length !== b.length) 
+        return false;
+
+    for (let i = 0; i < a.length; ++i)
+        if (a[i] !== b[1])
+            return false;
+    
+    return true;
 }
 
 function coordsToKey(coords) {
     return coords.join(',');
 }
 
-function keyToCoords(key) {
-    return key.split(',').map(i => parseInt(i));
+class CoordStore {
+    constructor() { this.store = new Map(); }
+    get size() { return this.store.size; }
+    get(coords) { return this.store.get(coordsToKey(coords)); }
+    set(coords, value) { return this.store.set(coordsToKey(coords), value); }
+    delete(coords) { return this.store.delete(coordsToKey(coords)); }
+    has(coords) { return this.store.has(coordsToKey(coords)); }
 }
 
+// based on https://www.redblobgames.com/grids/hexagons/
 class HexGrid {
     constructor(cellSize, cellSpacing=[0, 0]) {
         this.cellSize = cellSize;

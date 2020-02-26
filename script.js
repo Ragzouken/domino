@@ -178,7 +178,7 @@ async function loaded() {
             selectCard(undefined);
     }
 
-    function swapCells(a, b) {
+    function swapViewCells(a, b) {
         if (coordsAreEqual(a, b))
             return;
         
@@ -207,17 +207,27 @@ async function loaded() {
         const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
         const dropCell = grid.pixelToCell(dropPixel);
 
+        console.log(event.dataTransfer.files);
+        console.log(event.dataTransfer.types);
+        console.log(event.dataTransfer.getData('text/uri-list'));
+
         if (event.dataTransfer.types.includes('card/move')) {
             const originJson = event.dataTransfer.getData('card-origin-cell');
             const originCell = JSON.parse(originJson);
 
-            swapCells(originCell, dropCell);
+            swapViewCells(originCell, dropCell);
         } else if (!cellToView.has(dropCell)) {
             const types = event.dataTransfer.types;
             let content = undefined;
 
             if (types.includes('card/new')) {
                 content = "new card";
+            } else if (types.includes('text/uri-list')) {
+                content = event.dataTransfer
+                    .getData('text/uri-list')
+                    .split('\n')
+                    .filter(uri => !uri.startsWith('#'))
+                    .map(uri => `<a href="${uri}">link</a>`);
             } else if (types.includes('text/plain')) {
                 content = event.dataTransfer.getData('text/plain');
             } else if (types.includes('text')) {

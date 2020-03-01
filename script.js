@@ -3,7 +3,7 @@ const cube_directions = [
     [-1, +1, 0], [-1, 0, +1], [0, -1, +1], 
 ];
 
-const colors = ['red', 'green', 'blue'];
+const colors = ['black', 'red', 'green', 'blue'];
 
 class CardView {
     constructor(cell, card) {
@@ -11,7 +11,7 @@ class CardView {
         this.card = card;
 
         this.root = document.createElement('div');
-        this.root.classList.add('card', colors[0]);
+        this.root.classList.add('card');
         this.root.draggable = true;
 
         this.refresh();
@@ -23,13 +23,23 @@ class CardView {
     }
 
     refresh() {
+        this.root.classList.remove(...colors);
+        this.root.classList.add(this.card.type);
         this.root.innerHTML = this.card.text;
     }
 }
 
 async function loaded() {
-    const main = document.getElementsByTagName('main')[0];
-    const json = document.getElementById('data').innerText;
+    const typeSelect = document.querySelector('#type-select');
+    for (let type of colors) {
+        const option = document.createElement('option');
+        option.value = type;
+        option.innerHTML = type;
+        typeSelect.appendChild(option);
+    }
+
+    const main = document.querySelector('main');
+    const json = document.querySelector('#data').innerText;
     const data = JSON.parse(json);
 
     const testCard = document.createElement('div');
@@ -47,7 +57,7 @@ async function loaded() {
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
-        console.assert(!cellToView.has(cell));
+        console.assert(!cellToView.has(cell) || cellToView.get(cell) === view);
         cellToView.set(cell, view);
 
         const [x, y] = grid.cellToPixel(cell);
@@ -98,19 +108,35 @@ async function loaded() {
         updateAllViewContent();
     });
 
+    typeSelect.addEventListener('change', () => {
+        if (!selectedCard) return;
+
+        console.log("change...");
+        selectedCard.type = typeSelect.value;
+        updateAllViewContent();
+    });
+
     function selectCard(card) {
         selectedCard = card;
 
+        typeSelect.hidden = card === undefined;
         contentInput.hidden = card === undefined;
 
         if (card) {
+            typeSelect.value = card.type;
             contentInput.value = card.text;
         }
+
+        updateAllViewContent();
     }
 
     function updateAllViewContent() {
         cellToView.store.forEach((view, cell) => {
             view.refresh();
+
+            view.root.classList.remove('selected');
+            if (view.card === selectedCard)
+                view.root.classList.add('selected');
         });
     }
 
@@ -155,8 +181,6 @@ async function loaded() {
             const originJson = event.dataTransfer.getData('card-origin-cell');
             const cell = JSON.parse(originJson);
             swapCells(cell, view.cell);
-    
-            event.dataTransfer.clearData();
         });
 
         main.appendChild(view.root);
@@ -198,7 +222,6 @@ async function loaded() {
         event.preventDefault();
         event.stopPropagation();
         event.dataTransfer.dropEffect = 'copy';
-        console.log(event.dataTransfer.types);
     });
 
     document.addEventListener('drop', async event => {
@@ -207,9 +230,6 @@ async function loaded() {
         const rect = main.getBoundingClientRect();
         const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
         const dropCell = grid.pixelToCell(dropPixel);
-
-        console.log(event.dataTransfer.files);
-        console.log(event.dataTransfer.types);
 
         if (event.dataTransfer.types.includes('card/move')) {
             const originJson = event.dataTransfer.getData('card-origin-cell');
@@ -237,20 +257,20 @@ async function loaded() {
             }
 
             if (content) {
-                const view = addCardView({text: content, type: 0}, dropCell);
+                const view = addCardView({text: content, type: 'black'}, dropCell);
                 moveViewToCell(view, view.cell, 0);
                 await sleep(10);
                 moveViewToCell(view, view.cell, 1);
                 selectCard(view.card);
             }
         }
-
-        event.dataTransfer.clearData();
     });
 
     for (let card of data['cards']) {
         addCardView(card, card['coords']);
     }
+    
+    selectCard(undefined);
 
     main.classList.add('skiptransition');
     centerCell([0, 0]);

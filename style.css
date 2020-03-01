@@ -10,6 +10,7 @@
     --red-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHUlEQVQYV2O8JMKapvfm9ywGKGCEMTAEYCoxVAAAT4UIBcKIFHsAAAAASUVORK5CYII=);
     --green-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkyOJpYJj2pYEBChhhDEwBqEoMFQD4ngYFtMbpQAAAAABJRU5ErkJggg==);
     --blue-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkSLmZxjBHfRYDFDDCGJgCUJUYKgD+BgYFL5bp8wAAAABJRU5ErkJggg==);
+    --black-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkYGBIY2BgmMUABYwwBjYBsEoMFQBSHgIFwNTCZwAAAABJRU5ErkJggg==);
 
     --stipple-color: var(--red);
     --stipple-gap: 4px;
@@ -37,6 +38,7 @@ main {
     height: 0;
 }
 
+.black { background: var(--black-stiple) repeat; }
 .red   { background: var(--red-stiple)   repeat; }
 .green { background: var(--green-stiple) repeat; }
 .blue  { background: var(--blue-stiple)  repeat; }
@@ -98,6 +100,10 @@ hr {
     background: Highlight;
     color: HighlightText;
     text-shadow: none;
+}
+
+.card.selected {
+    outline: 2px dashed var(--red);
 }
 
 .card > h3 {

@@ -186,7 +186,7 @@ async function playableHTMLBlob(json)
     data.innerHTML = `\n${json}\n`;
     doc.querySelector("main").innerHTML = "";
 
-    return new Blob([doc.innerHTML], {type: "text/html"});
+    return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
 async function loaded() {

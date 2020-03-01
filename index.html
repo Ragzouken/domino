@@ -1,28 +1,996 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <title>domino</title>
-        <link href="https://fonts.googleapis.com/css?family=Lora&display=swap" rel="stylesheet">
-        <link href="./style.css" type="text/css" rel="stylesheet">
-        <script src="./script.js" type="text/javascript"></script>
-        <script src="./DragDropTouch.js" type="text/javascript"></script>
-        <script id="data" type="text/json">
-            {
-                "cards": []
-            }            
-        </script>
-    </head>
-    <body onload="loaded()">
-        <span id="debug">debug</span>
-        <main>
-        </main>
-        <div id="sidebar">
-            <button id="add-card" draggable="true">drag to add card</button>
-            <button id="del-card">drop card to delete</button>
-            <hr>
-            <select id="type-select"></select>
-            <textarea id="content-input" hidden>asdfdasdfasdf</textarea>
-        </div>
-    </body>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>domino</title>
+    <script id="data" type="text/json">{"cards": []}</script>
+    <link href="https://fonts.googleapis.com/css?family=Lora&display=swap" rel="stylesheet">
+    <style>[hidden] { display: none !important; }
+
+:root {
+    --light: rgb(255, 245, 209);
+    --dark: rgb(240, 248, 255);
+    --red: #d11305;
+    --green: #006951;
+    --blue: #162dab;
+  
+    --red-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHUlEQVQYV2O8JMKapvfm9ywGKGCEMTAEYCoxVAAAT4UIBcKIFHsAAAAASUVORK5CYII=);
+    --green-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkyOJpYJj2pYEBChhhDEwBqEoMFQD4ngYFtMbpQAAAAABJRU5ErkJggg==);
+    --blue-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkSLmZxjBHfRYDFDDCGJgCUJUYKgD+BgYFL5bp8wAAAABJRU5ErkJggg==);
+    --black-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkYGBIY2BgmMUABYwwBjYBsEoMFQBSHgIFwNTCZwAAAABJRU5ErkJggg==);
+
+    --stipple-color: var(--red);
+    --stipple-gap: 4px;
+    --stipple-background-size: calc(var(--stipple-gap) * 2) calc(var(--stipple-gap) * 2);
+
+    --stipple-gradient: radial-gradient(var(--stipple-color) 15%, transparent 16%);
+    --stipple-background:
+        var(--stipple-gradient) 0 0,
+        var(--stipple-gradient) var(--stipple-gap) var(--stipple-gap);
+
+    --card-width: 15rem;
+    --card-height: calc(var(--card-width) * .6);
+}
+
+html {
+    background: var(--light);
+
+    font-family: lora;
+    font-size: 1.1em;
+}
+
+main {
+    transition: transform .2s ease-in-out;
+    width: 0;
+    height: 0;
+}
+
+.black { background: var(--black-stiple) repeat; }
+.red   { background: var(--red-stiple)   repeat; }
+.green { background: var(--green-stiple) repeat; }
+.blue  { background: var(--blue-stiple)  repeat; }
+
+body {
+    overflow: hidden;
+}
+
+hr {
+    border-top: 2px solid black;
+}
+
+#debug {
+    position: absolute;
+    display: none;
+}
+
+#sidebar {
+    position: absolute;
+    margin: 1em;
+    padding: 1em;
+    
+    background: var(--dark);
+}
+
+#content-input {
+    display: block;
+    width: var(--card-width);
+    height: var(--card-height);
+}
+
+.card {
+    position: absolute;
+    cursor: pointer;
+
+    transition: transform .2s ease-in-out;
+
+    padding: 1em;
+    width: calc(var(--card-width) - 2em);
+    height: calc(var(--card-height) - 2em);
+
+    display: inline-block;
+    margin: 0 0 1em;
+    word-wrap: break-word;
+
+    border-bottom: 2px solid black;
+
+    text-shadow: 
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light),
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light), 
+        0 0 3px var(--light);
+}
+
+.card::selection {
+    background: Highlight;
+    color: HighlightText;
+    text-shadow: none;
+}
+
+.card.selected {
+    outline: 2px dashed var(--red);
+}
+
+.card > h3 {
+    display: inline;
+    font-size: 1em;
+}
+
+.card > h3::after {
+    font-weight: normal;
+    content: " — ";
+}
+
+.skiptransition {
+    transition: none !important;
+}
+
+    </style>
+    <script>const cube_directions = [
+    [+1, -1, 0], [+1, 0, -1], [0, +1, -1], 
+    [-1, +1, 0], [-1, 0, +1], [0, -1, +1], 
+];
+
+const colors = ['black', 'red', 'green', 'blue'];
+
+class CardView {
+    constructor(cell, card) {
+        this.cell = cell;
+        this.card = card;
+
+        this.root = document.createElement('div');
+        this.root.classList.add('card');
+        this.root.draggable = true;
+
+        this.refresh();
+    }
+
+    setPosition(x, y, scale=1) {
+        const transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%)) scale(${scale}, ${scale})`;
+        this.root.style.transform = transform;
+    }
+
+    refresh() {
+        this.root.classList.remove(...colors);
+        this.root.classList.add(this.card.type);
+        this.root.innerHTML = this.card.text;
+    }
+}
+
+async function loaded() {
+    const typeSelect = document.querySelector('#type-select');
+    for (let type of colors) {
+        const option = document.createElement('option');
+        option.value = type;
+        option.innerHTML = type;
+        typeSelect.appendChild(option);
+    }
+
+    const main = document.querySelector('main');
+    const json = document.querySelector('#data').innerText;
+    const data = JSON.parse(json);
+
+    const testCard = document.createElement('div');
+    testCard.classList.add('card');
+    main.appendChild(testCard);
+
+    const grid = new HexGrid([testCard.clientWidth, testCard.clientHeight], [32, 32]);
+    const cellToView = new CoordStore();
+
+    main.removeChild(testCard);
+
+    document.querySelector('#write-out').addEventListener('click', () => {
+        const cardData = {};
+        const viewData = [];
+
+        const cardToId = new Map();
+        let nextId = 0;
+        function getNextId() {
+            nextId += 1;
+            return nextId - 1;
+        }
+        function getCardId(card) {
+            let id = cardToId.get(card) || getNextId();
+            cardToId.set(card, id);
+            cardData[id] = card;
+            return id;
+        }
+        
+        cellToView.store.forEach((view) => {
+            viewData.push({ cell: view.cell, card: getCardId(view.card) });
+        });
+
+        const json = JSON.stringify({
+           cards: cardData,
+           views: viewData, 
+        });
+
+        console.log(json);
+    });
+
+    function setPan(x, y) {
+        main.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    function moveViewToCell(view, cell, scale=1) {
+        view.cell = cell;
+        console.assert(!cellToView.has(cell) || cellToView.get(cell) === view);
+        cellToView.set(cell, view);
+
+        const [x, y] = grid.cellToPixel(cell);
+        view.setPosition(x, y, scale);
+    }
+
+    const sidebar = document.querySelector('#sidebar');
+    const delCard = document.querySelector('#del-card');
+    
+    sidebar.addEventListener('dragover', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        event.dataTransfer.dropEffect = 'none';
+    });
+
+    sidebar.addEventListener('drop', event => {
+        event.preventDefault();
+        event.stopPropagation();
+    });
+
+    delCard.addEventListener('dragover', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        event.dataTransfer.dropEffect = 'move';
+    });
+
+    delCard.addEventListener('drop', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (event.dataTransfer.types.includes('card/move')) {
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const view = cellToView.get(JSON.parse(originJson));
+            removeCardView(view);
+        }
+    });
+
+    const addCard = document.querySelector('#add-card');
+    const contentInput = document.querySelector('#content-input');
+    let selectedCard = undefined;
+
+    contentInput.addEventListener('input', () => {
+        if (!selectedCard) return;
+
+        selectedCard.text = contentInput.value;
+        updateAllViewContent();
+    });
+
+    typeSelect.addEventListener('change', () => {
+        if (!selectedCard) return;
+
+        console.log("change...");
+        selectedCard.type = typeSelect.value;
+        updateAllViewContent();
+    });
+
+    function selectCard(card) {
+        selectedCard = card;
+
+        typeSelect.hidden = card === undefined;
+        contentInput.hidden = card === undefined;
+
+        if (card) {
+            typeSelect.value = card.type;
+            contentInput.value = card.text;
+        }
+
+        updateAllViewContent();
+    }
+
+    function updateAllViewContent() {
+        cellToView.store.forEach((view, cell) => {
+            view.refresh();
+
+            view.root.classList.remove('selected');
+            if (view.card === selectedCard)
+                view.root.classList.add('selected');
+        });
+    }
+
+    addCard.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('card/new', '');
+    });
+
+    function centerCell(coords) {
+        const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
+        const [nx, ny] = grid.cellToPixel(coords);
+        setPan(cx - nx , cy - ny);
+    }
+
+    function addCardView(card, cell) {
+        const view = new CardView(cell, card);
+
+        view.root.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
+            event.dataTransfer.setData('text/plain', view.card.text);
+            event.dataTransfer.setData('card/move', '');
+
+            const [x, y] = [view.root.clientWidth / 2, view.root.clientHeight / 2];
+            event.dataTransfer.setDragImage(view.root, x, y);
+        });
+
+        view.root.addEventListener('dragover', event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const newCard = event.dataTransfer.types.includes('card/new');
+            event.dataTransfer.dropEffect = newCard ? 'none' : 'move'; 
+        });
+
+        // shouldn't need this but it's more foolproof...
+        view.root.addEventListener('drop', event => {
+            event.stopPropagation();
+            event.preventDefault();
+
+            if (!event.dataTransfer.types.includes('card/move'))
+                return;
+
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const cell = JSON.parse(originJson);
+            swapCells(cell, view.cell);
+        });
+
+        main.appendChild(view.root);
+
+        view.root.addEventListener('click', () => {
+            selectCard(view.card);
+            centerCell(view.cell);
+        });
+
+        moveViewToCell(view, cell);
+
+        return view;
+    }
+
+    function removeCardView(view) {
+        main.removeChild(view.root);
+        cellToView.delete(view.cell);
+        if (selectedCard === view.card)
+            selectCard(undefined);
+    }
+
+    function swapViewCells(a, b) {
+        if (coordsAreEqual(a, b))
+            return;
+        
+        const aView = cellToView.get(a);
+        const bView = cellToView.get(b);
+
+        cellToView.delete(a);
+        cellToView.delete(b);
+
+        if (aView)
+            moveViewToCell(aView, b);
+        if (bView)
+            moveViewToCell(bView, a);
+    }
+
+    document.addEventListener('dragover', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.dataTransfer.dropEffect = 'copy';
+    });
+
+    document.addEventListener('drop', async event => {
+        event.preventDefault();
+
+        const rect = main.getBoundingClientRect();
+        const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
+        const dropCell = grid.pixelToCell(dropPixel);
+
+        if (event.dataTransfer.types.includes('card/move')) {
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const originCell = JSON.parse(originJson);
+
+            swapViewCells(originCell, dropCell);
+        } else if (!cellToView.has(dropCell)) {
+            const types = event.dataTransfer.types;
+            let content = undefined;
+
+            if (types.includes('card/new')) {
+                content = "new card";
+            } else if (types.includes('text/html')) {
+                content = event.dataTransfer.getData('text/html');
+            } else if (types.includes('text/uri-list')) {
+                content = event.dataTransfer
+                    .getData('text/uri-list')
+                    .split('\n')
+                    .filter(uri => !uri.startsWith('#'))
+                    .map(uri => `<a href="${uri}">link</a>`);
+            } else if (types.includes('text/plain')) {
+                content = event.dataTransfer.getData('text/plain');
+            } else if (types.includes('text')) {
+                content = event.dataTransfer.getData('text');
+            }
+
+            if (content) {
+                const view = addCardView({text: content, type: 'black'}, dropCell);
+                moveViewToCell(view, view.cell, 0);
+                await sleep(10);
+                moveViewToCell(view, view.cell, 1);
+                selectCard(view.card);
+            }
+        }
+    });
+
+    for (let card of data['cards']) {
+        addCardView(card, card['coords']);
+    }
+    
+    selectCard(undefined);
+
+    main.classList.add('skiptransition');
+    centerCell([0, 0]);
+    await sleep(10);
+    main.classList.remove('skiptransition');
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function coordsAreEqual(a, b) {
+    if (a.length !== b.length) 
+        return false;
+
+    for (let i = 0; i < a.length; ++i)
+        if (a[i] !== b[1])
+            return false;
+    
+    return true;
+}
+
+function coordsToKey(coords) {
+    return coords.join(',');
+}
+
+class CoordStore {
+    constructor() { this.store = new Map(); }
+    get size() { return this.store.size; }
+    get(coords) { return this.store.get(coordsToKey(coords)); }
+    set(coords, value) { return this.store.set(coordsToKey(coords), value); }
+    delete(coords) { return this.store.delete(coordsToKey(coords)); }
+    has(coords) { return this.store.has(coordsToKey(coords)); }
+}
+
+// based on https://www.redblobgames.com/grids/hexagons/
+class HexGrid {
+    constructor(cellSize, cellSpacing=[0, 0]) {
+        this.cellSize = cellSize;
+        this.cellSpacing = cellSpacing;
+    }
+
+    cellToPixel(cellCoords) {
+        const [q, r] = cellCoords;
+        const [w, h] = this.cellSize;
+        const [hs, vs] = this.cellSpacing;
+
+        const x = q * (w + hs);
+        const y = q * (h + vs) * .5 + r * (h + vs);
+        return [x, y];
+    }
+
+    pixelDebug(pixelCoords) {
+        let [x, y] = pixelCoords;
+        const [w, h] = this.cellSize;
+        const [hs, vs] = this.cellSpacing;
+
+        const q = x / (w + hs);
+        const r = (y - (q * (h + vs) * .5)) / (h + vs);
+
+        return [q, r];
+    }
+
+    pixelToCell(pixelCoords) {
+        const [x, y] = pixelCoords;
+        const [w, h] = this.cellSize;
+        const [hs, vs] = this.cellSpacing;
+
+        const q = x / (w + hs);
+        const r = (y - (q * (h + vs) * .5)) / (h + vs);
+
+        const cx = q;
+        const cy = r;
+        const cz = 0 - cx - cy;
+
+        let rx = Math.round(cx);
+        let ry = Math.round(cy);
+        let rz = Math.round(cz);
+
+        var x_diff = Math.abs(rx - cx);
+        var y_diff = Math.abs(ry - cy);
+        var z_diff = Math.abs(rz - cz);
+
+        if (x_diff > y_diff & x_diff > z_diff) {
+            rx = -ry-rz
+        } else if (y_diff > z_diff) {
+            ry = -rx-rz
+        } else {
+            rz = -rx-ry
+        }
+
+        return [rx, ry];
+    }
+}
+
+    </script>
+    <script>var DragDropTouch;
+(function (DragDropTouch_1) {
+    'use strict';
+    /**
+     * Object used to hold the data that is being dragged during drag and drop operations.
+     *
+     * It may hold one or more data items of different types. For more information about
+     * drag and drop operations and data transfer objects, see
+     * <a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer">HTML Drag and Drop API</a>.
+     *
+     * This object is created automatically by the @see:DragDropTouch singleton and is
+     * accessible through the @see:dataTransfer property of all drag events.
+     */
+    var DataTransfer = (function () {
+        function DataTransfer() {
+            this._dropEffect = 'move';
+            this._effectAllowed = 'all';
+            this._data = {};
+        }
+        Object.defineProperty(DataTransfer.prototype, "dropEffect", {
+            /**
+             * Gets or sets the type of drag-and-drop operation currently selected.
+             * The value must be 'none',  'copy',  'link', or 'move'.
+             */
+            get: function () {
+                return this._dropEffect;
+            },
+            set: function (value) {
+                this._dropEffect = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DataTransfer.prototype, "effectAllowed", {
+            /**
+             * Gets or sets the types of operations that are possible.
+             * Must be one of 'none', 'copy', 'copyLink', 'copyMove', 'link',
+             * 'linkMove', 'move', 'all' or 'uninitialized'.
+             */
+            get: function () {
+                return this._effectAllowed;
+            },
+            set: function (value) {
+                this._effectAllowed = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DataTransfer.prototype, "types", {
+            /**
+             * Gets an array of strings giving the formats that were set in the @see:dragstart event.
+             */
+            get: function () {
+                return Object.keys(this._data);
+            },
+            enumerable: true,
+            configurable: true
+        });
+        /**
+         * Removes the data associated with a given type.
+         *
+         * The type argument is optional. If the type is empty or not specified, the data
+         * associated with all types is removed. If data for the specified type does not exist,
+         * or the data transfer contains no data, this method will have no effect.
+         *
+         * @param type Type of data to remove.
+         */
+        DataTransfer.prototype.clearData = function (type) {
+            if (type != null) {
+                delete this._data[type];
+            }
+            else {
+                this._data = null;
+            }
+        };
+        /**
+         * Retrieves the data for a given type, or an empty string if data for that type does
+         * not exist or the data transfer contains no data.
+         *
+         * @param type Type of data to retrieve.
+         */
+        DataTransfer.prototype.getData = function (type) {
+            return this._data[type] || '';
+        };
+        /**
+         * Set the data for a given type.
+         *
+         * For a list of recommended drag types, please see
+         * https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Recommended_Drag_Types.
+         *
+         * @param type Type of data to add.
+         * @param value Data to add.
+         */
+        DataTransfer.prototype.setData = function (type, value) {
+            this._data[type] = value;
+        };
+        /**
+         * Set the image to be used for dragging if a custom one is desired.
+         *
+         * @param img An image element to use as the drag feedback image.
+         * @param offsetX The horizontal offset within the image.
+         * @param offsetY The vertical offset within the image.
+         */
+        DataTransfer.prototype.setDragImage = function (img, offsetX, offsetY) {
+            var ddt = DragDropTouch._instance;
+            ddt._imgCustom = img;
+            ddt._imgOffset = { x: offsetX, y: offsetY };
+        };
+        return DataTransfer;
+    }());
+    DragDropTouch_1.DataTransfer = DataTransfer;
+    /**
+     * Defines a class that adds support for touch-based HTML5 drag/drop operations.
+     *
+     * The @see:DragDropTouch class listens to touch events and raises the
+     * appropriate HTML5 drag/drop events as if the events had been caused
+     * by mouse actions.
+     *
+     * The purpose of this class is to enable using existing, standard HTML5
+     * drag/drop code on mobile devices running IOS or Android.
+     *
+     * To use, include the DragDropTouch.js file on the page. The class will
+     * automatically start monitoring touch events and will raise the HTML5
+     * drag drop events (dragstart, dragenter, dragleave, drop, dragend) which
+     * should be handled by the application.
+     *
+     * For details and examples on HTML drag and drop, see
+     * https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Drag_operations.
+     */
+    var DragDropTouch = (function () {
+        /**
+         * Initializes the single instance of the @see:DragDropTouch class.
+         */
+        function DragDropTouch() {
+            this._lastClick = 0;
+            // enforce singleton pattern
+            if (DragDropTouch._instance) {
+                throw 'DragDropTouch instance already created.';
+            }
+            // detect passive event support
+            // https://github.com/Modernizr/Modernizr/issues/1894
+            var supportsPassive = false;
+            document.addEventListener('test', function () { }, {
+                get passive() {
+                    supportsPassive = true;
+                    return true;
+                }
+            });
+            // listen to touch events
+            if ('ontouchstart' in document) {
+                var d = document, ts = this._touchstart.bind(this), tm = this._touchmove.bind(this), te = this._touchend.bind(this), opt = supportsPassive ? { passive: false, capture: false } : false;
+                d.addEventListener('touchstart', ts, opt);
+                d.addEventListener('touchmove', tm, opt);
+                d.addEventListener('touchend', te);
+                d.addEventListener('touchcancel', te);
+            }
+        }
+        /**
+         * Gets a reference to the @see:DragDropTouch singleton.
+         */
+        DragDropTouch.getInstance = function () {
+            return DragDropTouch._instance;
+        };
+        // ** event handlers
+        DragDropTouch.prototype._touchstart = function (e) {
+            var _this = this;
+            if (this._shouldHandle(e)) {
+                // raise double-click and prevent zooming
+                if (Date.now() - this._lastClick < DragDropTouch._DBLCLICK) {
+                    if (this._dispatchEvent(e, 'dblclick', e.target)) {
+                        e.preventDefault();
+                        this._reset();
+                        return;
+                    }
+                }
+                // clear all variables
+                this._reset();
+                // get nearest draggable element
+                var src = this._closestDraggable(e.target);
+                if (src) {
+                    // give caller a chance to handle the hover/move events
+                    if (!this._dispatchEvent(e, 'mousemove', e.target) &&
+                        !this._dispatchEvent(e, 'mousedown', e.target)) {
+                        // get ready to start dragging
+                        this._dragSource = src;
+                        this._ptDown = this._getPoint(e);
+                        this._lastTouch = e;
+                        e.preventDefault();
+                        // show context menu if the user hasn't started dragging after a while
+                        setTimeout(function () {
+                            if (_this._dragSource == src && _this._img == null) {
+                                if (_this._dispatchEvent(e, 'contextmenu', src)) {
+                                    _this._reset();
+                                }
+                            }
+                        }, DragDropTouch._CTXMENU);
+                        if (DragDropTouch._ISPRESSHOLDMODE) {
+                            this._pressHoldInterval = setTimeout(function () {
+                                _this._isDragEnabled = true;
+                                _this._touchmove(e);
+                            }, DragDropTouch._PRESSHOLDAWAIT);
+                        }
+                    }
+                }
+            }
+        };
+        DragDropTouch.prototype._touchmove = function (e) {
+            if (this._shouldCancelPressHoldMove(e)) {
+              this._reset();
+              return;
+            }
+            if (this._shouldHandleMove(e) || this._shouldHandlePressHoldMove(e)) {
+                // see if target wants to handle move
+                var target = this._getTarget(e);
+                if (this._dispatchEvent(e, 'mousemove', target)) {
+                    this._lastTouch = e;
+                    e.preventDefault();
+                    return;
+                }
+                // start dragging
+                if (this._dragSource && !this._img && this._shouldStartDragging(e)) {
+                    this._dispatchEvent(e, 'dragstart', this._dragSource);
+                    this._createImage(e);
+                    this._dispatchEvent(e, 'dragenter', target);
+                }
+                // continue dragging
+                if (this._img) {
+                    this._lastTouch = e;
+                    e.preventDefault(); // prevent scrolling
+                    if (target != this._lastTarget) {
+                        this._dispatchEvent(this._lastTouch, 'dragleave', this._lastTarget);
+                        this._dispatchEvent(e, 'dragenter', target);
+                        this._lastTarget = target;
+                    }
+                    this._moveImage(e);
+                    this._isDropZone = this._dispatchEvent(e, 'dragover', target);
+                }
+            }
+        };
+        DragDropTouch.prototype._touchend = function (e) {
+            if (this._shouldHandle(e)) {
+                // see if target wants to handle up
+                if (this._dispatchEvent(this._lastTouch, 'mouseup', e.target)) {
+                    e.preventDefault();
+                    return;
+                }
+                // user clicked the element but didn't drag, so clear the source and simulate a click
+                if (!this._img) {
+                    this._dragSource = null;
+                    this._dispatchEvent(this._lastTouch, 'click', e.target);
+                    this._lastClick = Date.now();
+                }
+                // finish dragging
+                this._destroyImage();
+                if (this._dragSource) {
+                    if (e.type.indexOf('cancel') < 0 && this._isDropZone) {
+                        this._dispatchEvent(this._lastTouch, 'drop', this._lastTarget);
+                    }
+                    this._dispatchEvent(this._lastTouch, 'dragend', this._dragSource);
+                    this._reset();
+                }
+            }
+        };
+        // ** utilities
+        // ignore events that have been handled or that involve more than one touch
+        DragDropTouch.prototype._shouldHandle = function (e) {
+            return e &&
+                !e.defaultPrevented &&
+                e.touches && e.touches.length < 2;
+        };
+
+        // use regular condition outside of press & hold mode
+        DragDropTouch.prototype._shouldHandleMove = function (e) {
+          return !DragDropTouch._ISPRESSHOLDMODE && this._shouldHandle(e);
+        };
+
+        // allow to handle moves that involve many touches for press & hold
+        DragDropTouch.prototype._shouldHandlePressHoldMove = function (e) {
+          return DragDropTouch._ISPRESSHOLDMODE &&
+              this._isDragEnabled && e && e.touches && e.touches.length;
+        };
+
+        // reset data if user drags without pressing & holding
+        DragDropTouch.prototype._shouldCancelPressHoldMove = function (e) {
+          return DragDropTouch._ISPRESSHOLDMODE && !this._isDragEnabled &&
+              this._getDelta(e) > DragDropTouch._PRESSHOLDMARGIN;
+        };
+
+        // start dragging when specified delta is detected
+        DragDropTouch.prototype._shouldStartDragging = function (e) {
+            var delta = this._getDelta(e);
+            return delta > DragDropTouch._THRESHOLD ||
+                (DragDropTouch._ISPRESSHOLDMODE && delta >= DragDropTouch._PRESSHOLDTHRESHOLD);
+        }
+
+        // clear all members
+        DragDropTouch.prototype._reset = function () {
+            this._destroyImage();
+            this._dragSource = null;
+            this._lastTouch = null;
+            this._lastTarget = null;
+            this._ptDown = null;
+            this._isDragEnabled = false;
+            this._isDropZone = false;
+            this._dataTransfer = new DataTransfer();
+            clearInterval(this._pressHoldInterval);
+        };
+        // get point for a touch event
+        DragDropTouch.prototype._getPoint = function (e, page) {
+            if (e && e.touches) {
+                e = e.touches[0];
+            }
+            return { x: page ? e.pageX : e.clientX, y: page ? e.pageY : e.clientY };
+        };
+        // get distance between the current touch event and the first one
+        DragDropTouch.prototype._getDelta = function (e) {
+            if (DragDropTouch._ISPRESSHOLDMODE && !this._ptDown) { return 0; }
+            var p = this._getPoint(e);
+            return Math.abs(p.x - this._ptDown.x) + Math.abs(p.y - this._ptDown.y);
+        };
+        // get the element at a given touch event
+        DragDropTouch.prototype._getTarget = function (e) {
+            var pt = this._getPoint(e), el = document.elementFromPoint(pt.x, pt.y);
+            while (el && getComputedStyle(el).pointerEvents == 'none') {
+                el = el.parentElement;
+            }
+            return el;
+        };
+        // create drag image from source element
+        DragDropTouch.prototype._createImage = function (e) {
+            // just in case...
+            if (this._img) {
+                this._destroyImage();
+            }
+            // create drag image from custom element or drag source
+            var src = this._imgCustom || this._dragSource;
+            this._img = src.cloneNode(true);
+            this._copyStyle(src, this._img);
+            this._img.style.top = this._img.style.left = '-9999px';
+            // if creating from drag source, apply offset and opacity
+            if (!this._imgCustom) {
+                var rc = src.getBoundingClientRect(), pt = this._getPoint(e);
+                this._imgOffset = { x: pt.x - rc.left, y: pt.y - rc.top };
+                this._img.style.opacity = DragDropTouch._OPACITY.toString();
+            }
+            // add image to document
+            this._moveImage(e);
+            document.body.appendChild(this._img);
+        };
+        // dispose of drag image element
+        DragDropTouch.prototype._destroyImage = function () {
+            if (this._img && this._img.parentElement) {
+                this._img.parentElement.removeChild(this._img);
+            }
+            this._img = null;
+            this._imgCustom = null;
+        };
+        // move the drag image element
+        DragDropTouch.prototype._moveImage = function (e) {
+            var _this = this;
+            requestAnimationFrame(function () {
+                if (_this._img) {
+                    var pt = _this._getPoint(e, true), s = _this._img.style;
+                    s.position = 'absolute';
+                    s.pointerEvents = 'none';
+                    s.zIndex = '999999';
+                    s.left = Math.round(pt.x - _this._imgOffset.x) + 'px';
+                    s.top = Math.round(pt.y - _this._imgOffset.y) + 'px';
+                }
+            });
+        };
+        // copy properties from an object to another
+        DragDropTouch.prototype._copyProps = function (dst, src, props) {
+            for (var i = 0; i < props.length; i++) {
+                var p = props[i];
+                dst[p] = src[p];
+            }
+        };
+        DragDropTouch.prototype._copyStyle = function (src, dst) {
+            // remove potentially troublesome attributes
+            DragDropTouch._rmvAtts.forEach(function (att) {
+                dst.removeAttribute(att);
+            });
+            // copy canvas content
+            if (src instanceof HTMLCanvasElement) {
+                var cSrc = src, cDst = dst;
+                cDst.width = cSrc.width;
+                cDst.height = cSrc.height;
+                cDst.getContext('2d').drawImage(cSrc, 0, 0);
+            }
+            // copy style (without transitions)
+            var cs = getComputedStyle(src);
+            for (var i = 0; i < cs.length; i++) {
+                var key = cs[i];
+                if (key.indexOf('transition') < 0) {
+                    dst.style[key] = cs[key];
+                }
+            }
+            dst.style.pointerEvents = 'none';
+            // and repeat for all children
+            for (var i = 0; i < src.children.length; i++) {
+                this._copyStyle(src.children[i], dst.children[i]);
+            }
+        };
+        DragDropTouch.prototype._dispatchEvent = function (e, type, target) {
+            if (e && target) {
+                var evt = document.createEvent('Event'), t = e.touches ? e.touches[0] : e;
+                evt.initEvent(type, true, true);
+                evt.button = 0;
+                evt.which = evt.buttons = 1;
+                this._copyProps(evt, e, DragDropTouch._kbdProps);
+                this._copyProps(evt, t, DragDropTouch._ptProps);
+                evt.dataTransfer = this._dataTransfer;
+                target.dispatchEvent(evt);
+                return evt.defaultPrevented;
+            }
+            return false;
+        };
+        // gets an element's closest draggable ancestor
+        DragDropTouch.prototype._closestDraggable = function (e) {
+            for (; e; e = e.parentElement) {
+                if (e.hasAttribute('draggable') && e.draggable) {
+                    return e;
+                }
+            }
+            return null;
+        };
+        return DragDropTouch;
+    }());
+    /*private*/ DragDropTouch._instance = new DragDropTouch(); // singleton
+    // constants
+    DragDropTouch._THRESHOLD = 5; // pixels to move before drag starts
+    DragDropTouch._OPACITY = 0.5; // drag image opacity
+    DragDropTouch._DBLCLICK = 500; // max ms between clicks in a double click
+    DragDropTouch._CTXMENU = 900; // ms to hold before raising 'contextmenu' event
+    DragDropTouch._ISPRESSHOLDMODE = false; // decides of press & hold mode presence
+    DragDropTouch._PRESSHOLDAWAIT = 400; // ms to wait before press & hold is detected
+    DragDropTouch._PRESSHOLDMARGIN = 25; // pixels that finger might shiver while pressing
+    DragDropTouch._PRESSHOLDTHRESHOLD = 0; // pixels to move before drag starts
+    // copy styles/attributes from drag source to drag image element
+    DragDropTouch._rmvAtts = 'id,class,style,draggable'.split(',');
+    // synthesize and dispatch an event
+    // returns true if the event has been handled (e.preventDefault == true)
+    DragDropTouch._kbdProps = 'altKey,ctrlKey,metaKey,shiftKey'.split(',');
+    DragDropTouch._ptProps = 'pageX,pageY,clientX,clientY,screenX,screenY'.split(',');
+    DragDropTouch_1.DragDropTouch = DragDropTouch;
+})(DragDropTouch || (DragDropTouch = {}));
+
+    </script>
+  </head>
+  <body onload="loaded()"><span id="debug">debug</span>
+    <main></main>
+    <div id="sidebar">
+      <button id="add-card" draggable="true">drag to add card</button>
+      <button id="del-card">drop card to delete</button>
+      <hr>
+      <select id="type-select"></select>
+      <textarea id="content-input" hidden></textarea>
+      <hr>
+      <button id="write-out">write-out</button>
+    </div>
+  </body>
 </html>

@@ -82,6 +82,7 @@ hr {
 
     display: inline-block;
     margin: 0 0 1em;
+    word-wrap: break-word;
 
     border-bottom: 2px solid black;
 

@@ -1,0 +1,27 @@
+- var font = 'https://fonts.googleapis.com/css?family=Lora&display=swap'
+- var data = '{"cards": []}'
+
+doctype html
+html
+    head
+        meta(charset='utf-8')
+        title domino
+        script#data(type='text/json') !{data}
+        link(href!=font, rel='stylesheet')
+        style
+            include style.css
+        script
+            include script.js
+        script
+            include DragDropTouch.js
+    body(onload='loaded()')
+        span#debug debug
+        main
+        #sidebar
+            button#add-card(draggable='true') drag to add card
+            button#del-card drop card to delete
+            hr
+            select#type-select
+            textarea#content-input(hidden)
+            hr
+            button#write-out write-out

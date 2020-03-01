@@ -51,6 +51,35 @@ async function loaded() {
 
     main.removeChild(testCard);
 
+    document.querySelector('#write-out').addEventListener('click', () => {
+        const cardData = {};
+        const viewData = [];
+
+        const cardToId = new Map();
+        let nextId = 0;
+        function getNextId() {
+            nextId += 1;
+            return nextId - 1;
+        }
+        function getCardId(card) {
+            let id = cardToId.get(card) || getNextId();
+            cardToId.set(card, id);
+            cardData[id] = card;
+            return id;
+        }
+        
+        cellToView.store.forEach((view) => {
+            viewData.push({ cell: view.cell, card: getCardId(view.card) });
+        });
+
+        const json = JSON.stringify({
+           cards: cardData,
+           views: viewData, 
+        });
+
+        console.log(json);
+    });
+
     function setPan(x, y) {
         main.style.transform = `translate(${x}px, ${y}px)`;
     }

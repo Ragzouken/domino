@@ -59,6 +59,10 @@ async function loaded() {
 
     main.removeChild(testCard);
 
+    document.querySelector('#jump-to-center').addEventListener('click', () => {
+        centerCell([0, 0]);
+    });
+
     document.querySelector('#download').addEventListener('click', async () => {
         const cardData = {};
         const viewData = [];
@@ -105,9 +109,22 @@ async function loaded() {
         view.setPosition(x, y, scale);
     }
 
+    const importFile = document.querySelector('#import-file');
+    document.querySelector('#import').addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', () => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const html = document.createElement('html');
+            html.innerHTML = reader.result;
+            const json = html.querySelector('#data').innerHTML;
+            loadData(JSON.parse(json));
+        };
+        reader.readAsText(importFile.files[0]);
+    });
+
     const sidebar = document.querySelector('#sidebar');
     const delCard = document.querySelector('#del-card');
-    
+
     sidebar.addEventListener('dragover', event => {
         event.preventDefault();
         event.stopPropagation();
@@ -321,9 +338,15 @@ async function loaded() {
         }
     });
 
-    function loadData() {
+    function loadDataFromEmbed() {
         const json = document.querySelector('#data').innerText;
         const data = JSON.parse(json);
+        loadData(data);
+    }
+
+    function loadData(data) {
+        main.innerHTML = "";
+        cellToView.store.clear();
 
         for (let view of data.views) {
             addCardView(data.cards[view.card], view.cell);
@@ -331,7 +354,7 @@ async function loaded() {
         updateAllViewContent();
     }
     
-    loadData();
+    loadDataFromEmbed();
     selectCard(undefined);
 
     main.classList.add('skiptransition');

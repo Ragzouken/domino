@@ -32,6 +32,14 @@ html {
     font-size: 1.1em;
 }
 
+#screen {
+    position: absolute;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    cursor: pointer;
+}
+
 main {
     transition: transform .2s ease-in-out;
     width: 0;

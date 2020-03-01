@@ -265,6 +265,16 @@ async function loaded() {
         event.dataTransfer.dropEffect = 'copy';
     });
 
+    document.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const rect = main.getBoundingClientRect();
+        const clickPixel = [event.clientX - rect.x, event.clientY - rect.y];
+        const clickCell = grid.pixelToCell(clickPixel);
+        centerCell(clickCell);
+    });
+
     document.addEventListener('drop', async event => {
         event.preventDefault();
 

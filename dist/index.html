@@ -39,6 +39,14 @@ html {
     font-size: 1.1em;
 }
 
+#screen {
+    position: absolute;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    cursor: pointer;
+}
+
 main {
     transition: transform .2s ease-in-out;
     width: 0;
@@ -402,6 +410,16 @@ async function loaded() {
         event.dataTransfer.dropEffect = 'copy';
     });
 
+    document.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const rect = main.getBoundingClientRect();
+        const clickPixel = [event.clientX - rect.x, event.clientY - rect.y];
+        const clickCell = grid.pixelToCell(clickPixel);
+        centerCell(clickCell);
+    });
+
     document.addEventListener('drop', async event => {
         event.preventDefault();
 
@@ -558,6 +576,7 @@ class HexGrid {
     </script>
   </head>
   <body onload="loaded()"><span id="debug">debug</span>
+    <div id="screen"></div>
     <main></main>
     <div id="sidebar">
       <button id="add-card" draggable="true">drag to add card</button>

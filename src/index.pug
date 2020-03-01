@@ -1,3 +1,5 @@
+- var version = 'alpha';
+- var date = (new Date()).toLocaleDateString();
 - var font = 'https://fonts.googleapis.com/css?family=Lora&display=swap'
 - var data = '{"cards": {"0": {"text": "hello", "type": "red"}}, "views": [{"card": "0", "cell": [0, 0]}]}'
 - var types = ['black', 'red', 'green', 'blue']
@@ -32,3 +34,4 @@ html
             button#export export
             button#import import
             input#import-file(type='file', accept='.html', hidden)
+            #version <b>version</b>—#{version} (#{date})

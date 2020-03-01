@@ -39,7 +39,7 @@ html {
     font-size: 1.1em;
 }
 
-button {
+button, textarea {
     font-family: lora;
     font-size: 1em;
 }
@@ -77,7 +77,7 @@ hr {
 }
 
 #sidebar {
-    width: 15em;
+    width: calc(var(--card-width));
     position: absolute;
     margin: 1em;
     padding: 1em;
@@ -107,9 +107,11 @@ hr {
 }
 
 #content-input {
+    padding: 1em;
+    width: calc(var(--card-width) - 2em);
+    height: calc(var(--card-height) - 2em);
+
     display: block;
-    width: calc(100% - 4px);
-    height: var(--card-height);
     border: none;
     border-bottom: 2px solid black;
     margin-bottom: 1em;
@@ -186,4 +188,8 @@ hr {
 
 .skiptransition {
     transition: none !important;
+}
+
+#version {
+    margin-top: 1em;
 }

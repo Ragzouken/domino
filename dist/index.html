@@ -46,7 +46,7 @@ html {
     font-size: 1.1em;
 }
 
-button {
+button, textarea {
     font-family: lora;
     font-size: 1em;
 }
@@ -84,7 +84,7 @@ hr {
 }
 
 #sidebar {
-    width: 15em;
+    width: calc(var(--card-width));
     position: absolute;
     margin: 1em;
     padding: 1em;
@@ -114,9 +114,11 @@ hr {
 }
 
 #content-input {
+    padding: 1em;
+    width: calc(var(--card-width) - 2em);
+    height: calc(var(--card-height) - 2em);
+
     display: block;
-    width: calc(100% - 4px);
-    height: var(--card-height);
     border: none;
     border-bottom: 2px solid black;
     margin-bottom: 1em;
@@ -193,6 +195,10 @@ hr {
 
 .skiptransition {
     transition: none !important;
+}
+
+#version {
+    margin-top: 1em;
 }
 
     </style>
@@ -683,6 +689,7 @@ class HexGrid {
       <button id="export">export</button>
       <button id="import">import</button>
       <input id="import-file" type="file" accept=".html" hidden>
+      <div id="version"><b>version</b>—alpha (2020-3-1)</div>
     </div>
   </body>
 </html>

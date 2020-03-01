@@ -29,6 +29,16 @@ class CardView {
     }
 }
 
+async function playableHTMLBlob(json)
+{
+    const doc = document.documentElement.cloneNode(true);
+    const data = doc.querySelector("#data");
+    data.innerHTML = `\n${json}\n`;
+    doc.querySelector("main").innerHTML = "";
+
+    return new Blob([doc.innerHTML], {type: "text/html"});
+}
+
 async function loaded() {
     const typeSelect = document.querySelector('#type-select');
     for (let type of colors) {
@@ -39,8 +49,6 @@ async function loaded() {
     }
 
     const main = document.querySelector('main');
-    const json = document.querySelector('#data').innerText;
-    const data = JSON.parse(json);
 
     const testCard = document.createElement('div');
     testCard.classList.add('card');
@@ -51,18 +59,18 @@ async function loaded() {
 
     main.removeChild(testCard);
 
-    document.querySelector('#write-out').addEventListener('click', () => {
+    document.querySelector('#download').addEventListener('click', async () => {
         const cardData = {};
         const viewData = [];
 
         const cardToId = new Map();
         let nextId = 0;
-        function getNextId() {
+        function generateID() {
             nextId += 1;
-            return nextId - 1;
+            return (nextId - 1).toString();
         }
         function getCardId(card) {
-            let id = cardToId.get(card) || getNextId();
+            let id = cardToId.get(card) || generateID();
             cardToId.set(card, id);
             cardData[id] = card;
             return id;
@@ -77,7 +85,11 @@ async function loaded() {
            views: viewData, 
         });
 
-        console.log(json);
+        document.querySelector('#data').innerHTML = json;
+
+        const name = "test";
+        const blob = await playableHTMLBlob(json);
+        saveAs(blob, `domino-${name}.html`);
     });
 
     function setPan(x, y) {
@@ -295,10 +307,17 @@ async function loaded() {
         }
     });
 
-    for (let card of data['cards']) {
-        addCardView(card, card['coords']);
+    function loadData() {
+        const json = document.querySelector('#data').innerText;
+        const data = JSON.parse(json);
+
+        for (let view of data.views) {
+            addCardView(data.cards[view.card], view.cell);
+        }
+        updateAllViewContent();
     }
     
+    loadData();
     selectCard(undefined);
 
     main.classList.add('skiptransition');

@@ -1,5 +1,5 @@
 - var font = 'https://fonts.googleapis.com/css?family=Lora&display=swap'
-- var data = '{"cards": []}'
+- var data = '{"cards": {"0": {"text": "hello", "type": "red"}}, "views": [{"card": "0", "cell": [0, 0]}]}'
 
 doctype html
 html
@@ -11,9 +11,12 @@ html
         style
             include style.css
         script
-            include script.js
+            include library/DragDropTouch.min.js
         script
-            include DragDropTouch.js
+            include library/FileSaver.min.js
+        script
+            include script.js
+
     body(onload='loaded()')
         span#debug debug
         main
@@ -24,4 +27,4 @@ html
             select#type-select
             textarea#content-input(hidden)
             hr
-            button#write-out write-out
+            button#download download

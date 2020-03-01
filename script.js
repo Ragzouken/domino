@@ -221,7 +221,7 @@ async function loaded() {
 
             const originJson = event.dataTransfer.getData('card-origin-cell');
             const cell = JSON.parse(originJson);
-            swapCells(cell, view.cell);
+            swapViewCells(cell, view.cell);
         });
 
         main.appendChild(view.root);

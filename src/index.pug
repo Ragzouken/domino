@@ -1,5 +1,6 @@
 - var font = 'https://fonts.googleapis.com/css?family=Lora&display=swap'
 - var data = '{"cards": {"0": {"text": "hello", "type": "red"}}, "views": [{"card": "0", "cell": [0, 0]}]}'
+- var types = ['black', 'red', 'green', 'blue']
 
 doctype html
 html
@@ -23,9 +24,11 @@ html
         main
         #sidebar
             #add-delete-card(draggable='true') drag out new card or drop unwanted card here
-            select#type-select
+            #type-select
+                each type_ in types
+                    div(onclick=`setCardType('${type_}')`, class='type-button ' + type_)
             textarea#content-input(hidden)
             button#jump-to-center jump to center
-            button#download download
+            button#export export
             button#import import
-            input#import-file(type="file", accept=".html", hidden)
+            input#import-file(type='file', accept='.html', hidden)

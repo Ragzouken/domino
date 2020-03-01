@@ -32,16 +32,23 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
+html, body {
+    position: absolute;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
 html {
     background: var(--light);
 
     font-family: lora;
     font-size: 1.1em;
+}
 
-    position: absolute;
-    margin: 0;
-    width: 100vw;
-    height: 100vh;
+button {
+    font-family: lora;
+    font-size: 1em;
 }
 
 #screen {
@@ -113,6 +120,28 @@ hr {
     border: none;
     border-bottom: 2px solid black;
     margin-bottom: 1em;
+}
+
+#type-select {
+    height: 2em;
+    margin-bottom: 1em;
+    display: grid;
+    column-gap: .5em;
+}
+
+.type-button {
+    height: 100%;
+    grid-row: 1;
+    border-bottom: 1px solid black;
+    cursor: pointer;
+}
+
+.type-button:hover {
+    height: calc(100% + .5em);
+}
+
+.type-button.selected {
+    height: calc(100% + .5em);
 }
 
 .card {
@@ -214,15 +243,9 @@ async function playableHTMLBlob(json)
     return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
-async function loaded() {
-    const typeSelect = document.querySelector('#type-select');
-    for (let type of colors) {
-        const option = document.createElement('option');
-        option.value = type;
-        option.innerHTML = type;
-        typeSelect.appendChild(option);
-    }
+let setCardType;
 
+async function loaded() {
     const main = document.querySelector('main');
 
     const testCard = document.createElement('div');
@@ -238,7 +261,7 @@ async function loaded() {
         centerCell([0, 0]);
     });
 
-    document.querySelector('#download').addEventListener('click', async () => {
+    document.querySelector('#export').addEventListener('click', async () => {
         const cardData = {};
         const viewData = [];
 
@@ -341,13 +364,25 @@ async function loaded() {
         updateAllViewContent();
     });
 
-    typeSelect.addEventListener('change', () => {
+    setCardType = function(type) {
         if (!selectedCard) return;
 
-        console.log("change...");
-        selectedCard.type = typeSelect.value;
+        selectedCard.type = type;
+        refreshTypeSelect();
         updateAllViewContent();
-    });
+    }
+
+    const typeSelect = document.querySelector('#type-select');
+
+    function refreshTypeSelect() {
+        if (!selectedCard) return;
+
+        document.querySelectorAll('.type-button').forEach(button => {
+            button.classList.remove('selected');
+            if (button.classList.contains(selectedCard.type))
+                button.classList.add('selected');
+        });
+    }
 
     function selectCard(card) {
         selectedCard = card;
@@ -356,10 +391,10 @@ async function loaded() {
         contentInput.hidden = card === undefined;
 
         if (card) {
-            typeSelect.value = card.type;
             contentInput.value = card.text;
         }
 
+        refreshTypeSelect();
         updateAllViewContent();
     }
 
@@ -637,10 +672,15 @@ class HexGrid {
     <main></main>
     <div id="sidebar">
       <div id="add-delete-card" draggable="true">drag out new card or drop unwanted card here</div>
-      <select id="type-select"></select>
+      <div id="type-select">
+        <div class="type-button black" onclick="setCardType('black')"></div>
+        <div class="type-button red" onclick="setCardType('red')"></div>
+        <div class="type-button green" onclick="setCardType('green')"></div>
+        <div class="type-button blue" onclick="setCardType('blue')"></div>
+      </div>
       <textarea id="content-input" hidden></textarea>
       <button id="jump-to-center">jump to center</button>
-      <button id="download">download</button>
+      <button id="export">export</button>
       <button id="import">import</button>
       <input id="import-file" type="file" accept=".html" hidden>
     </div>

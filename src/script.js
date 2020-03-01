@@ -39,15 +39,9 @@ async function playableHTMLBlob(json)
     return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
-async function loaded() {
-    const typeSelect = document.querySelector('#type-select');
-    for (let type of colors) {
-        const option = document.createElement('option');
-        option.value = type;
-        option.innerHTML = type;
-        typeSelect.appendChild(option);
-    }
+let setCardType;
 
+async function loaded() {
     const main = document.querySelector('main');
 
     const testCard = document.createElement('div');
@@ -63,7 +57,7 @@ async function loaded() {
         centerCell([0, 0]);
     });
 
-    document.querySelector('#download').addEventListener('click', async () => {
+    document.querySelector('#export').addEventListener('click', async () => {
         const cardData = {};
         const viewData = [];
 
@@ -166,13 +160,25 @@ async function loaded() {
         updateAllViewContent();
     });
 
-    typeSelect.addEventListener('change', () => {
+    setCardType = function(type) {
         if (!selectedCard) return;
 
-        console.log("change...");
-        selectedCard.type = typeSelect.value;
+        selectedCard.type = type;
+        refreshTypeSelect();
         updateAllViewContent();
-    });
+    }
+
+    const typeSelect = document.querySelector('#type-select');
+
+    function refreshTypeSelect() {
+        if (!selectedCard) return;
+
+        document.querySelectorAll('.type-button').forEach(button => {
+            button.classList.remove('selected');
+            if (button.classList.contains(selectedCard.type))
+                button.classList.add('selected');
+        });
+    }
 
     function selectCard(card) {
         selectedCard = card;
@@ -181,10 +187,10 @@ async function loaded() {
         contentInput.hidden = card === undefined;
 
         if (card) {
-            typeSelect.value = card.type;
             contentInput.value = card.text;
         }
 
+        refreshTypeSelect();
         updateAllViewContent();
     }
 

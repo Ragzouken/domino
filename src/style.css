@@ -25,16 +25,23 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
+html, body {
+    position: absolute;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
 html {
     background: var(--light);
 
     font-family: lora;
     font-size: 1.1em;
+}
 
-    position: absolute;
-    margin: 0;
-    width: 100vw;
-    height: 100vh;
+button {
+    font-family: lora;
+    font-size: 1em;
 }
 
 #screen {
@@ -106,6 +113,28 @@ hr {
     border: none;
     border-bottom: 2px solid black;
     margin-bottom: 1em;
+}
+
+#type-select {
+    height: 2em;
+    margin-bottom: 1em;
+    display: grid;
+    column-gap: .5em;
+}
+
+.type-button {
+    height: 100%;
+    grid-row: 1;
+    border-bottom: 1px solid black;
+    cursor: pointer;
+}
+
+.type-button:hover {
+    height: calc(100% + .5em);
+}
+
+.type-button.selected {
+    height: calc(100% + .5em);
 }
 
 .card {

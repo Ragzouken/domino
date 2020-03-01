@@ -30,6 +30,11 @@ html {
 
     font-family: lora;
     font-size: 1.1em;
+
+    position: absolute;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
 }
 
 #screen {

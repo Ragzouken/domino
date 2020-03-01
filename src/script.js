@@ -123,7 +123,6 @@ async function loaded() {
     });
 
     const sidebar = document.querySelector('#sidebar');
-    const delCard = document.querySelector('#del-card');
 
     sidebar.addEventListener('dragover', event => {
         event.preventDefault();
@@ -137,14 +136,16 @@ async function loaded() {
         event.stopPropagation();
     });
 
-    delCard.addEventListener('dragover', event => {
+    const addCard = document.querySelector('#add-delete-card');
+
+    addCard.addEventListener('dragover', event => {
         event.preventDefault();
         event.stopPropagation();
 
         event.dataTransfer.dropEffect = 'move';
     });
 
-    delCard.addEventListener('drop', event => {
+    addCard.addEventListener('drop', event => {
         event.preventDefault();
         event.stopPropagation();
 
@@ -155,7 +156,6 @@ async function loaded() {
         }
     });
 
-    const addCard = document.querySelector('#add-card');
     const contentInput = document.querySelector('#content-input');
     let selectedCard = undefined;
 

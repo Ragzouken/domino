@@ -70,6 +70,7 @@ hr {
 }
 
 #sidebar {
+    width: 15em;
     position: absolute;
     margin: 1em;
     padding: 1em;
@@ -77,10 +78,34 @@ hr {
     background: var(--dark);
 }
 
+#add-delete-card {
+    height: 3em;
+    padding: 1em;
+    width: calc(100% - 2em);
+
+    margin-bottom: 1em;
+
+    cursor: pointer;
+    background: var(--black-stiple);
+    border-bottom: 2px solid black;
+    text-shadow: 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark),
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark);
+}
+
 #content-input {
     display: block;
-    width: var(--card-width);
+    width: calc(100% - 4px);
     height: var(--card-height);
+    border: none;
+    border-bottom: 2px solid black;
+    margin-bottom: 1em;
 }
 
 .card {

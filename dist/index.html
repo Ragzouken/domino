@@ -77,6 +77,7 @@ hr {
 }
 
 #sidebar {
+    width: 15em;
     position: absolute;
     margin: 1em;
     padding: 1em;
@@ -84,10 +85,34 @@ hr {
     background: var(--dark);
 }
 
+#add-delete-card {
+    height: 3em;
+    padding: 1em;
+    width: calc(100% - 2em);
+
+    margin-bottom: 1em;
+
+    cursor: pointer;
+    background: var(--black-stiple);
+    border-bottom: 2px solid black;
+    text-shadow: 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark),
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark), 
+        0 0 3px var(--dark);
+}
+
 #content-input {
     display: block;
-    width: var(--card-width);
+    width: calc(100% - 4px);
     height: var(--card-height);
+    border: none;
+    border-bottom: 2px solid black;
+    margin-bottom: 1em;
 }
 
 .card {
@@ -273,7 +298,6 @@ async function loaded() {
     });
 
     const sidebar = document.querySelector('#sidebar');
-    const delCard = document.querySelector('#del-card');
 
     sidebar.addEventListener('dragover', event => {
         event.preventDefault();
@@ -287,14 +311,16 @@ async function loaded() {
         event.stopPropagation();
     });
 
-    delCard.addEventListener('dragover', event => {
+    const addCard = document.querySelector('#add-delete-card');
+
+    addCard.addEventListener('dragover', event => {
         event.preventDefault();
         event.stopPropagation();
 
         event.dataTransfer.dropEffect = 'move';
     });
 
-    delCard.addEventListener('drop', event => {
+    addCard.addEventListener('drop', event => {
         event.preventDefault();
         event.stopPropagation();
 
@@ -305,7 +331,6 @@ async function loaded() {
         }
     });
 
-    const addCard = document.querySelector('#add-card');
     const contentInput = document.querySelector('#content-input');
     let selectedCard = undefined;
 
@@ -611,12 +636,9 @@ class HexGrid {
     <div id="screen"></div>
     <main></main>
     <div id="sidebar">
-      <button id="add-card" draggable="true">drag to add card</button>
-      <button id="del-card">drop card to delete</button>
-      <hr>
+      <div id="add-delete-card" draggable="true">drag out new card or drop unwanted card here</div>
       <select id="type-select"></select>
       <textarea id="content-input" hidden></textarea>
-      <hr>
       <button id="jump-to-center">jump to center</button>
       <button id="download">download</button>
       <button id="import">import</button>

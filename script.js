@@ -259,6 +259,10 @@ async function loaded() {
             moveViewToCell(bView, a);
     }
 
+    document.querySelector('#sidebar').addEventListener('click', event => {
+        event.stopPropagation();
+    })
+
     document.addEventListener('dragover', event => {
         event.preventDefault();
         event.stopPropagation();

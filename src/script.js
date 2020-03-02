@@ -14,6 +14,9 @@ class CardView {
         this.root.classList.add('card');
         this.root.draggable = true;
 
+        this.text = document.createElement('div');
+        this.root.appendChild(this.text);
+
         this.refresh();
     }
 
@@ -25,7 +28,7 @@ class CardView {
     refresh() {
         this.root.classList.remove(...colors);
         this.root.classList.add(this.card.type);
-        this.root.innerHTML = this.card.text;
+        this.text.innerHTML = this.card.text;
     }
 }
 
@@ -120,7 +123,7 @@ async function loaded() {
 
     const sidebar = document.querySelector('#editor-panel');
 
-    deselect = () => selectCard(undefined);
+    deselect = () => selectCardView(undefined);
 
     sidebar.addEventListener('dragover', event => {
         event.preventDefault();
@@ -186,15 +189,18 @@ async function loaded() {
         });
     }
 
-    const editorPanel = document.querySelector('#editor-panel');
+    const cardbar = document.querySelector('#cardbar');
 
-    function selectCard(card) {
-        selectedCard = card;
+    function selectCardView(view) {
+        selectedCard = view ? view.card : undefined;
+        cardbar.hidden = view === undefined;
 
-        editorPanel.hidden = card === undefined;
-
-        if (card) {
-            contentInput.value = card.text;
+        if (view) {
+            contentInput.value = view.card.text;
+            view.root.appendChild(cardbar);
+            console.log(cardbar.parentElement.parentElement);
+        } else {
+            //document.documentElement.appendChild(cardbar);
         }
 
         refreshTypeSelect();
@@ -253,7 +259,7 @@ async function loaded() {
         scene.appendChild(view.root);
 
         view.root.addEventListener('click', () => {
-            selectCard(view.card);
+            selectCardView(view);
             centerCell(view.cell);
         });
 
@@ -266,7 +272,7 @@ async function loaded() {
         scene.removeChild(view.root);
         cellToView.delete(view.cell);
         if (selectedCard === view.card)
-            selectCard(undefined);
+            selectCardView(undefined);
     }
 
     function swapViewCells(a, b) {
@@ -344,7 +350,7 @@ async function loaded() {
                 moveViewToCell(view, view.cell, 0);
                 await sleep(10);
                 moveViewToCell(view, view.cell, 1);
-                selectCard(view.card);
+                selectCardView(view);
             }
         }
     });
@@ -366,7 +372,7 @@ async function loaded() {
     }
     
     loadDataFromEmbed();
-    selectCard(undefined);
+    selectCardView(undefined);
 
     scene.classList.add('skiptransition');
     centerCell([0, 0]);

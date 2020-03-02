@@ -110,7 +110,7 @@ hr {
 
 #about-screen {
     pointer-events: initial;
-    cursor: initial;
+    cursor: pointer;
     box-sizing: border-box;
 
     position: absolute;
@@ -120,6 +120,7 @@ hr {
 }
 
 #about-panel {
+    cursor: auto;
     box-sizing: border-box;
 
     margin: auto;
@@ -243,26 +244,35 @@ hr {
     float: right;
 }
 
-#toolbar {
+.icon-bar {
+    cursor: unset;
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 0;
 
     font-size: 1.5rem;
 
     display: grid;
     column-gap: .5em;
-    row-gap: .5em;
-    margin: .5em;
-    margin-left: 0;
-    margin-right: 0;
+    margin: 0;
 }
 
-#toolbar > button {
+.icon-bar > button {
     width: 3rem;
     height: 3rem;
     grid-row: 1;
+}
+
+#cardbar {
+    left: 50%;
+    transform: translate(-50%, 50%);
+    bottom: 0;
+}
+
+#toolbar {
+    left: 50%;
+    transform: translate(-50%, 0);
+    bottom: 0;
+    
+    margin-bottom: .5em;
 }
 
     </style>
@@ -288,6 +298,9 @@ class CardView {
         this.root.classList.add('card');
         this.root.draggable = true;
 
+        this.text = document.createElement('div');
+        this.root.appendChild(this.text);
+
         this.refresh();
     }
 
@@ -299,7 +312,7 @@ class CardView {
     refresh() {
         this.root.classList.remove(...colors);
         this.root.classList.add(this.card.type);
-        this.root.innerHTML = this.card.text;
+        this.text.innerHTML = this.card.text;
     }
 }
 
@@ -394,7 +407,7 @@ async function loaded() {
 
     const sidebar = document.querySelector('#editor-panel');
 
-    deselect = () => selectCard(undefined);
+    deselect = () => selectCardView(undefined);
 
     sidebar.addEventListener('dragover', event => {
         event.preventDefault();
@@ -460,15 +473,18 @@ async function loaded() {
         });
     }
 
-    const editorPanel = document.querySelector('#editor-panel');
+    const cardbar = document.querySelector('#cardbar');
 
-    function selectCard(card) {
-        selectedCard = card;
+    function selectCardView(view) {
+        selectedCard = view ? view.card : undefined;
+        cardbar.hidden = view === undefined;
 
-        editorPanel.hidden = card === undefined;
-
-        if (card) {
-            contentInput.value = card.text;
+        if (view) {
+            contentInput.value = view.card.text;
+            view.root.appendChild(cardbar);
+            console.log(cardbar.parentElement.parentElement);
+        } else {
+            //document.documentElement.appendChild(cardbar);
         }
 
         refreshTypeSelect();
@@ -527,7 +543,7 @@ async function loaded() {
         scene.appendChild(view.root);
 
         view.root.addEventListener('click', () => {
-            selectCard(view.card);
+            selectCardView(view);
             centerCell(view.cell);
         });
 
@@ -540,7 +556,7 @@ async function loaded() {
         scene.removeChild(view.root);
         cellToView.delete(view.cell);
         if (selectedCard === view.card)
-            selectCard(undefined);
+            selectCardView(undefined);
     }
 
     function swapViewCells(a, b) {
@@ -618,7 +634,7 @@ async function loaded() {
                 moveViewToCell(view, view.cell, 0);
                 await sleep(10);
                 moveViewToCell(view, view.cell, 1);
-                selectCard(view.card);
+                selectCardView(view);
             }
         }
     });
@@ -640,7 +656,7 @@ async function loaded() {
     }
     
     loadDataFromEmbed();
-    selectCard(undefined);
+    selectCardView(undefined);
 
     scene.classList.add('skiptransition');
     centerCell([0, 0]);
@@ -745,16 +761,19 @@ class HexGrid {
   <body onload="loaded()"><span id="debug">debug</span>
     <div class="no-select" id="screen"></div>
     <main id="scene"></main>
-    <div id="toolbar">
-      <button onclick="document.querySelector(&quot;#about-screen&quot;).hidden = false;">❔</button>
-      <button id="center">🧭</button>
-      <button id="add-delete-icon" draggable="true">🗃️</button>
-      <button id="import">📂</button>
-      <button id="export">📦</button>
+    <div class="icon-bar" id="toolbar">
+      <button onclick="document.querySelector(&quot;#about-screen&quot;).hidden = false;" title="information about this tool">❔</button>
+      <button id="center" title="jump to center">🧭</button>
+      <button id="add-delete-icon" draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</button>
+      <button id="import" title="import a domino project">📂</button>
+      <button id="export" title="export as html">📦</button>
       <input id="import-file" type="file" accept=".html" hidden>
     </div>
+    <div class="icon-bar" id="cardbar" hidden>
+      <button id="edit" title="edit selected card" onclick="document.querySelector(&quot;#editor-panel&quot;).hidden = false;">📝</button>
+    </div>
     <div id="editor-panel" hidden>
-      <button onclick="deselect()" style="float: right">close</button>
+      <button onclick="document.querySelector(&quot;#editor-panel&quot;).hidden = true;" style="float: right">close</button>
       <h3>edit card</h3>
       <div id="type-select">
         <div class="type-button black" onclick="setCardType('black')"></div>
@@ -768,7 +787,7 @@ class HexGrid {
       <div id="about-panel">
         <button onclick="document.querySelector(&quot;#about-screen&quot;).hidden = true;">exit window</button>
         <div id="version">
-           version—alpha (2020-3-2)</div><h1>domino</h1>
+          version—alpha (2020-3-2)</div><h1>domino</h1>
 <h2>about</h2>
 <p>domino is a tool for collaging fragmented thoughts into a larger idea.
 it's essentially a tool for making a particular kind of mindmap and sharing it

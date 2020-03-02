@@ -24,15 +24,17 @@ html
         span#debug debug
         #screen.no-select
         main#scene
-        #toolbar
-            button(onclick='document.querySelector("#about-screen").hidden = false;') ❔
-            button#center 🧭
-            button#add-delete-icon(draggable='true') 🗃️
-            button#import 📂
-            button#export 📦
+        #toolbar.icon-bar
+            button(onclick='document.querySelector("#about-screen").hidden = false;', title='information about this tool') ❔
+            button#center(title='jump to center') 🧭
+            button#add-delete-icon(draggable='true', title='drag a new card from here or a drop an unwanted card') 🗃️
+            button#import(title='import a domino project') 📂
+            button#export(title='export as html') 📦
             input#import-file(type='file', accept='.html', hidden)
+        #cardbar.icon-bar(hidden)
+            button#edit(title='edit selected card', onclick='document.querySelector("#editor-panel").hidden = false;') 📝
         #editor-panel(hidden)
-            button(onclick='deselect()', style='float: right') close
+            button(onclick='document.querySelector("#editor-panel").hidden = true;', style='float: right') close
             h3 edit card
             #type-select
                 each type_ in types
@@ -41,7 +43,7 @@ html
         #about-screen(onclick='document.querySelector("#about-screen").hidden = true;', hidden)
             #about-panel
                 button(onclick='document.querySelector("#about-screen").hidden = true;') exit window
-                #version 
+                #version
                     | version—
                     include version.txt
                     |  (#{date})

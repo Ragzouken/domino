@@ -8,6 +8,7 @@ doctype html
 html
     head
         meta(charset='utf-8')
+        meta(name='viewport', content='width=device-width, initial-scale=1')
         title domino
         script#data(type='text/json') !{data}
         link(href!=font, rel='stylesheet')
@@ -22,16 +23,24 @@ html
 
     body(onload='loaded()')
         span#debug debug
-        #screen
-        main
-        #sidebar
-            #add-delete-card(draggable='true') drag out new card or drop unwanted card here
+        #screen.no-select
+        main#scene
+        #toolbar
+            button(onclick='document.querySelector("#about-screen").hidden = false;') ❔
+            button#center 🧭
+            button#add-delete-icon(draggable='true') 🗃️
+            button#import 📂
+            button#export 📦
+            input#import-file(type='file', accept='.html', hidden)
+        #editor-panel(hidden)
+            h3 edit card
             #type-select
                 each type_ in types
                     div(onclick=`setCardType('${type_}')`, class='type-button ' + type_)
-            textarea#content-input(hidden)
-            button#jump-to-center jump to center
-            button#export export
-            button#import import
-            input#import-file(type='file', accept='.html', hidden)
-            #version <b>version</b>—#{version} (#{date})
+            textarea#content-input
+            button(onclick='deselect()') close
+        #about-screen(onclick='document.querySelector("#about-screen").hidden = true;', hidden)
+            #about-panel
+                button(onclick='document.querySelector("#about-screen").hidden = true;') exit window
+                #version version—#{version} (#{date})
+                include:markdown-it(html) about.md

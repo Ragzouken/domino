@@ -2,12 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>domino</title>
     <script id="data" type="text/json">{"cards": {"0": {"text": "hello", "type": "red"}}, "views": [{"card": "0", "cell": [0, 0]}]}</script>
     <link href="https://fonts.googleapis.com/css?family=Lora&display=swap" rel="stylesheet">
-    <style>[hidden] { display: none !important; }
-
-:root {
+    <style>:root {
     --light: rgb(255, 245, 209);
     --dark: rgb(240, 248, 255);
     --red: #d11305;
@@ -32,11 +31,28 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
+/* hidden elements should be hidden regardless of their display style */
+[hidden] { 
+    display: none !important; 
+}
+
+.no-select {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 html, body {
     position: absolute;
     margin: 0;
     width: 100vw;
     height: 100vh;
+
+    overflow: hidden;
 }
 
 html {
@@ -57,6 +73,15 @@ button, textarea {
     width: 100vw;
     height: 100vh;
     cursor: pointer;
+}
+
+#overlay {
+    position: absolute;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+
+    pointer-events: none;
 }
 
 main {
@@ -83,34 +108,47 @@ hr {
     display: none;
 }
 
-#sidebar {
+#about-screen {
+    pointer-events: initial;
+    cursor: initial;
+    box-sizing: border-box;
+
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(0, 0, 0, .25);
+}
+
+#about-panel {
+    box-sizing: border-box;
+
+    margin: auto;
+
+    padding: 2em;
+
+    width: 40em;
+    height: 100%;
+    max-width: 100%;
+
+    background-color: var(--light);
+
+    overflow: auto;
+}
+
+#editor-panel {
     width: calc(var(--card-width));
     position: absolute;
-    margin: 1em;
     padding: 1em;
     
     background: var(--dark);
-}
+    pointer-events: initial;
 
-#add-delete-card {
-    height: 3em;
-    padding: 1em;
-    width: calc(100% - 2em);
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    margin: 0;
 
-    margin-bottom: 1em;
-
-    cursor: pointer;
-    background: var(--black-stiple);
-    border-bottom: 2px solid black;
-    text-shadow: 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark),
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark);
+    max-width: 100%;
 }
 
 #content-input {
@@ -198,7 +236,35 @@ hr {
 }
 
 #version {
-    margin-top: 1em;
+    float: right;
+}
+
+#toolbar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+
+    font-size: 1.5rem;
+
+    display: grid;
+    column-gap: .5em;
+    row-gap: .5em;
+    margin: .5em;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#toolbar > button {
+    width: 3rem;
+    height: 3rem;
+    grid-row: 1;
+}
+
+@media only screen and (max-width: 55rem) {
+    #editor-panel {
+        display: none;
+    }
 }
 
     </style>
@@ -244,26 +310,28 @@ async function playableHTMLBlob(json)
     const doc = document.documentElement.cloneNode(true);
     const data = doc.querySelector("#data");
     data.innerHTML = `\n${json}\n`;
-    doc.querySelector("main").innerHTML = "";
+    doc.querySelector("#scene").innerHTML = "";
 
     return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
 let setCardType;
+let centerCell;
+let deselect;
 
 async function loaded() {
-    const main = document.querySelector('main');
+    const scene = document.querySelector('#scene');
 
     const testCard = document.createElement('div');
     testCard.classList.add('card');
-    main.appendChild(testCard);
+    scene.appendChild(testCard);
 
     const grid = new HexGrid([testCard.clientWidth, testCard.clientHeight], [32, 32]);
     const cellToView = new CoordStore();
 
-    main.removeChild(testCard);
+    scene.removeChild(testCard);
 
-    document.querySelector('#jump-to-center').addEventListener('click', () => {
+    document.querySelector('#center').addEventListener('click', () => {
         centerCell([0, 0]);
     });
 
@@ -301,7 +369,7 @@ async function loaded() {
     });
 
     function setPan(x, y) {
-        main.style.transform = `translate(${x}px, ${y}px)`;
+        scene.style.transform = `translate(${x}px, ${y}px)`;
     }
 
     function moveViewToCell(view, cell, scale=1) {
@@ -326,7 +394,9 @@ async function loaded() {
         reader.readAsText(importFile.files[0]);
     });
 
-    const sidebar = document.querySelector('#sidebar');
+    const sidebar = document.querySelector('#editor-panel');
+
+    deselect = () => selectCard(undefined);
 
     sidebar.addEventListener('dragover', event => {
         event.preventDefault();
@@ -340,25 +410,29 @@ async function loaded() {
         event.stopPropagation();
     });
 
-    const addCard = document.querySelector('#add-delete-card');
+    for (let addCard of document.querySelectorAll('#add-delete-icon')) {
+        addCard.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('card/new', '');
+        });
 
-    addCard.addEventListener('dragover', event => {
-        event.preventDefault();
-        event.stopPropagation();
+        addCard.addEventListener('dragover', event => {
+            event.preventDefault();
+            event.stopPropagation();
 
-        event.dataTransfer.dropEffect = 'move';
-    });
+            event.dataTransfer.dropEffect = 'move';
+        });
 
-    addCard.addEventListener('drop', event => {
-        event.preventDefault();
-        event.stopPropagation();
+        addCard.addEventListener('drop', event => {
+            event.preventDefault();
+            event.stopPropagation();
 
-        if (event.dataTransfer.types.includes('card/move')) {
-            const originJson = event.dataTransfer.getData('card-origin-cell');
-            const view = cellToView.get(JSON.parse(originJson));
-            removeCardView(view);
-        }
-    });
+            if (event.dataTransfer.types.includes('card/move')) {
+                const originJson = event.dataTransfer.getData('card-origin-cell');
+                const view = cellToView.get(JSON.parse(originJson));
+                removeCardView(view);
+            }
+        });
+    }
 
     const contentInput = document.querySelector('#content-input');
     let selectedCard = undefined;
@@ -378,8 +452,6 @@ async function loaded() {
         updateAllViewContent();
     }
 
-    const typeSelect = document.querySelector('#type-select');
-
     function refreshTypeSelect() {
         if (!selectedCard) return;
 
@@ -390,11 +462,12 @@ async function loaded() {
         });
     }
 
+    const editorPanel = document.querySelector('#editor-panel');
+
     function selectCard(card) {
         selectedCard = card;
 
-        typeSelect.hidden = card === undefined;
-        contentInput.hidden = card === undefined;
+        editorPanel.hidden = card === undefined;
 
         if (card) {
             contentInput.value = card.text;
@@ -414,11 +487,7 @@ async function loaded() {
         });
     }
 
-    addCard.addEventListener('dragstart', event => {
-        event.dataTransfer.setData('card/new', '');
-    });
-
-    function centerCell(coords) {
+    centerCell = function(coords) {
         const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
         const [nx, ny] = grid.cellToPixel(coords);
         setPan(cx - nx , cy - ny);
@@ -457,7 +526,7 @@ async function loaded() {
             swapViewCells(cell, view.cell);
         });
 
-        main.appendChild(view.root);
+        scene.appendChild(view.root);
 
         view.root.addEventListener('click', () => {
             selectCard(view.card);
@@ -470,7 +539,7 @@ async function loaded() {
     }
 
     function removeCardView(view) {
-        main.removeChild(view.root);
+        scene.removeChild(view.root);
         cellToView.delete(view.cell);
         if (selectedCard === view.card)
             selectCard(undefined);
@@ -492,30 +561,32 @@ async function loaded() {
             moveViewToCell(bView, a);
     }
 
-    document.querySelector('#sidebar').addEventListener('click', event => {
+    document.querySelector('#editor-panel').addEventListener('click', event => {
         event.stopPropagation();
     })
 
-    document.addEventListener('dragover', event => {
+    const screen = document.querySelector('#screen');
+
+    screen.addEventListener('dragover', event => {
         event.preventDefault();
         event.stopPropagation();
         event.dataTransfer.dropEffect = 'copy';
     });
 
-    document.addEventListener('click', event => {
+    screen.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
 
-        const rect = main.getBoundingClientRect();
+        const rect = scene.getBoundingClientRect();
         const clickPixel = [event.clientX - rect.x, event.clientY - rect.y];
         const clickCell = grid.pixelToCell(clickPixel);
         centerCell(clickCell);
     });
 
-    document.addEventListener('drop', async event => {
+    screen.addEventListener('drop', async event => {
         event.preventDefault();
 
-        const rect = main.getBoundingClientRect();
+        const rect = scene.getBoundingClientRect();
         const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
         const dropCell = grid.pixelToCell(dropPixel);
 
@@ -561,7 +632,7 @@ async function loaded() {
     }
 
     function loadData(data) {
-        main.innerHTML = "";
+        scene.innerHTML = "";
         cellToView.store.clear();
 
         for (let view of data.views) {
@@ -573,10 +644,10 @@ async function loaded() {
     loadDataFromEmbed();
     selectCard(undefined);
 
-    main.classList.add('skiptransition');
+    scene.classList.add('skiptransition');
     centerCell([0, 0]);
     await sleep(10);
-    main.classList.remove('skiptransition');
+    scene.classList.remove('skiptransition');
 }
 
 function sleep(ms) {
@@ -674,22 +745,57 @@ class HexGrid {
     </script>
   </head>
   <body onload="loaded()"><span id="debug">debug</span>
-    <div id="screen"></div>
-    <main></main>
-    <div id="sidebar">
-      <div id="add-delete-card" draggable="true">drag out new card or drop unwanted card here</div>
+    <div class="no-select" id="screen"></div>
+    <main id="scene"></main>
+    <div id="toolbar">
+      <button onclick="document.querySelector(&quot;#about-screen&quot;).hidden = false;">❔</button>
+      <button id="center">🧭</button>
+      <button id="add-delete-icon" draggable="true">🗃️</button>
+      <button id="import">📂</button>
+      <button id="export">📦</button>
+      <input id="import-file" type="file" accept=".html" hidden>
+    </div>
+    <div id="editor-panel" hidden>
+      <h3>edit card</h3>
       <div id="type-select">
         <div class="type-button black" onclick="setCardType('black')"></div>
         <div class="type-button red" onclick="setCardType('red')"></div>
         <div class="type-button green" onclick="setCardType('green')"></div>
         <div class="type-button blue" onclick="setCardType('blue')"></div>
       </div>
-      <textarea id="content-input" hidden></textarea>
-      <button id="jump-to-center">jump to center</button>
-      <button id="export">export</button>
-      <button id="import">import</button>
-      <input id="import-file" type="file" accept=".html" hidden>
-      <div id="version"><b>version</b>—alpha (2020-3-1)</div>
+      <textarea id="content-input"></textarea>
+      <button onclick="deselect()">close</button>
+    </div>
+    <div id="about-screen" onclick="document.querySelector(&quot;#about-screen&quot;).hidden = true;" hidden>
+      <div id="about-panel">
+        <button onclick="document.querySelector(&quot;#about-screen&quot;).hidden = true;">exit window</button>
+        <div id="version">version—alpha (2020-3-2)</div><h1>domino</h1>
+<h2>about</h2>
+<p>domino is a tool for collaging fragmented thoughts into a larger idea.
+it's essentially a tool for making a particular kind of mindmap and sharing it
+as a page on your website or itch.io.</p>
+<p>domino is a <a href="https://candle.neocities.org/2020/02/26/speculations.html">response to my frustration</a> trying to express myself in Emilie
+Reed's writing jams.</p>
+<h2>credits &amp; thanks</h2>
+<h3>creators</h3>
+<ul>
+<li>mark wonnacott</li>
+</ul>
+<h3>inspiration</h3>
+<ul>
+<li>Em Reed—<a href="https://itch.io/jam/manifesto-jam">Manifesto Jam</a>, <a href="https://itch.io/jam/speculation-jam">Speculation Jam</a></li>
+<li>Max—<a href="https://github.com/synth-ruiner/image-to-bitsy">image to bitsy</a></li>
+<li>Kris De Decker—<a href="https://solar.lowtechmagazine.com/">LOW←TECH MAGAZINE</a></li>
+<li>Chris Klimas—<a href="https://twinery.org/">Twine</a></li>
+</ul>
+<h3>libraries</h3>
+<ul>
+<li>Bernardo Castilho—<a href="https://github.com/Bernardo-Castilho/dragdroptouch">DragDropTouch</a></li>
+<li>Eli Grey—<a href="https://github.com/eligrey/FileSaver.js/">FileSaver.js</a></li>
+<li>Cyreal—<a href="https://fonts.google.com/specimen/Lora">Lora font</a></li>
+</ul>
+
+      </div>
     </div>
   </body>
 </html>

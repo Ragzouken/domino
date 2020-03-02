@@ -1,5 +1,3 @@
-[hidden] { display: none !important; }
-
 :root {
     --light: rgb(255, 245, 209);
     --dark: rgb(240, 248, 255);
@@ -25,11 +23,28 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
+/* hidden elements should be hidden regardless of their display style */
+[hidden] { 
+    display: none !important; 
+}
+
+.no-select {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 html, body {
     position: absolute;
     margin: 0;
     width: 100vw;
     height: 100vh;
+
+    overflow: hidden;
 }
 
 html {
@@ -50,6 +65,15 @@ button, textarea {
     width: 100vw;
     height: 100vh;
     cursor: pointer;
+}
+
+#overlay {
+    position: absolute;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+
+    pointer-events: none;
 }
 
 main {
@@ -76,34 +100,47 @@ hr {
     display: none;
 }
 
-#sidebar {
+#about-screen {
+    pointer-events: initial;
+    cursor: initial;
+    box-sizing: border-box;
+
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(0, 0, 0, .25);
+}
+
+#about-panel {
+    box-sizing: border-box;
+
+    margin: auto;
+
+    padding: 2em;
+
+    width: 40em;
+    height: 100%;
+    max-width: 100%;
+
+    background-color: var(--light);
+
+    overflow: auto;
+}
+
+#editor-panel {
     width: calc(var(--card-width));
     position: absolute;
-    margin: 1em;
     padding: 1em;
     
     background: var(--dark);
-}
+    pointer-events: initial;
 
-#add-delete-card {
-    height: 3em;
-    padding: 1em;
-    width: calc(100% - 2em);
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    margin: 0;
 
-    margin-bottom: 1em;
-
-    cursor: pointer;
-    background: var(--black-stiple);
-    border-bottom: 2px solid black;
-    text-shadow: 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark),
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark), 
-        0 0 3px var(--dark);
+    max-width: 100%;
 }
 
 #content-input {
@@ -191,5 +228,33 @@ hr {
 }
 
 #version {
-    margin-top: 1em;
+    float: right;
+}
+
+#toolbar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+
+    font-size: 1.5rem;
+
+    display: grid;
+    column-gap: .5em;
+    row-gap: .5em;
+    margin: .5em;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#toolbar > button {
+    width: 3rem;
+    height: 3rem;
+    grid-row: 1;
+}
+
+@media only screen and (max-width: 55rem) {
+    #editor-panel {
+        display: none;
+    }
 }

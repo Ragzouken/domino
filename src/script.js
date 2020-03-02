@@ -34,26 +34,28 @@ async function playableHTMLBlob(json)
     const doc = document.documentElement.cloneNode(true);
     const data = doc.querySelector("#data");
     data.innerHTML = `\n${json}\n`;
-    doc.querySelector("main").innerHTML = "";
+    doc.querySelector("#scene").innerHTML = "";
 
     return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
 let setCardType;
+let centerCell;
+let deselect;
 
 async function loaded() {
-    const main = document.querySelector('main');
+    const scene = document.querySelector('#scene');
 
     const testCard = document.createElement('div');
     testCard.classList.add('card');
-    main.appendChild(testCard);
+    scene.appendChild(testCard);
 
     const grid = new HexGrid([testCard.clientWidth, testCard.clientHeight], [32, 32]);
     const cellToView = new CoordStore();
 
-    main.removeChild(testCard);
+    scene.removeChild(testCard);
 
-    document.querySelector('#jump-to-center').addEventListener('click', () => {
+    document.querySelector('#center').addEventListener('click', () => {
         centerCell([0, 0]);
     });
 
@@ -91,7 +93,7 @@ async function loaded() {
     });
 
     function setPan(x, y) {
-        main.style.transform = `translate(${x}px, ${y}px)`;
+        scene.style.transform = `translate(${x}px, ${y}px)`;
     }
 
     function moveViewToCell(view, cell, scale=1) {
@@ -116,7 +118,9 @@ async function loaded() {
         reader.readAsText(importFile.files[0]);
     });
 
-    const sidebar = document.querySelector('#sidebar');
+    const sidebar = document.querySelector('#editor-panel');
+
+    deselect = () => selectCard(undefined);
 
     sidebar.addEventListener('dragover', event => {
         event.preventDefault();
@@ -130,25 +134,29 @@ async function loaded() {
         event.stopPropagation();
     });
 
-    const addCard = document.querySelector('#add-delete-card');
+    for (let addCard of document.querySelectorAll('#add-delete-icon')) {
+        addCard.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('card/new', '');
+        });
 
-    addCard.addEventListener('dragover', event => {
-        event.preventDefault();
-        event.stopPropagation();
+        addCard.addEventListener('dragover', event => {
+            event.preventDefault();
+            event.stopPropagation();
 
-        event.dataTransfer.dropEffect = 'move';
-    });
+            event.dataTransfer.dropEffect = 'move';
+        });
 
-    addCard.addEventListener('drop', event => {
-        event.preventDefault();
-        event.stopPropagation();
+        addCard.addEventListener('drop', event => {
+            event.preventDefault();
+            event.stopPropagation();
 
-        if (event.dataTransfer.types.includes('card/move')) {
-            const originJson = event.dataTransfer.getData('card-origin-cell');
-            const view = cellToView.get(JSON.parse(originJson));
-            removeCardView(view);
-        }
-    });
+            if (event.dataTransfer.types.includes('card/move')) {
+                const originJson = event.dataTransfer.getData('card-origin-cell');
+                const view = cellToView.get(JSON.parse(originJson));
+                removeCardView(view);
+            }
+        });
+    }
 
     const contentInput = document.querySelector('#content-input');
     let selectedCard = undefined;
@@ -168,8 +176,6 @@ async function loaded() {
         updateAllViewContent();
     }
 
-    const typeSelect = document.querySelector('#type-select');
-
     function refreshTypeSelect() {
         if (!selectedCard) return;
 
@@ -180,11 +186,12 @@ async function loaded() {
         });
     }
 
+    const editorPanel = document.querySelector('#editor-panel');
+
     function selectCard(card) {
         selectedCard = card;
 
-        typeSelect.hidden = card === undefined;
-        contentInput.hidden = card === undefined;
+        editorPanel.hidden = card === undefined;
 
         if (card) {
             contentInput.value = card.text;
@@ -204,11 +211,7 @@ async function loaded() {
         });
     }
 
-    addCard.addEventListener('dragstart', event => {
-        event.dataTransfer.setData('card/new', '');
-    });
-
-    function centerCell(coords) {
+    centerCell = function(coords) {
         const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
         const [nx, ny] = grid.cellToPixel(coords);
         setPan(cx - nx , cy - ny);
@@ -247,7 +250,7 @@ async function loaded() {
             swapViewCells(cell, view.cell);
         });
 
-        main.appendChild(view.root);
+        scene.appendChild(view.root);
 
         view.root.addEventListener('click', () => {
             selectCard(view.card);
@@ -260,7 +263,7 @@ async function loaded() {
     }
 
     function removeCardView(view) {
-        main.removeChild(view.root);
+        scene.removeChild(view.root);
         cellToView.delete(view.cell);
         if (selectedCard === view.card)
             selectCard(undefined);
@@ -282,30 +285,32 @@ async function loaded() {
             moveViewToCell(bView, a);
     }
 
-    document.querySelector('#sidebar').addEventListener('click', event => {
+    document.querySelector('#editor-panel').addEventListener('click', event => {
         event.stopPropagation();
     })
 
-    document.addEventListener('dragover', event => {
+    const screen = document.querySelector('#screen');
+
+    screen.addEventListener('dragover', event => {
         event.preventDefault();
         event.stopPropagation();
         event.dataTransfer.dropEffect = 'copy';
     });
 
-    document.addEventListener('click', event => {
+    screen.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
 
-        const rect = main.getBoundingClientRect();
+        const rect = scene.getBoundingClientRect();
         const clickPixel = [event.clientX - rect.x, event.clientY - rect.y];
         const clickCell = grid.pixelToCell(clickPixel);
         centerCell(clickCell);
     });
 
-    document.addEventListener('drop', async event => {
+    screen.addEventListener('drop', async event => {
         event.preventDefault();
 
-        const rect = main.getBoundingClientRect();
+        const rect = scene.getBoundingClientRect();
         const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
         const dropCell = grid.pixelToCell(dropPixel);
 
@@ -351,7 +356,7 @@ async function loaded() {
     }
 
     function loadData(data) {
-        main.innerHTML = "";
+        scene.innerHTML = "";
         cellToView.store.clear();
 
         for (let view of data.views) {
@@ -363,10 +368,10 @@ async function loaded() {
     loadDataFromEmbed();
     selectCard(undefined);
 
-    main.classList.add('skiptransition');
+    scene.classList.add('skiptransition');
     centerCell([0, 0]);
     await sleep(10);
-    main.classList.remove('skiptransition');
+    scene.classList.remove('skiptransition');
 }
 
 function sleep(ms) {

@@ -1,4 +1,3 @@
-- var version = 'alpha';
 - var date = (new Date()).toLocaleDateString();
 - var font = 'https://fonts.googleapis.com/css?family=Lora&display=swap'
 - var data = '{"cards": {"0": {"text": "hello", "type": "red"}}, "views": [{"card": "0", "cell": [0, 0]}]}'
@@ -42,5 +41,8 @@ html
         #about-screen(onclick='document.querySelector("#about-screen").hidden = true;', hidden)
             #about-panel
                 button(onclick='document.querySelector("#about-screen").hidden = true;') exit window
-                #version version—#{version} (#{date})
+                #version 
+                    | version—
+                    include version.txt
+                    |  (#{date})
                 include:markdown-it(html) about.md

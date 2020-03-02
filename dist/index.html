@@ -151,6 +151,10 @@ hr {
     max-width: 100%;
 }
 
+#editor-panel > h3 {
+    margin-top: 0;
+}
+
 #content-input {
     padding: 1em;
     width: calc(var(--card-width) - 2em);
@@ -259,12 +263,6 @@ hr {
     width: 3rem;
     height: 3rem;
     grid-row: 1;
-}
-
-@media only screen and (max-width: 55rem) {
-    #editor-panel {
-        display: none;
-    }
 }
 
     </style>
@@ -756,6 +754,7 @@ class HexGrid {
       <input id="import-file" type="file" accept=".html" hidden>
     </div>
     <div id="editor-panel" hidden>
+      <button onclick="deselect()" style="float: right">close</button>
       <h3>edit card</h3>
       <div id="type-select">
         <div class="type-button black" onclick="setCardType('black')"></div>
@@ -764,7 +763,6 @@ class HexGrid {
         <div class="type-button blue" onclick="setCardType('blue')"></div>
       </div>
       <textarea id="content-input"></textarea>
-      <button onclick="deselect()">close</button>
     </div>
     <div id="about-screen" onclick="document.querySelector(&quot;#about-screen&quot;).hidden = true;" hidden>
       <div id="about-panel">

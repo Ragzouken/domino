@@ -143,6 +143,10 @@ hr {
     max-width: 100%;
 }
 
+#editor-panel > h3 {
+    margin-top: 0;
+}
+
 #content-input {
     padding: 1em;
     width: calc(var(--card-width) - 2em);
@@ -251,10 +255,4 @@ hr {
     width: 3rem;
     height: 3rem;
     grid-row: 1;
-}
-
-@media only screen and (max-width: 55rem) {
-    #editor-panel {
-        display: none;
-    }
 }

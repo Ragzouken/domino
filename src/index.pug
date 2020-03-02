@@ -33,12 +33,12 @@ html
             button#export 📦
             input#import-file(type='file', accept='.html', hidden)
         #editor-panel(hidden)
+            button(onclick='deselect()', style='float: right') close
             h3 edit card
             #type-select
                 each type_ in types
                     div(onclick=`setCardType('${type_}')`, class='type-button ' + type_)
             textarea#content-input
-            button(onclick='deselect()') close
         #about-screen(onclick='document.querySelector("#about-screen").hidden = true;', hidden)
             #about-panel
                 button(onclick='document.querySelector("#about-screen").hidden = true;') exit window

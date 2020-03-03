@@ -14,9 +14,18 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
+.black { background: var(--black-stiple) repeat; }
+.red   { background: var(--red-stiple)   repeat; }
+.green { background: var(--green-stiple) repeat; }
+.blue  { background: var(--blue-stiple)  repeat; }
+
 /* hidden elements should be hidden regardless of their display style */
 [hidden] { 
     display: none !important; 
+}
+
+.skiptransition {
+    transition: none !important;
 }
 
 .no-select {
@@ -58,37 +67,10 @@ button, textarea {
     cursor: pointer;
 }
 
-#overlay {
-    position: absolute;
-    margin: 0;
-    width: 100vw;
-    height: 100vh;
-
-    pointer-events: none;
-}
-
 main {
     transition: transform .2s ease-in-out;
     width: 0;
     height: 0;
-}
-
-.black { background: var(--black-stiple) repeat; }
-.red   { background: var(--red-stiple)   repeat; }
-.green { background: var(--green-stiple) repeat; }
-.blue  { background: var(--blue-stiple)  repeat; }
-
-body {
-    overflow: hidden;
-}
-
-hr {
-    border-top: 2px solid black;
-}
-
-#debug {
-    position: absolute;
-    display: none;
 }
 
 .screen {
@@ -213,10 +195,6 @@ hr {
 .card > h3::after {
     font-weight: normal;
     content: " — ";
-}
-
-.skiptransition {
-    transition: none !important;
 }
 
 #version {

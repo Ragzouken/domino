@@ -312,7 +312,7 @@ function getDocumentCenter() {
     ];
 }
 
-function setElementDropEffect(query, effect) {
+function setElementDragoverDropEffect(query, effect) {
     addListener(query, 'dragover', event => {
         killEvent(event);
         event.dataTransfer.dropEffect = effect;
@@ -364,7 +364,9 @@ class CoordStore {
     <script>/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
 var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof navigator!=="undefined"&&/MSIE [1-9]\./.test(navigator.userAgent)){return}var t=e.document,n=function(){return e.URL||e.webkitURL||e},r=t.createElementNS("http://www.w3.org/1999/xhtml","a"),o="download"in r,a=function(e){var t=new MouseEvent("click");e.dispatchEvent(t)},i=/constructor/i.test(e.HTMLElement)||e.safari,f=/CriOS\/[\d]+/.test(navigator.userAgent),u=function(t){(e.setImmediate||e.setTimeout)(function(){throw t},0)},s="application/octet-stream",d=1e3*40,c=function(e){var t=function(){if(typeof e==="string"){n().revokeObjectURL(e)}else{e.remove()}};setTimeout(t,d)},l=function(e,t,n){t=[].concat(t);var r=t.length;while(r--){var o=e["on"+t[r]];if(typeof o==="function"){try{o.call(e,n||e)}catch(a){u(a)}}}},p=function(e){if(/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(e.type)){return new Blob([String.fromCharCode(65279),e],{type:e.type})}return e},v=function(t,u,d){if(!d){t=p(t)}var v=this,w=t.type,m=w===s,y,h=function(){l(v,"writestart progress write writeend".split(" "))},S=function(){if((f||m&&i)&&e.FileReader){var r=new FileReader;r.onloadend=function(){var t=f?r.result:r.result.replace(/^data:[^;]*;/,"data:attachment/file;");var n=e.open(t,"_blank");if(!n)e.location.href=t;t=undefined;v.readyState=v.DONE;h()};r.readAsDataURL(t);v.readyState=v.INIT;return}if(!y){y=n().createObjectURL(t)}if(m){e.location.href=y}else{var o=e.open(y,"_blank");if(!o){e.location.href=y}}v.readyState=v.DONE;h();c(y)};v.readyState=v.INIT;if(o){y=n().createObjectURL(t);setTimeout(function(){r.href=y;r.download=u;a(r);h();c(y);v.readyState=v.DONE});return}S()},w=v.prototype,m=function(e,t,n){return new v(e,t||e.name||"download",n)};if(typeof navigator!=="undefined"&&navigator.msSaveOrOpenBlob){return function(e,t,n){t=t||e.name||"download";if(!n){e=p(e)}return navigator.msSaveOrOpenBlob(e,t)}}w.abort=function(){};w.readyState=w.INIT=0;w.WRITING=1;w.DONE=2;w.error=w.onwritestart=w.onprogress=w.onwrite=w.onabort=w.onerror=w.onwriteend=null;return m}(typeof self!=="undefined"&&self||typeof window!=="undefined"&&window||this.content);if(typeof module!=="undefined"&&module.exports){module.exports.saveAs=saveAs}else if(typeof define!=="undefined"&&define!==null&&define.amd!==null){define("FileSaver.js",function(){return saveAs})}
     </script>
-    <script>const cube_directions = [
+    <script>'use strict';
+
+const cube_directions = [
     [+1, -1, 0], [+1, 0, -1], [0, +1, -1], 
     [-1, +1, 0], [-1, 0, +1], [0, -1, +1], 
 ];
@@ -428,35 +430,71 @@ function setupClassHooks() {
     });
 }
 
-let makeEditable;
+let makeEditable, clearBoard;
 let editable = false;
+let grid, scene, selectedCard;
 
-let clearBoard;
+const cellToView = new CoordStore();
+
+function computeCardSize(parent) {
+    const testCard = document.createElement('div');
+    testCard.classList.add('card');
+    parent.appendChild(testCard);
+    const size = [testCard.clientWidth, testCard.clientHeight];
+    parent.removeChild(testCard);
+    return size;
+}
+
+const setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
+
+function getProjectData() {
+    const cardData = {};
+    const viewData = [];
+    const cardToId = new Map();
+
+    let nextId = 0;
+    const generateID = () => (nextId++).toString();
+
+    function getCardId(card) {
+        let id = cardToId.get(card) || generateID();
+        cardToId.set(card, id);
+        cardData[id] = card;
+        return id;
+    }
+    
+    cellToView.store.forEach((view) => {
+        viewData.push({ cell: view.cell, card: getCardId(view.card) });
+    });
+
+    return {
+        editable: false,
+        cards: cardData,
+        views: viewData, 
+    };
+}
 
 async function loaded() {
     setupClassHooks();
 
-    const scene = document.querySelector('#scene');
+    scene = document.querySelector('#scene');
+    grid = new HexGrid(computeCardSize(scene), [32, 32]);
 
-    const testCard = document.createElement('div');
-    testCard.classList.add('card');
-
-    function computeCardSize() {
-        scene.appendChild(testCard);
-        const size = [testCard.clientWidth, testCard.clientHeight];
-        scene.removeChild(testCard);
-        return size;
-    }
-
-    const grid = new HexGrid(computeCardSize(), [32, 32]);
-    const cellToView = new CoordStore();
-
-    makeEditable = () => setEditable(true);
     clearBoard = () => loadData({editable: true, cards:[], views:[]});
     deselect = () => selectCardView(undefined);
-    setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
 
+    const cardbar = document.querySelector('#cardbar').cloneNode(true);
+    const editCard = cardbar.querySelector('#edit-card');
+
+    const aboutScreen = document.querySelector('#about-screen');
+    const editorPanel = document.querySelector('#editor-panel');
+    setElementDragoverDropEffect(editorPanel, 'none');
+    addListener(editorPanel, 'drop', killEvent);
+    
+    addListener(editCard, 'click', () => editorPanel.hidden = false);
     addListener('#center', 'click', () => centerCell([0, 0]));
+    addListener('#open-about', 'click', () => aboutScreen.hidden = false);
+    addListener('#enable-edit', 'click', () => setEditable(true));
+    addListener('#reset', 'click', () => clearBoard());
     addListener('#import', 'click', () => importFile.click());
     addListener('#export', 'click', async () => {
         const json = JSON.stringify(getProjectData());
@@ -466,34 +504,6 @@ async function loaded() {
         const blob = await playableHTMLBlob(json);
         saveAs(blob, `domino-${name}.html`);
     });
-
-    function getProjectData() {
-        const cardData = {};
-        const viewData = [];
-
-        const cardToId = new Map();
-        let nextId = 0;
-        function generateID() {
-            nextId += 1;
-            return (nextId - 1).toString();
-        }
-        function getCardId(card) {
-            let id = cardToId.get(card) || generateID();
-            cardToId.set(card, id);
-            cardData[id] = card;
-            return id;
-        }
-        
-        cellToView.store.forEach((view) => {
-            viewData.push({ cell: view.cell, card: getCardId(view.card) });
-        });
-
-        return {
-            editable: false,
-            cards: cardData,
-            views: viewData, 
-        };
-    }
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
@@ -516,18 +526,12 @@ async function loaded() {
         reader.readAsText(importFile.files[0]);
     });
 
-    const editorPanel = document.querySelector('#editor-panel');
-
-    setElementDropEffect(editorPanel, 'none');
-
-    addListener(editorPanel, 'drop', killEvent);
-
     const addCard = document.querySelector('#add-delete-icon');
     addListener(addCard, 'dragstart', event => {
         event.dataTransfer.setData('card/new', '');
     });
 
-    setElementDropEffect(addCard, 'move');
+    setElementDragoverDropEffect(addCard, 'move');
 
     addListener(addCard, 'drop', event => {
         killEvent(event);
@@ -565,8 +569,6 @@ async function loaded() {
                 button.classList.add('selected');
         });
     }
-
-    const cardbar = document.querySelector('#cardbar').cloneNode(true);
 
     function selectCardView(view) {
         selectedCard = view ? view.card : undefined;
@@ -659,7 +661,7 @@ async function loaded() {
     })
 
     const screen = document.querySelector('#screen');
-    setElementDropEffect(screen, 'copy');
+    setElementDragoverDropEffect(screen, 'copy');
     addListeners(screen, {
         'click': event => {
             killEvent(event);
@@ -811,12 +813,12 @@ class HexGrid {
     <div class="no-select" id="screen"></div>
     <main id="scene"></main>
     <div class="icon-bar" id="toolbar">
-      <button onclick="document.querySelector('#about-screen').hidden = false;" title="information about this tool">❔</button>
+      <button id="open-about" title="information about this tool">❔</button>
       <button id="center" title="jump to center">🧭</button>
       <button id="add-delete-icon" hidden draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</button>
     </div>
     <div class="icon-bar" id="cardbar" hidden>
-      <button id="edit" title="edit this card" onclick="document.querySelector('#editor-panel').hidden = false;">📝</button>
+      <button id="edit-card" title="edit this card">📝</button>
     </div>
     <div id="editor-panel" hidden>
       <button onclick="document.querySelector('#editor-panel').hidden = true;" style="float: right">close</button>
@@ -835,10 +837,10 @@ class HexGrid {
         <div id="version">
           version—alpha (2020-3-3)</div>
         <div id="project-menu">
-          <button id="enable-edit" title="enable editing" onclick="makeEditable()">📝 enable editing</button>
+          <button id="enable-edit" title="enable editing">📝 enable editing</button>
           <button id="import" title="import a domino project">📂 import from html</button>
           <button id="export" title="export as html">📦 export to html</button>
-          <button id="reset" title="remove all cards" onclick="clearBoard()">❌ remove all cards</button>
+          <button id="reset" title="remove all cards">❌ remove all cards</button>
         </div>
         <input id="import-file" type="file" accept=".html" hidden><h1>domino</h1>
 <h2>about</h2>

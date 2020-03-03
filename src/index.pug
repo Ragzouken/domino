@@ -27,11 +27,11 @@ html
         #screen.no-select
         main#scene
         #toolbar.icon-bar
-            button(onclick!="document.querySelector('#about-screen').hidden = false;", title="information about this tool") ❔
+            button#open-about(title="information about this tool") ❔
             button#center(title="jump to center") 🧭
             button#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
         #cardbar.icon-bar(hidden)
-            button#edit(title="edit this card", onclick!="document.querySelector('#editor-panel').hidden = false;") 📝
+            button#edit-card(title="edit this card") 📝
         #editor-panel(hidden)
             button(onclick!="document.querySelector('#editor-panel').hidden = true;", style="float: right") close
             h3 edit card
@@ -47,9 +47,9 @@ html
                     include version.txt
                     |  (#{date})
                 #project-menu
-                    button#enable-edit(title="enable editing", onclick!="makeEditable()") 📝 enable editing
+                    button#enable-edit(title="enable editing") 📝 enable editing
                     button#import(title="import a domino project") 📂 import from html
                     button#export(title="export as html") 📦 export to html
-                    button#reset(title="remove all cards", onclick!="clearBoard()") ❌ remove all cards
+                    button#reset(title="remove all cards") ❌ remove all cards
                 input#import-file(type="file", accept=".html", hidden)
                 include:markdown-it(html) about.md

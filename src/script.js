@@ -1,3 +1,5 @@
+'use strict';
+
 const cube_directions = [
     [+1, -1, 0], [+1, 0, -1], [0, +1, -1], 
     [-1, +1, 0], [-1, 0, +1], [0, -1, +1], 
@@ -62,35 +64,71 @@ function setupClassHooks() {
     });
 }
 
-let makeEditable;
+let makeEditable, clearBoard;
 let editable = false;
+let grid, scene, selectedCard;
 
-let clearBoard;
+const cellToView = new CoordStore();
+
+function computeCardSize(parent) {
+    const testCard = document.createElement('div');
+    testCard.classList.add('card');
+    parent.appendChild(testCard);
+    const size = [testCard.clientWidth, testCard.clientHeight];
+    parent.removeChild(testCard);
+    return size;
+}
+
+const setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
+
+function getProjectData() {
+    const cardData = {};
+    const viewData = [];
+    const cardToId = new Map();
+
+    let nextId = 0;
+    const generateID = () => (nextId++).toString();
+
+    function getCardId(card) {
+        let id = cardToId.get(card) || generateID();
+        cardToId.set(card, id);
+        cardData[id] = card;
+        return id;
+    }
+    
+    cellToView.store.forEach((view) => {
+        viewData.push({ cell: view.cell, card: getCardId(view.card) });
+    });
+
+    return {
+        editable: false,
+        cards: cardData,
+        views: viewData, 
+    };
+}
 
 async function loaded() {
     setupClassHooks();
 
-    const scene = document.querySelector('#scene');
+    scene = document.querySelector('#scene');
+    grid = new HexGrid(computeCardSize(scene), [32, 32]);
 
-    const testCard = document.createElement('div');
-    testCard.classList.add('card');
-
-    function computeCardSize() {
-        scene.appendChild(testCard);
-        const size = [testCard.clientWidth, testCard.clientHeight];
-        scene.removeChild(testCard);
-        return size;
-    }
-
-    const grid = new HexGrid(computeCardSize(), [32, 32]);
-    const cellToView = new CoordStore();
-
-    makeEditable = () => setEditable(true);
     clearBoard = () => loadData({editable: true, cards:[], views:[]});
     deselect = () => selectCardView(undefined);
-    setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
 
+    const cardbar = document.querySelector('#cardbar').cloneNode(true);
+    const editCard = cardbar.querySelector('#edit-card');
+
+    const aboutScreen = document.querySelector('#about-screen');
+    const editorPanel = document.querySelector('#editor-panel');
+    setElementDragoverDropEffect(editorPanel, 'none');
+    addListener(editorPanel, 'drop', killEvent);
+    
+    addListener(editCard, 'click', () => editorPanel.hidden = false);
     addListener('#center', 'click', () => centerCell([0, 0]));
+    addListener('#open-about', 'click', () => aboutScreen.hidden = false);
+    addListener('#enable-edit', 'click', () => setEditable(true));
+    addListener('#reset', 'click', () => clearBoard());
     addListener('#import', 'click', () => importFile.click());
     addListener('#export', 'click', async () => {
         const json = JSON.stringify(getProjectData());
@@ -100,34 +138,6 @@ async function loaded() {
         const blob = await playableHTMLBlob(json);
         saveAs(blob, `domino-${name}.html`);
     });
-
-    function getProjectData() {
-        const cardData = {};
-        const viewData = [];
-
-        const cardToId = new Map();
-        let nextId = 0;
-        function generateID() {
-            nextId += 1;
-            return (nextId - 1).toString();
-        }
-        function getCardId(card) {
-            let id = cardToId.get(card) || generateID();
-            cardToId.set(card, id);
-            cardData[id] = card;
-            return id;
-        }
-        
-        cellToView.store.forEach((view) => {
-            viewData.push({ cell: view.cell, card: getCardId(view.card) });
-        });
-
-        return {
-            editable: false,
-            cards: cardData,
-            views: viewData, 
-        };
-    }
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
@@ -150,18 +160,12 @@ async function loaded() {
         reader.readAsText(importFile.files[0]);
     });
 
-    const editorPanel = document.querySelector('#editor-panel');
-
-    setElementDropEffect(editorPanel, 'none');
-
-    addListener(editorPanel, 'drop', killEvent);
-
     const addCard = document.querySelector('#add-delete-icon');
     addListener(addCard, 'dragstart', event => {
         event.dataTransfer.setData('card/new', '');
     });
 
-    setElementDropEffect(addCard, 'move');
+    setElementDragoverDropEffect(addCard, 'move');
 
     addListener(addCard, 'drop', event => {
         killEvent(event);
@@ -199,8 +203,6 @@ async function loaded() {
                 button.classList.add('selected');
         });
     }
-
-    const cardbar = document.querySelector('#cardbar').cloneNode(true);
 
     function selectCardView(view) {
         selectedCard = view ? view.card : undefined;
@@ -293,7 +295,7 @@ async function loaded() {
     })
 
     const screen = document.querySelector('#screen');
-    setElementDropEffect(screen, 'copy');
+    setElementDragoverDropEffect(screen, 'copy');
     addListeners(screen, {
         'click': event => {
             killEvent(event);

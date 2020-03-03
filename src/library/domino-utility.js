@@ -18,7 +18,7 @@ function getDocumentCenter() {
     ];
 }
 
-function setElementDropEffect(query, effect) {
+function setElementDragoverDropEffect(query, effect) {
     addListener(query, 'dragover', event => {
         killEvent(event);
         event.dataTransfer.dropEffect = effect;

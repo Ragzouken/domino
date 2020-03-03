@@ -166,7 +166,7 @@ async function loaded() {
         if (document.fullscreenElement) {
             document.exitFullscreen();
         } else {
-            document.documentElement.requestFullscreen();
+            document.documentElement.requestFullscreen({ navigationUI: 'hide' });
         }
     }
 

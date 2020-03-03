@@ -231,3 +231,13 @@ main {
     
     margin-bottom: .5em;
 }
+
+#project-menu {
+    margin-top: 1em;
+    display: grid;
+    column-gap: 1em;
+}
+
+#project-menu > button {
+    grid-row: 1;
+}

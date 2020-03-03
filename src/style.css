@@ -10,15 +10,6 @@
     --blue-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkSLmZxjBHfRYDFDDCGJgCUJUYKgD+BgYFL5bp8wAAAABJRU5ErkJggg==);
     --black-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkYGBIY2BgmMUABYwwBjYBsEoMFQBSHgIFwNTCZwAAAABJRU5ErkJggg==);
 
-    --stipple-color: var(--red);
-    --stipple-gap: 4px;
-    --stipple-background-size: calc(var(--stipple-gap) * 2) calc(var(--stipple-gap) * 2);
-
-    --stipple-gradient: radial-gradient(var(--stipple-color) 15%, transparent 16%);
-    --stipple-background:
-        var(--stipple-gradient) 0 0,
-        var(--stipple-gradient) var(--stipple-gap) var(--stipple-gap);
-
     --card-width: 15rem;
     --card-height: calc(var(--card-width) * .6);
 }
@@ -126,16 +117,6 @@ hr {
     background-color: var(--light);
 
     overflow: auto;
-}
-
-#project-menu {
-    margin-top: 1em;
-    display: grid;
-    column-gap: 1em;
-}
-
-#project-menu > button {
-    grid-row: 1;
 }
 
 #editor-panel {

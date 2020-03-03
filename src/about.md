@@ -14,6 +14,7 @@ Reed's writing jams.
 ### inspiration
  * Em Reed—[Manifesto Jam][3], [Speculation Jam][4]
  * Max—[image to bitsy][5]
+ * sg—[môsi][9]
  * Kris De Decker—[LOW←TECH MAGAZINE][6]
  * Chris Klimas—[Twine][7]
 
@@ -31,3 +32,4 @@ Reed's writing jams.
 [6]: https://solar.lowtechmagazine.com/
 [7]: https://twinery.org/
 [8]: https://fonts.google.com/specimen/Lora
+[9]: https://zenzoa.itch.io/mosi

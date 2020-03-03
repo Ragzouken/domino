@@ -45,10 +45,6 @@ async function playableHTMLBlob(json)
     return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
-let setCardType;
-let centerCell;
-let deselect;
-
 function setupClassHooks() {
     document.querySelectorAll('.block-clicks').forEach(element => {
         element.addEventListener('click', event => event.stopPropagation());
@@ -64,7 +60,8 @@ function setupClassHooks() {
     });
 }
 
-let makeEditable, clearBoard;
+
+let setCardType, deselect, makeEditable, clearBoard;
 let editable = false;
 let grid, scene, selectedCard;
 
@@ -79,9 +76,30 @@ function computeCardSize(parent) {
     return size;
 }
 
+function centerCell(coords) {
+    const [cx, cy] = getElementCenter(document.documentElement);
+    const [nx, ny] = grid.cellToPixel(coords);
+    setPan(cx - nx , cy - ny);
+    location.hash = `${coords[0]},${coords[1]}`;
+}
+
 const setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
 
-function getProjectData() {
+async function htmlFileToData(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+            const html = document.createElement('html');
+            html.innerHTML = reader.result;
+            const json = html.querySelector('#data').innerHTML;
+            resolve(JSON.parse(json));
+        };
+        reader.readAsText(file); 
+    });
+}
+
+function projectToData() {
     const cardData = {};
     const viewData = [];
     const cardToId = new Map();
@@ -107,6 +125,15 @@ function getProjectData() {
     };
 }
 
+async function exportProject() {
+    const json = JSON.stringify(projectToData());
+    document.querySelector('#data').innerHTML = json;
+
+    const name = "test";
+    const blob = await playableHTMLBlob(json);
+    saveAs(blob, `domino-${name}.html`);
+}
+
 async function loaded() {
     setupClassHooks();
 
@@ -123,21 +150,14 @@ async function loaded() {
     const editorPanel = document.querySelector('#editor-panel');
     setElementDragoverDropEffect(editorPanel, 'none');
     addListener(editorPanel, 'drop', killEvent);
-    
-    addListener(editCard, 'click', () => editorPanel.hidden = false);
-    addListener('#center', 'click', () => centerCell([0, 0]));
-    addListener('#open-about', 'click', () => aboutScreen.hidden = false);
-    addListener('#enable-edit', 'click', () => setEditable(true));
-    addListener('#reset', 'click', () => clearBoard());
-    addListener('#import', 'click', () => importFile.click());
-    addListener('#export', 'click', async () => {
-        const json = JSON.stringify(getProjectData());
-        document.querySelector('#data').innerHTML = json;
 
-        const name = "test";
-        const blob = await playableHTMLBlob(json);
-        saveAs(blob, `domino-${name}.html`);
-    });
+    addListener(editCard,       'click', () => editorPanel.hidden = false);
+    addListener('#center',      'click', () => centerCell([0, 0]));
+    addListener('#open-about',  'click', () => aboutScreen.hidden = false);
+    addListener('#enable-edit', 'click', () => setEditable(true));
+    addListener('#reset',       'click', () => clearBoard());
+    addListener('#import',      'click', () => importFile.click());
+    addListener('#export',      'click', () => exportProject());
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
@@ -149,15 +169,8 @@ async function loaded() {
     }
 
     const importFile = document.querySelector('#import-file');
-    importFile.addEventListener('change', () => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const html = document.createElement('html');
-            html.innerHTML = reader.result;
-            const json = html.querySelector('#data').innerHTML;
-            loadData(JSON.parse(json));
-        };
-        reader.readAsText(importFile.files[0]);
+    addListener(importFile, 'change', async event => {
+        loadData(await htmlFileToData(event.target.files[0]));
     });
 
     const addCard = document.querySelector('#add-delete-icon');
@@ -177,7 +190,6 @@ async function loaded() {
     });
 
     const contentInput = document.querySelector('#content-input');
-    let selectedCard = undefined;
 
     contentInput.addEventListener('input', () => {
         if (!selectedCard) return;
@@ -221,25 +233,21 @@ async function loaded() {
         cellToView.store.forEach(view => view.refresh());
     }
 
-    centerCell = function(coords) {
-        const [cx, cy] = getDocumentCenter();
-        const [nx, ny] = grid.cellToPixel(coords);
-        setPan(cx - nx , cy - ny);
-        location.hash = `${coords[0]},${coords[1]}`;
-    }
-
     function addCardView(card, cell) {
         const view = new CardView(cell, card);
 
+        view.root.addEventListener('click', () => {
+            selectCardView(view);
+            centerCell(view.cell);
+        });
         view.root.addEventListener('dragstart', event => {
             event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
             event.dataTransfer.setData('text/plain', view.card.text);
             event.dataTransfer.setData('card/move', '');
 
-            const [x, y] = [view.root.clientWidth / 2, view.root.clientHeight / 2];
+            const [x, y] = getElementCenter(view.root);
             event.dataTransfer.setDragImage(view.root, x, y);
         });
-
         view.root.addEventListener('dragover', event => {
             killEvent(event);
             const newCard = event.dataTransfer.types.includes('card/new');
@@ -256,12 +264,6 @@ async function loaded() {
         });
 
         scene.appendChild(view.root);
-
-        view.root.addEventListener('click', () => {
-            selectCardView(view);
-            centerCell(view.cell);
-        });
-
         moveViewToCell(view, cell);
 
         return view;
@@ -290,18 +292,20 @@ async function loaded() {
             moveViewToCell(bView, a);
     }
 
-    document.querySelector('#editor-panel').addEventListener('click', event => {
-        event.stopPropagation();
-    })
+    async function spawnCardView(card, cell) {
+        const view = addCardView(card, cell);
+        moveViewToCell(view, view.cell, 0);
+        await sleep(10);
+        moveViewToCell(view, view.cell, 1);
+        return view;
+    }
 
     const screen = document.querySelector('#screen');
     setElementDragoverDropEffect(screen, 'copy');
     addListeners(screen, {
         'click': event => {
             killEvent(event);
-    
-            const rect = scene.getBoundingClientRect();
-            const clickPixel = [event.clientX - rect.x, event.clientY - rect.y];
+            const clickPixel = eventToElementPixel(event, scene);
             const clickCell = grid.pixelToCell(clickPixel);
             centerCell(clickCell);
             deselect();
@@ -339,10 +343,8 @@ async function loaded() {
                 }
     
                 if (content) {
-                    const view = addCardView({text: content, type: 'black'}, dropCell);
-                    moveViewToCell(view, view.cell, 0);
-                    await sleep(10);
-                    moveViewToCell(view, view.cell, 1);
+                    const card = { text: content, type: 'black' };
+                    const view = await spawnCardView(card, dropCell);
                     selectCardView(view);
                 }
             }

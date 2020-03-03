@@ -28,15 +28,6 @@
     --blue-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkSLmZxjBHfRYDFDDCGJgCUJUYKgD+BgYFL5bp8wAAAABJRU5ErkJggg==);
     --black-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkYGBIY2BgmMUABYwwBjYBsEoMFQBSHgIFwNTCZwAAAABJRU5ErkJggg==);
 
-    --stipple-color: var(--red);
-    --stipple-gap: 4px;
-    --stipple-background-size: calc(var(--stipple-gap) * 2) calc(var(--stipple-gap) * 2);
-
-    --stipple-gradient: radial-gradient(var(--stipple-color) 15%, transparent 16%);
-    --stipple-background:
-        var(--stipple-gradient) 0 0,
-        var(--stipple-gradient) var(--stipple-gap) var(--stipple-gap);
-
     --card-width: 15rem;
     --card-height: calc(var(--card-width) * .6);
 }
@@ -144,16 +135,6 @@ hr {
     background-color: var(--light);
 
     overflow: auto;
-}
-
-#project-menu {
-    margin-top: 1em;
-    display: grid;
-    column-gap: 1em;
-}
-
-#project-menu > button {
-    grid-row: 1;
 }
 
 #editor-panel {
@@ -305,11 +286,13 @@ function killEvent(event) {
     event.preventDefault();
 }
 
-function getDocumentCenter() {
-    return [
-        document.documentElement.clientWidth / 2, 
-        document.documentElement.clientHeight / 2,
-    ];
+function eventToElementPixel(event, element) {
+    const rect = element.getBoundingClientRect();
+    return [event.clientX - rect.x, event.clientY - rect.y];
+}
+
+function getElementCenter(element) {
+    return [element.clientWidth / 2, element.clientHeight / 2];
 }
 
 function setElementDragoverDropEffect(query, effect) {
@@ -411,10 +394,6 @@ async function playableHTMLBlob(json)
     return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
-let setCardType;
-let centerCell;
-let deselect;
-
 function setupClassHooks() {
     document.querySelectorAll('.block-clicks').forEach(element => {
         element.addEventListener('click', event => event.stopPropagation());
@@ -430,7 +409,8 @@ function setupClassHooks() {
     });
 }
 
-let makeEditable, clearBoard;
+
+let setCardType, deselect, makeEditable, clearBoard;
 let editable = false;
 let grid, scene, selectedCard;
 
@@ -445,9 +425,30 @@ function computeCardSize(parent) {
     return size;
 }
 
+function centerCell(coords) {
+    const [cx, cy] = getElementCenter(document.documentElement);
+    const [nx, ny] = grid.cellToPixel(coords);
+    setPan(cx - nx , cy - ny);
+    location.hash = `${coords[0]},${coords[1]}`;
+}
+
 const setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
 
-function getProjectData() {
+async function htmlFileToData(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+            const html = document.createElement('html');
+            html.innerHTML = reader.result;
+            const json = html.querySelector('#data').innerHTML;
+            resolve(JSON.parse(json));
+        };
+        reader.readAsText(file); 
+    });
+}
+
+function projectToData() {
     const cardData = {};
     const viewData = [];
     const cardToId = new Map();
@@ -473,6 +474,15 @@ function getProjectData() {
     };
 }
 
+async function exportProject() {
+    const json = JSON.stringify(projectToData());
+    document.querySelector('#data').innerHTML = json;
+
+    const name = "test";
+    const blob = await playableHTMLBlob(json);
+    saveAs(blob, `domino-${name}.html`);
+}
+
 async function loaded() {
     setupClassHooks();
 
@@ -489,21 +499,14 @@ async function loaded() {
     const editorPanel = document.querySelector('#editor-panel');
     setElementDragoverDropEffect(editorPanel, 'none');
     addListener(editorPanel, 'drop', killEvent);
-    
-    addListener(editCard, 'click', () => editorPanel.hidden = false);
-    addListener('#center', 'click', () => centerCell([0, 0]));
-    addListener('#open-about', 'click', () => aboutScreen.hidden = false);
-    addListener('#enable-edit', 'click', () => setEditable(true));
-    addListener('#reset', 'click', () => clearBoard());
-    addListener('#import', 'click', () => importFile.click());
-    addListener('#export', 'click', async () => {
-        const json = JSON.stringify(getProjectData());
-        document.querySelector('#data').innerHTML = json;
 
-        const name = "test";
-        const blob = await playableHTMLBlob(json);
-        saveAs(blob, `domino-${name}.html`);
-    });
+    addListener(editCard,       'click', () => editorPanel.hidden = false);
+    addListener('#center',      'click', () => centerCell([0, 0]));
+    addListener('#open-about',  'click', () => aboutScreen.hidden = false);
+    addListener('#enable-edit', 'click', () => setEditable(true));
+    addListener('#reset',       'click', () => clearBoard());
+    addListener('#import',      'click', () => importFile.click());
+    addListener('#export',      'click', () => exportProject());
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
@@ -515,15 +518,8 @@ async function loaded() {
     }
 
     const importFile = document.querySelector('#import-file');
-    importFile.addEventListener('change', () => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const html = document.createElement('html');
-            html.innerHTML = reader.result;
-            const json = html.querySelector('#data').innerHTML;
-            loadData(JSON.parse(json));
-        };
-        reader.readAsText(importFile.files[0]);
+    addListener(importFile, 'change', async event => {
+        loadData(await htmlFileToData(event.target.files[0]));
     });
 
     const addCard = document.querySelector('#add-delete-icon');
@@ -543,7 +539,6 @@ async function loaded() {
     });
 
     const contentInput = document.querySelector('#content-input');
-    let selectedCard = undefined;
 
     contentInput.addEventListener('input', () => {
         if (!selectedCard) return;
@@ -587,25 +582,21 @@ async function loaded() {
         cellToView.store.forEach(view => view.refresh());
     }
 
-    centerCell = function(coords) {
-        const [cx, cy] = getDocumentCenter();
-        const [nx, ny] = grid.cellToPixel(coords);
-        setPan(cx - nx , cy - ny);
-        location.hash = `${coords[0]},${coords[1]}`;
-    }
-
     function addCardView(card, cell) {
         const view = new CardView(cell, card);
 
+        view.root.addEventListener('click', () => {
+            selectCardView(view);
+            centerCell(view.cell);
+        });
         view.root.addEventListener('dragstart', event => {
             event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
             event.dataTransfer.setData('text/plain', view.card.text);
             event.dataTransfer.setData('card/move', '');
 
-            const [x, y] = [view.root.clientWidth / 2, view.root.clientHeight / 2];
+            const [x, y] = getElementCenter(view.root);
             event.dataTransfer.setDragImage(view.root, x, y);
         });
-
         view.root.addEventListener('dragover', event => {
             killEvent(event);
             const newCard = event.dataTransfer.types.includes('card/new');
@@ -622,12 +613,6 @@ async function loaded() {
         });
 
         scene.appendChild(view.root);
-
-        view.root.addEventListener('click', () => {
-            selectCardView(view);
-            centerCell(view.cell);
-        });
-
         moveViewToCell(view, cell);
 
         return view;
@@ -656,18 +641,20 @@ async function loaded() {
             moveViewToCell(bView, a);
     }
 
-    document.querySelector('#editor-panel').addEventListener('click', event => {
-        event.stopPropagation();
-    })
+    async function spawnCardView(card, cell) {
+        const view = addCardView(card, cell);
+        moveViewToCell(view, view.cell, 0);
+        await sleep(10);
+        moveViewToCell(view, view.cell, 1);
+        return view;
+    }
 
     const screen = document.querySelector('#screen');
     setElementDragoverDropEffect(screen, 'copy');
     addListeners(screen, {
         'click': event => {
             killEvent(event);
-    
-            const rect = scene.getBoundingClientRect();
-            const clickPixel = [event.clientX - rect.x, event.clientY - rect.y];
+            const clickPixel = eventToElementPixel(event, scene);
             const clickCell = grid.pixelToCell(clickPixel);
             centerCell(clickCell);
             deselect();
@@ -705,10 +692,8 @@ async function loaded() {
                 }
     
                 if (content) {
-                    const view = addCardView({text: content, type: 'black'}, dropCell);
-                    moveViewToCell(view, view.cell, 0);
-                    await sleep(10);
-                    moveViewToCell(view, view.cell, 1);
+                    const card = { text: content, type: 'black' };
+                    const view = await spawnCardView(card, dropCell);
                     selectCardView(view);
                 }
             }
@@ -820,7 +805,7 @@ class HexGrid {
     <div class="icon-bar" id="cardbar" hidden>
       <button id="edit-card" title="edit this card">📝</button>
     </div>
-    <div id="editor-panel" hidden>
+    <div class="block-clicks" id="editor-panel" hidden>
       <button onclick="document.querySelector('#editor-panel').hidden = true;" style="float: right">close</button>
       <h3>edit card</h3>
       <div id="type-select">
@@ -858,6 +843,7 @@ Reed's writing jams.</p>
 <ul>
 <li>Em Reed—<a href="https://itch.io/jam/manifesto-jam">Manifesto Jam</a>, <a href="https://itch.io/jam/speculation-jam">Speculation Jam</a></li>
 <li>Max—<a href="https://github.com/synth-ruiner/image-to-bitsy">image to bitsy</a></li>
+<li>sg—<a href="https://zenzoa.itch.io/mosi">môsi</a></li>
 <li>Kris De Decker—<a href="https://solar.lowtechmagazine.com/">LOW←TECH MAGAZINE</a></li>
 <li>Chris Klimas—<a href="https://twinery.org/">Twine</a></li>
 </ul>

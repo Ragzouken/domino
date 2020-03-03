@@ -32,7 +32,7 @@ html
             button#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
         #cardbar.icon-bar(hidden)
             button#edit-card(title="edit this card") 📝
-        #editor-panel(hidden)
+        #editor-panel.block-clicks(hidden)
             button(onclick!="document.querySelector('#editor-panel').hidden = true;", style="float: right") close
             h3 edit card
             #type-select

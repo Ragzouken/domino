@@ -11,11 +11,13 @@ function killEvent(event) {
     event.preventDefault();
 }
 
-function getDocumentCenter() {
-    return [
-        document.documentElement.clientWidth / 2, 
-        document.documentElement.clientHeight / 2,
-    ];
+function eventToElementPixel(event, element) {
+    const rect = element.getBoundingClientRect();
+    return [event.clientX - rect.x, event.clientY - rect.y];
+}
+
+function getElementCenter(element) {
+    return [element.clientWidth / 2, element.clientHeight / 2];
 }
 
 function setElementDragoverDropEffect(query, effect) {

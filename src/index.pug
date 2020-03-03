@@ -1,6 +1,5 @@
 - var date = (new Date()).toLocaleDateString();
 - var font = 'https://fonts.googleapis.com/css?family=Lora&display=swap'
-- var data = '{"cards": {"0": {"text": "hello", "type": "red"}}, "views": [{"card": "0", "cell": [0, 0]}]}'
 - var types = ['black', 'red', 'green', 'blue']
 
 doctype html
@@ -9,7 +8,8 @@ html
         meta(charset='utf-8')
         meta(name='viewport', content='width=device-width, initial-scale=1')
         title domino
-        script#data(type='text/json') !{data}
+        script#data(type='text/json')
+            include default-board.json
         link(href!=font, rel='stylesheet')
         style
             include style.css
@@ -28,11 +28,9 @@ html
             button(onclick='document.querySelector("#about-screen").hidden = false;', title='information about this tool') ❔
             button#center(title='jump to center') 🧭
             button#add-delete-icon(draggable='true', title='drag a new card from here or a drop an unwanted card') 🗃️
-            button#import(title='import a domino project') 📂
-            button#export(title='export as html') 📦
-            input#import-file(type='file', accept='.html', hidden)
+            button#menu(title='open project menu', onclick='document.querySelector("#menu-screen").hidden = false;') ⚙️
         #cardbar.icon-bar(hidden)
-            button#edit(title='edit selected card', onclick='document.querySelector("#editor-panel").hidden = false;') 📝
+            button#edit(title='edit this card', onclick='document.querySelector("#editor-panel").hidden = false;') 📝
         #editor-panel(hidden)
             button(onclick='document.querySelector("#editor-panel").hidden = true;', style='float: right') close
             h3 edit card
@@ -40,9 +38,17 @@ html
                 each type_ in types
                     div(onclick=`setCardType('${type_}')`, class='type-button ' + type_)
             textarea#content-input
-        #about-screen(onclick='document.querySelector("#about-screen").hidden = true;', hidden)
-            #about-panel
-                button(onclick='document.querySelector("#about-screen").hidden = true;') exit window
+        #menu-screen.screen.click-to-hide(hidden)
+            .full-panel.block-clicks
+                button.close-parent-screen exit window
+                button#enable-edit(title='enable editing', onclick='makeEditable()') 📝 enable editing
+                button#import(title='import a domino project') 📂 import from html
+                button#export(title='export as html') 📦 export to html
+                button#reset(title='remove all cards', onclick='clearBoard()') ❌ remove all cards
+                input#import-file(type='file', accept='.html', hidden)
+        #about-screen.screen.click-to-hide(hidden)
+            .full-panel.block-clicks
+                button.close-parent-screen exit window
                 #version
                     | version—
                     include version.txt

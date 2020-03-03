@@ -46,7 +46,29 @@ let setCardType;
 let centerCell;
 let deselect;
 
+function setupClassHooks() {
+    document.querySelectorAll('.block-clicks').forEach(element => {
+        element.addEventListener('click', event => event.stopPropagation());
+    });
+
+    document.querySelectorAll('.click-to-hide').forEach(element => {
+        element.addEventListener('click', () => element.hidden = true);
+    })
+
+    document.querySelectorAll('.close-parent-screen').forEach(element => {
+        const screen = element.closest('.screen');
+        element.addEventListener('click', () => screen.hidden = true);
+    });
+}
+
+let makeEditable;
+let editable = false;
+
+let clearBoard;
+
 async function loaded() {
+    setupClassHooks();
+
     const scene = document.querySelector('#scene');
 
     const testCard = document.createElement('div');
@@ -84,8 +106,9 @@ async function loaded() {
         });
 
         const json = JSON.stringify({
-           cards: cardData,
-           views: viewData, 
+            editable: false,
+            cards: cardData,
+            views: viewData, 
         });
 
         document.querySelector('#data').innerHTML = json;
@@ -136,6 +159,10 @@ async function loaded() {
         event.preventDefault();
         event.stopPropagation();
     });
+
+    clearBoard = function() {
+        loadData({editable: true, cards:[], views:[]});
+    }
 
     for (let addCard of document.querySelectorAll('#add-delete-icon')) {
         addCard.addEventListener('dragstart', event => {
@@ -189,18 +216,15 @@ async function loaded() {
         });
     }
 
-    const cardbar = document.querySelector('#cardbar');
+    const cardbar = document.querySelector('#cardbar').cloneNode(true);
 
     function selectCardView(view) {
         selectedCard = view ? view.card : undefined;
-        cardbar.hidden = view === undefined;
+        cardbar.hidden = (view === undefined) || !editable;
 
         if (view) {
             contentInput.value = view.card.text;
             view.root.appendChild(cardbar);
-            console.log(cardbar.parentElement.parentElement);
-        } else {
-            //document.documentElement.appendChild(cardbar);
         }
 
         refreshTypeSelect();
@@ -311,6 +335,7 @@ async function loaded() {
         const clickPixel = [event.clientX - rect.x, event.clientY - rect.y];
         const clickCell = grid.pixelToCell(clickPixel);
         centerCell(clickCell);
+        deselect();
     });
 
     screen.addEventListener('drop', async event => {
@@ -354,10 +379,15 @@ async function loaded() {
             }
         }
     });
+    
+    makeEditable = function() {
+        editable = true;
+    };
 
     function loadDataFromEmbed() {
         const json = document.querySelector('#data').innerText;
         const data = JSON.parse(json);
+        if (data.editable) makeEditable();
         loadData(data);
     }
 

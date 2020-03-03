@@ -798,16 +798,16 @@ class HexGrid {
     <div class="no-select" id="screen"></div>
     <main id="scene"></main>
     <div class="icon-bar" id="toolbar">
-      <button onclick="document.querySelector(&quot;#about-screen&quot;).hidden = false;" title="information about this tool">❔</button>
+      <button onclick="document.querySelector('#about-screen').hidden = false;" title="information about this tool">❔</button>
       <button id="center" title="jump to center">🧭</button>
       <button id="add-delete-icon" draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</button>
-      <button id="menu" title="open project menu" onclick="document.querySelector(&quot;#menu-screen&quot;).hidden = false;">⚙️</button>
+      <button id="menu" title="open project menu" onclick="document.querySelector('#menu-screen').hidden = false;">⚙️</button>
     </div>
     <div class="icon-bar" id="cardbar" hidden>
-      <button id="edit" title="edit this card" onclick="document.querySelector(&quot;#editor-panel&quot;).hidden = false;">📝</button>
+      <button id="edit" title="edit this card" onclick="document.querySelector('#editor-panel').hidden = false;">📝</button>
     </div>
     <div id="editor-panel" hidden>
-      <button onclick="document.querySelector(&quot;#editor-panel&quot;).hidden = true;" style="float: right">close</button>
+      <button onclick="document.querySelector('#editor-panel').hidden = true;" style="float: right">close</button>
       <h3>edit card</h3>
       <div id="type-select">
         <div class="type-button black" onclick="setCardType('black')"></div>

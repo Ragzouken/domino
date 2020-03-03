@@ -244,6 +244,7 @@ async function loaded() {
         const [cx, cy] = [document.documentElement.clientWidth / 2, document.documentElement.clientHeight / 2];
         const [nx, ny] = grid.cellToPixel(coords);
         setPan(cx - nx , cy - ny);
+        location.hash = `${coords[0]},${coords[1]}`;
     }
 
     function addCardView(card, cell) {
@@ -406,7 +407,19 @@ async function loaded() {
     selectCardView(undefined);
 
     scene.classList.add('skiptransition');
-    centerCell([0, 0]);
+    
+    function locationFromHash() {
+        let coords = [0, 0];
+
+        try {
+            coords = location.hash.slice(1).split(',').map(i => parseInt(i));
+        } catch(e) {}
+
+        centerCell(coords);
+    }
+
+    locationFromHash();
+
     await sleep(10);
     scene.classList.remove('skiptransition');
 }

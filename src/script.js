@@ -158,6 +158,17 @@ async function loaded() {
     addListener('#reset',       'click', () => clearBoard());
     addListener('#import',      'click', () => importFile.click());
     addListener('#export',      'click', () => exportProject());
+    addListener('#fullscreen',  'click', () => toggleFullscreen());
+
+    document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
+
+    function toggleFullscreen() {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            document.documentElement.requestFullscreen();
+        }
+    }
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;

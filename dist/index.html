@@ -495,6 +495,17 @@ async function loaded() {
     addListener('#reset',       'click', () => clearBoard());
     addListener('#import',      'click', () => importFile.click());
     addListener('#export',      'click', () => exportProject());
+    addListener('#fullscreen',  'click', () => toggleFullscreen());
+
+    document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
+
+    function toggleFullscreen() {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            document.documentElement.requestFullscreen();
+        }
+    }
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
@@ -789,6 +800,7 @@ class HexGrid {
       <button id="open-about" title="information about this tool">❔</button>
       <button id="center" title="jump to center">🧭</button>
       <button id="add-delete-icon" hidden draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</button>
+      <button id="fullscreen" title="toggle fullscreen">💢</button>
     </div>
     <div class="icon-bar" id="cardbar" hidden>
       <button id="edit-card" title="edit this card">📝</button>

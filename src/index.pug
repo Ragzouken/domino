@@ -27,8 +27,7 @@ html
         #toolbar.icon-bar
             button(onclick!="document.querySelector('#about-screen').hidden = false;", title="information about this tool") ❔
             button#center(title="jump to center") 🧭
-            button#add-delete-icon(draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
-            button#menu(title="open project menu", onclick!="document.querySelector('#menu-screen').hidden = false;") ⚙️
+            button#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
         #cardbar.icon-bar(hidden)
             button#edit(title="edit this card", onclick!="document.querySelector('#editor-panel').hidden = false;") 📝
         #editor-panel(hidden)
@@ -38,14 +37,6 @@ html
                 each type_ in types
                     div(onclick!=`setCardType('${type_}')`, class="type-button " + type_)
             textarea#content-input
-        #menu-screen.screen.click-to-hide(hidden)
-            .full-panel.block-clicks
-                button.close-parent-screen exit window
-                button#enable-edit(title="enable editing", onclick!="makeEditable()") 📝 enable editing
-                button#import(title="import a domino project") 📂 import from html
-                button#export(title="export as html") 📦 export to html
-                button#reset(title="remove all cards", onclick!="clearBoard()") ❌ remove all cards
-                input#import-file(type="file", accept=".html", hidden)
         #about-screen.screen.click-to-hide(hidden)
             .full-panel.block-clicks
                 button.close-parent-screen exit window
@@ -53,4 +44,10 @@ html
                     | version—
                     include version.txt
                     |  (#{date})
+                #project-menu
+                    button#enable-edit(title="enable editing", onclick!="makeEditable()") 📝 enable editing
+                    button#import(title="import a domino project") 📂 import from html
+                    button#export(title="export as html") 📦 export to html
+                    button#reset(title="remove all cards", onclick!="clearBoard()") ❌ remove all cards
+                input#import-file(type="file", accept=".html", hidden)
                 include:markdown-it(html) about.md

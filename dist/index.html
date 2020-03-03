@@ -146,6 +146,16 @@ hr {
     overflow: auto;
 }
 
+#project-menu {
+    margin-top: 1em;
+    display: grid;
+    column-gap: 1em;
+}
+
+#project-menu > button {
+    grid-row: 1;
+}
+
 #editor-panel {
     width: calc(var(--card-width));
     position: absolute;
@@ -454,29 +464,28 @@ async function loaded() {
         loadData({editable: true, cards:[], views:[]});
     }
 
-    for (let addCard of document.querySelectorAll('#add-delete-icon')) {
-        addCard.addEventListener('dragstart', event => {
-            event.dataTransfer.setData('card/new', '');
-        });
+    const addCard = document.querySelector('#add-delete-icon');
+    addCard.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('card/new', '');
+    });
 
-        addCard.addEventListener('dragover', event => {
-            event.preventDefault();
-            event.stopPropagation();
+    addCard.addEventListener('dragover', event => {
+        event.preventDefault();
+        event.stopPropagation();
 
-            event.dataTransfer.dropEffect = 'move';
-        });
+        event.dataTransfer.dropEffect = 'move';
+    });
 
-        addCard.addEventListener('drop', event => {
-            event.preventDefault();
-            event.stopPropagation();
+    addCard.addEventListener('drop', event => {
+        event.preventDefault();
+        event.stopPropagation();
 
-            if (event.dataTransfer.types.includes('card/move')) {
-                const originJson = event.dataTransfer.getData('card-origin-cell');
-                const view = cellToView.get(JSON.parse(originJson));
-                removeCardView(view);
-            }
-        });
-    }
+        if (event.dataTransfer.types.includes('card/move')) {
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const view = cellToView.get(JSON.parse(originJson));
+            removeCardView(view);
+        }
+    });
 
     const contentInput = document.querySelector('#content-input');
     let selectedCard = undefined;
@@ -672,6 +681,8 @@ async function loaded() {
     
     makeEditable = function() {
         editable = true;
+        document.querySelector('#enable-edit').disabled = true;
+        addCard.hidden = false;
     };
 
     function loadDataFromEmbed() {
@@ -800,8 +811,7 @@ class HexGrid {
     <div class="icon-bar" id="toolbar">
       <button onclick="document.querySelector('#about-screen').hidden = false;" title="information about this tool">❔</button>
       <button id="center" title="jump to center">🧭</button>
-      <button id="add-delete-icon" draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</button>
-      <button id="menu" title="open project menu" onclick="document.querySelector('#menu-screen').hidden = false;">⚙️</button>
+      <button id="add-delete-icon" hidden draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</button>
     </div>
     <div class="icon-bar" id="cardbar" hidden>
       <button id="edit" title="edit this card" onclick="document.querySelector('#editor-panel').hidden = false;">📝</button>
@@ -817,21 +827,18 @@ class HexGrid {
       </div>
       <textarea id="content-input"></textarea>
     </div>
-    <div class="screen click-to-hide" id="menu-screen" hidden>
-      <div class="full-panel block-clicks">
-        <button class="close-parent-screen">exit window</button>
-        <button id="enable-edit" title="enable editing" onclick="makeEditable()">📝 enable editing</button>
-        <button id="import" title="import a domino project">📂 import from html</button>
-        <button id="export" title="export as html">📦 export to html</button>
-        <button id="reset" title="remove all cards" onclick="clearBoard()">❌ remove all cards</button>
-        <input id="import-file" type="file" accept=".html" hidden>
-      </div>
-    </div>
     <div class="screen click-to-hide" id="about-screen" hidden>
       <div class="full-panel block-clicks">
         <button class="close-parent-screen">exit window</button>
         <div id="version">
-          version—alpha (2020-3-3)</div><h1>domino</h1>
+          version—alpha (2020-3-3)</div>
+        <div id="project-menu">
+          <button id="enable-edit" title="enable editing" onclick="makeEditable()">📝 enable editing</button>
+          <button id="import" title="import a domino project">📂 import from html</button>
+          <button id="export" title="export as html">📦 export to html</button>
+          <button id="reset" title="remove all cards" onclick="clearBoard()">❌ remove all cards</button>
+        </div>
+        <input id="import-file" type="file" accept=".html" hidden><h1>domino</h1>
 <h2>about</h2>
 <p>domino is a tool for collaging fragmented thoughts into a larger idea.
 it's essentially a tool for making a particular kind of mindmap and sharing it

@@ -164,29 +164,28 @@ async function loaded() {
         loadData({editable: true, cards:[], views:[]});
     }
 
-    for (let addCard of document.querySelectorAll('#add-delete-icon')) {
-        addCard.addEventListener('dragstart', event => {
-            event.dataTransfer.setData('card/new', '');
-        });
+    const addCard = document.querySelector('#add-delete-icon');
+    addCard.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('card/new', '');
+    });
 
-        addCard.addEventListener('dragover', event => {
-            event.preventDefault();
-            event.stopPropagation();
+    addCard.addEventListener('dragover', event => {
+        event.preventDefault();
+        event.stopPropagation();
 
-            event.dataTransfer.dropEffect = 'move';
-        });
+        event.dataTransfer.dropEffect = 'move';
+    });
 
-        addCard.addEventListener('drop', event => {
-            event.preventDefault();
-            event.stopPropagation();
+    addCard.addEventListener('drop', event => {
+        event.preventDefault();
+        event.stopPropagation();
 
-            if (event.dataTransfer.types.includes('card/move')) {
-                const originJson = event.dataTransfer.getData('card-origin-cell');
-                const view = cellToView.get(JSON.parse(originJson));
-                removeCardView(view);
-            }
-        });
-    }
+        if (event.dataTransfer.types.includes('card/move')) {
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const view = cellToView.get(JSON.parse(originJson));
+            removeCardView(view);
+        }
+    });
 
     const contentInput = document.querySelector('#content-input');
     let selectedCard = undefined;
@@ -382,6 +381,8 @@ async function loaded() {
     
     makeEditable = function() {
         editable = true;
+        document.querySelector('#enable-edit').disabled = true;
+        addCard.hidden = false;
     };
 
     function loadDataFromEmbed() {

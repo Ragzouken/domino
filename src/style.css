@@ -128,6 +128,16 @@ hr {
     overflow: auto;
 }
 
+#project-menu {
+    margin-top: 1em;
+    display: grid;
+    column-gap: 1em;
+}
+
+#project-menu > button {
+    grid-row: 1;
+}
+
 #editor-panel {
     width: calc(var(--card-width));
     position: absolute;

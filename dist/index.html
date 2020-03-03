@@ -712,7 +712,7 @@ async function loaded() {
         let coords = [0, 0];
 
         try {
-            coords = location.hash.slice(1).split(',').map(i => parseInt(i));
+            coords = location.hash.slice(1).split(',').map(i => parseInt(i) || 0);
         } catch(e) {}
 
         centerCell(coords);

@@ -7,7 +7,7 @@
     <script id="data" type="text/json">{
     "editable": true, 
     "cards": {
-        "0": {"text": "hello", "type": "red"}
+        "0": {"text": "<center><h2>domino</h2></center>a tool for collaging thoughts", "type": "black"}
     }, 
     "views": [
         {"card": "0", "cell": [0, 0]}
@@ -577,6 +577,7 @@ class Domino {
         this.deselect();
         this.scene.innerHTML = "";
         this.cellToView.store.clear();
+        this.centerCell([0, 0]);
     }
 
     setData(data) {

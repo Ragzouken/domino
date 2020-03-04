@@ -158,6 +158,7 @@ class Domino {
         this.deselect();
         this.scene.innerHTML = "";
         this.cellToView.store.clear();
+        this.centerCell([0, 0]);
     }
 
     setData(data) {

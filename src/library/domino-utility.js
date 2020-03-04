@@ -31,14 +31,15 @@ function queryToElement(query) {
     return (query instanceof Element) ? query : document.querySelector(query);
 }
 
-function addListener(query, type, listener) {
-    queryToElement(query).addEventListener(type, listener);
+function cloneTemplateElement(query) {
+    const template = queryToElement(query);
+    const clone = template.cloneNode(true);
+    clone.removeAttribute('id');
+    return clone;
 }
 
-function addListeners(query, listeners) {
-    const element = queryToElement(query);
-    Object.keys(listeners)
-        .forEach(type => element.addEventListener(type, listeners[type]));
+function addListener(query, type, listener) {
+    queryToElement(query).addEventListener(type, listener);
 }
 
 function coordsAreEqual(a, b) {
@@ -63,4 +64,43 @@ class CoordStore {
     set(coords, value) { return this.store.set(coordsToKey(coords), value); }
     delete(coords) { return this.store.delete(coordsToKey(coords)); }
     has(coords) { return this.store.has(coordsToKey(coords)); }
+}
+
+// based on https://www.redblobgames.com/grids/hexagons/
+class HexGrid {
+    constructor(cellSize) {
+        this.cellSize = cellSize;
+    }
+
+    cellToPixel(cellCoords) {
+        const [q, r] = cellCoords;
+        const [w, h] = this.cellSize;
+
+        const x = q * w;
+        const y = (r + q / 2) * h;
+        return [x, y];
+    }
+
+    pixelToCell(pixelCoords) {
+        const [x, y] = pixelCoords;
+        const [w, h] = this.cellSize;
+        // pixel to axial coordinates
+        const q = x / w;
+        const r = y / h - q / 2;
+        // convert axial to cube coordinates
+        const [cx, cy, cz] = [q, r, -q-r];
+        // determine rounding error
+        let [rx, ry, rz] = [cx, cy, cz].map(Math.round);
+        const [dx, dy, dz] = [rx - cx, ry - cy, rz - cz].map(Math.abs);
+        // recompute worst coordinate from others
+        if (dx > dy && dx > dz) {
+            rx = -ry-rz
+        } else if (dy > dz) {
+            ry = -rx-rz
+        } else {
+            rz = -rx-ry
+        }
+        // return axial components
+        return [rx, ry];
+    }
 }

@@ -23,6 +23,16 @@ html
             include script.js
 
     body(onload="loaded()")
+        #templates(hidden)
+            #card-template.card(draggable="true")
+                .card-text
+                .icon-bar
+            #cardbar-template.icon-bar(hidden)
+                button#edit-card(title="edit this card") 📝
+                button 🔗
+                button 🌍
+                button 📖
+                button H
         #screen.no-select
         main#scene
         #toolbar.icon-bar
@@ -30,8 +40,6 @@ html
             button#center(title="jump to center") 🧭
             button#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
             button#fullscreen(title="toggle fullscreen") 💢
-        #cardbar.icon-bar(hidden)
-            button#edit-card(title="edit this card") 📝
         #editor-panel.block-clicks(hidden)
             button(onclick!="document.querySelector('#editor-panel').hidden = true;", style="float: right") close
             h3 edit card

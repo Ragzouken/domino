@@ -1,10 +1,5 @@
 'use strict';
 
-const cube_directions = [
-    [+1, -1, 0], [+1, 0, -1], [0, +1, -1], 
-    [-1, +1, 0], [-1, 0, +1], [0, -1, +1], 
-];
-
 const colors = ['black', 'red', 'green', 'blue'];
 
 class CardView {
@@ -12,19 +7,17 @@ class CardView {
         this.cell = cell;
         this.card = card;
 
-        this.root = document.createElement('div');
-        this.root.classList.add('card');
-        this.root.draggable = true;
-
-        this.text = document.createElement('div');
-        this.root.appendChild(this.text);
-
+        this.root = cloneTemplateElement('#card-template');
+        this.text = this.root.querySelector('.card-text');
+        this.icons = this.root.querySelector('.icon-bar');
+        
         this.refresh();
     }
 
     setPosition(x, y, scale=1) {
-        const transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%)) scale(${scale}, ${scale})`;
-        this.root.style.transform = transform;
+        const position = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
+        const scaling = `scale(${scale}, ${scale})`;
+        this.root.style.transform = `${position} ${scaling}`;
     }
 
     refresh() {
@@ -60,7 +53,7 @@ function setupClassHooks() {
     });
 }
 
-let deselect, makeEditable, clearBoard;
+let makeEditable, selectCardView;
 let editable = false;
 let grid, scene, selectedCard;
 
@@ -164,7 +157,123 @@ function toggleFullscreen() {
     }
 }
 
+function moveViewToCell(view, cell, scale=1) {
+    view.cell = cell;
+    console.assert(!cellToView.has(cell) || cellToView.get(cell) === view);
+    cellToView.set(cell, view);
+
+    const [x, y] = grid.cellToPixel(cell);
+    view.setPosition(x, y, scale);
+}
+
+function swapViewCells(a, b) {
+    if (coordsAreEqual(a, b))
+        return;
+    
+    const aView = cellToView.get(a);
+    const bView = cellToView.get(b);
+
+    cellToView.delete(a);
+    cellToView.delete(b);
+
+    if (aView)
+        moveViewToCell(aView, b);
+    if (bView)
+        moveViewToCell(bView, a);
+}
+
+function addCardViewListeners(view) {
+    view.root.addEventListener('click', () => {
+        selectCardView(view);
+        centerCell(view.cell);
+    });
+    view.root.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
+        event.dataTransfer.setData('text/plain', view.card.text);
+        event.dataTransfer.setData('card/move', '');
+
+        const [x, y] = getElementCenter(view.root);
+        event.dataTransfer.setDragImage(view.root, x, y);
+    });
+    view.root.addEventListener('dragover', event => {
+        killEvent(event);
+        const newCard = event.dataTransfer.types.includes('card/new');
+        event.dataTransfer.dropEffect = newCard ? 'none' : 'move'; 
+    });
+    view.root.addEventListener('drop', event => {
+        killEvent(event);
+        if (!event.dataTransfer.types.includes('card/move'))
+            return;
+
+        const originJson = event.dataTransfer.getData('card-origin-cell');
+        const cell = JSON.parse(originJson);
+        swapViewCells(cell, view.cell);
+    });
+}
+
+function hashToCoords() {
+    try {
+        const coords = location.hash.slice(1).split(',').map(i => parseInt(i) || 0);
+        if (coords.length === 2) return coords;
+    } catch(e) {}
+
+    return [0, 0];
+}
+
+async function centerCellNoTransition(coords) {
+    scene.classList.add('skiptransition');
+    centerCell(coords);
+    await sleep(10);
+    scene.classList.remove('skiptransition');
+}
+
+function addCardView(card, cell) {
+    const view = new CardView(cell, card);
+
+    addCardViewListeners(view);
+    scene.appendChild(view.root);
+    moveViewToCell(view, cell);
+
+    return view;
+}
+
+function removeCardView(view) {
+    scene.removeChild(view.root);
+    cellToView.delete(view.cell);
+    if (selectedCard === view.card)
+        deselect();
+}
+
+async function spawnCardView(card, cell) {
+    const view = addCardView(card, cell);
+    moveViewToCell(view, view.cell, 0);
+    await sleep(10);
+    moveViewToCell(view, view.cell, 1);
+    return view;
+}
+
+function loadData(data) {
+    scene.innerHTML = "";
+    cellToView.store.clear();
+
+    for (let view of data.views) {
+        addCardView(data.cards[view.card], view.cell);
+    }
+    updateAllViewContent();
+}
+
+const jumpFromHash = () => centerCell(hashToCoords());
 const updateAllViewContent = () => cellToView.store.forEach(view => view.refresh());
+const clearBoard = () => loadData({editable: true, cards:[], views:[]});
+const deselect = () => selectCardView(undefined);
+
+const dropContentTransformers = [
+    ['card/new',      c => 'new card'],
+    ['text/html',     c => c],
+    ['text/uri-list', c => c.split('\n').filter(uri => !uri.startsWith('#')).map(uri => `<a href="${uri}">link</a>`)],
+    ['text/plain',    c => c],
+    ['text',          c => c],
+];
 
 async function loaded() {
     setupClassHooks();
@@ -173,11 +282,13 @@ async function loaded() {
     const [cw, ch] = computeCardSize(scene);
     grid = new HexGrid([cw + 32, ch + 32]);
 
-    clearBoard = () => loadData({editable: true, cards:[], views:[]});
-    deselect = () => selectCardView(undefined);
-
-    const cardbar = document.querySelector('#cardbar').cloneNode(true);
+    const cardbar = cloneTemplateElement('#cardbar-template');
+    cardbar.id = 'cardbar'
     const editCard = cardbar.querySelector('#edit-card');
+
+    const contentInput = document.querySelector('#content-input');
+    const importFile = document.querySelector('#import-file');
+    const screen = document.querySelector('#screen');
 
     const aboutScreen = document.querySelector('#about-screen');
     const editorPanel = document.querySelector('#editor-panel');
@@ -185,7 +296,7 @@ async function loaded() {
     addListener(editorPanel, 'drop', killEvent);
 
     addListener(editCard,       'click', () => editorPanel.hidden = false);
-    addListener('#center',      'click', () => centerCell([0, 0]));
+    addListener('#center',      'click', () => location.hash = '0,0');
     addListener('#open-about',  'click', () => aboutScreen.hidden = false);
     addListener('#enable-edit', 'click', () => setEditable(true));
     addListener('#reset',       'click', () => clearBoard());
@@ -195,16 +306,9 @@ async function loaded() {
 
     document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
 
-    function moveViewToCell(view, cell, scale=1) {
-        view.cell = cell;
-        console.assert(!cellToView.has(cell) || cellToView.get(cell) === view);
-        cellToView.set(cell, view);
+    window.addEventListener('hashchange', jumpFromHash);
+    window.addEventListener('resize', jumpFromHash);
 
-        const [x, y] = grid.cellToPixel(cell);
-        view.setPosition(x, y, scale);
-    }
-
-    const importFile = document.querySelector('#import-file');
     addListener(importFile, 'change', async event => {
         loadData(await htmlFileToData(event.target.files[0]));
     });
@@ -225,8 +329,6 @@ async function loaded() {
         }
     });
 
-    const contentInput = document.querySelector('#content-input');
-
     contentInput.addEventListener('input', () => {
         if (!selectedCard) return;
 
@@ -234,7 +336,7 @@ async function loaded() {
         updateAllViewContent();
     });
 
-    function selectCardView(view) {
+    selectCardView = function(view) {
         selectedCard = view ? view.card : undefined;
         cardbar.hidden = (view === undefined) || !editable;
 
@@ -247,125 +349,46 @@ async function loaded() {
         updateAllViewContent();
     }
 
-    function addCardViewListeners(view) {
-        view.root.addEventListener('click', () => {
-            selectCardView(view);
-            centerCell(view.cell);
-        });
-        view.root.addEventListener('dragstart', event => {
-            event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
-            event.dataTransfer.setData('text/plain', view.card.text);
-            event.dataTransfer.setData('card/move', '');
-
-            const [x, y] = getElementCenter(view.root);
-            event.dataTransfer.setDragImage(view.root, x, y);
-        });
-        view.root.addEventListener('dragover', event => {
-            killEvent(event);
-            const newCard = event.dataTransfer.types.includes('card/new');
-            event.dataTransfer.dropEffect = newCard ? 'none' : 'move'; 
-        });
-        view.root.addEventListener('drop', event => {
-            killEvent(event);
-            if (!event.dataTransfer.types.includes('card/move'))
-                return;
-
-            const originJson = event.dataTransfer.getData('card-origin-cell');
-            const cell = JSON.parse(originJson);
-            swapViewCells(cell, view.cell);
-        });
-    }
-
-    function addCardView(card, cell) {
-        const view = new CardView(cell, card);
-
-        addCardViewListeners(view);
-        scene.appendChild(view.root);
-        moveViewToCell(view, cell);
-
-        return view;
-    }
-
-    function removeCardView(view) {
-        scene.removeChild(view.root);
-        cellToView.delete(view.cell);
-        if (selectedCard === view.card)
-            selectCardView(undefined);
-    }
-
-    function swapViewCells(a, b) {
-        if (coordsAreEqual(a, b))
-            return;
-        
-        const aView = cellToView.get(a);
-        const bView = cellToView.get(b);
-
-        cellToView.delete(a);
-        cellToView.delete(b);
-
-        if (aView)
-            moveViewToCell(aView, b);
-        if (bView)
-            moveViewToCell(bView, a);
-    }
-
-    async function spawnCardView(card, cell) {
-        const view = addCardView(card, cell);
-        moveViewToCell(view, view.cell, 0);
-        await sleep(10);
-        moveViewToCell(view, view.cell, 1);
-        return view;
-    }
-
-    const screen = document.querySelector('#screen');
     setElementDragoverDropEffect(screen, 'copy');
-    addListeners(screen, {
-        'click': event => {
-            killEvent(event);
-            const clickPixel = eventToElementPixel(event, scene);
-            const clickCell = grid.pixelToCell(clickPixel);
-            centerCell(clickCell);
-            deselect();
-        },
-        'drop': async event => {
-            killEvent(event);
+    addListener(screen, 'click', event => {
+        killEvent(event);
+        const clickPixel = eventToElementPixel(event, scene);
+        const clickCell = grid.pixelToCell(clickPixel);
+        centerCell(clickCell);
+        deselect();
+    });
+    addListener(screen, 'drop', async event => {
+        killEvent(event);
 
-            const rect = scene.getBoundingClientRect();
-            const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
-            const dropCell = grid.pixelToCell(dropPixel);
-    
-            if (event.dataTransfer.types.includes('card/move')) {
-                const originJson = event.dataTransfer.getData('card-origin-cell');
-                const originCell = JSON.parse(originJson);
-    
-                swapViewCells(originCell, dropCell);
-            } else if (!cellToView.has(dropCell)) {
-                const types = event.dataTransfer.types;
-                let content = undefined;
-    
-                if (types.includes('card/new')) {
-                    content = "new card";
-                } else if (types.includes('text/html')) {
-                    content = event.dataTransfer.getData('text/html');
-                } else if (types.includes('text/uri-list')) {
-                    content = event.dataTransfer
-                        .getData('text/uri-list')
-                        .split('\n')
-                        .filter(uri => !uri.startsWith('#'))
-                        .map(uri => `<a href="${uri}">link</a>`);
-                } else if (types.includes('text/plain')) {
-                    content = event.dataTransfer.getData('text/plain');
-                } else if (types.includes('text')) {
-                    content = event.dataTransfer.getData('text');
-                }
-    
-                if (content) {
-                    const card = { text: content, type: 'black' };
-                    const view = await spawnCardView(card, dropCell);
-                    selectCardView(view);
+        const rect = scene.getBoundingClientRect();
+        const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
+        const dropCell = grid.pixelToCell(dropPixel);
+        
+        const amMovingCard = event.dataTransfer.types.includes('card/move');
+        const cellIsEmpty = !cellToView.has(dropCell);
+
+        if (amMovingCard) {
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const originCell = JSON.parse(originJson);
+
+            swapViewCells(originCell, dropCell);
+        } else if (cellIsEmpty) {
+            let content = undefined;
+
+            for (let [field, transformer] of dropContentTransformers) {
+                if (event.dataTransfer.types.includes(field)) {
+                    const data = event.dataTransfer.getData(field);
+                    content = transformer(data);
+                    break;
                 }
             }
-        },
+
+            if (content) {
+                const card = { text: content, type: 'black' };
+                const view = await spawnCardView(card, dropCell);
+                selectCardView(view);
+            }
+        }
     });
 
     function setEditable(state) {
@@ -379,72 +402,8 @@ async function loaded() {
         setEditable(data.editable);
         loadData(data);
     }
-
-    function loadData(data) {
-        scene.innerHTML = "";
-        cellToView.store.clear();
-
-        for (let view of data.views) {
-            addCardView(data.cards[view.card], view.cell);
-        }
-        updateAllViewContent();
-    }
     
     loadDataFromEmbed();
     selectCardView(undefined);
-
-    function locationFromHash() {
-        let coords = [0, 0];
-
-        try {
-            let fragment = location.hash.slice(1).split(',').map(i => parseInt(i) || 0);
-            if (fragment.length === 2) coords = fragment;
-        } catch(e) {}
-
-        centerCell(coords);
-    }
-
-    scene.classList.add('skiptransition');
-    locationFromHash();
-    await sleep(10);
-    scene.classList.remove('skiptransition');
-}
-
-// based on https://www.redblobgames.com/grids/hexagons/
-class HexGrid {
-    constructor(cellSize) {
-        this.cellSize = cellSize;
-    }
-
-    cellToPixel(cellCoords) {
-        const [q, r] = cellCoords;
-        const [w, h] = this.cellSize;
-
-        const x = q * w;
-        const y = (r + q / 2) * h;
-        return [x, y];
-    }
-
-    pixelToCell(pixelCoords) {
-        const [x, y] = pixelCoords;
-        const [w, h] = this.cellSize;
-        // pixel to axial coordinates
-        const q = x / w;
-        const r = y / h - q / 2;
-        // convert axial to cube coordinates
-        const [cx, cy, cz] = [q, r, -q-r];
-        // determine rounding error
-        let [rx, ry, rz] = [cx, cy, cz].map(Math.round);
-        const [dx, dy, dz] = [rx - cx, ry - cy, rz - cz].map(Math.abs);
-        // recompute worst coordinate from others
-        if (dx > dy && dx > dz) {
-            rx = -ry-rz
-        } else if (dy > dz) {
-            ry = -rx-rz
-        } else {
-            rz = -rx-ry
-        }
-        // return axial components
-        return [rx, ry];
-    }
+    centerCellNoTransition(hashToCoords());
 }

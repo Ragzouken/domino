@@ -213,15 +213,34 @@ main {
 }
 
 .icon-bar > button {
-    width: 3rem;
-    height: 3rem;
+    width: 2em;
+    height: 2em;
     grid-row: 1;
+
+    padding: 0;
+    text-align: center;
 }
 
 #cardbar {
+    font-size: 1rem;
+
     left: 50%;
     transform: translate(-50%, 50%);
     bottom: 0;
+}
+
+#cardbar > button {
+    border: none;
+    background: none;
+    text-shadow: 
+    0 0 3px var(--light), 
+    0 0 3px var(--light), 
+    0 0 3px var(--light), 
+    0 0 3px var(--light),
+    0 0 3px var(--light), 
+    0 0 3px var(--light), 
+    0 0 3px var(--light), 
+    0 0 3px var(--light);
 }
 
 #toolbar {

@@ -66,17 +66,6 @@ function addListener(query, type, listener) {
     queryToElement(query).addEventListener(type, listener);
 }
 
-function coordsAreEqual(a, b) {
-    if (a.length !== b.length) 
-        return false;
-
-    for (let i = 0; i < a.length; ++i)
-        if (a[i] !== b[1])
-            return false;
-    
-    return true;
-}
-
 function coordsToKey(coords) {
     return coords.join(',');
 }

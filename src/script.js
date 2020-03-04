@@ -142,9 +142,6 @@ class Domino {
     }
 
     swapCells(a, b) {
-        if (coordsAreEqual(a, b))
-            return;
-        
         const aView = this.cellToView.get(a);
         const bView = this.cellToView.get(b);
     

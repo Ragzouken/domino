@@ -643,20 +643,23 @@ class Domino {
         this.cardbar = cloneTemplateElement('#cardbar-template');
         this.cardbar.id = 'cardbar';
         const editCard = this.cardbar.querySelector('#edit-card');
-
         const importFile = document.querySelector('#import-file');
         const screen = document.querySelector('#screen');
         this.addDeleteCardIcon = document.querySelector('#add-delete-icon');
         this.enableEdit = document.querySelector('#enable-edit')
-
         this.aboutScreen = document.querySelector('#about-screen');
-
         this.editorPanel = document.querySelector('#editor-panel');
         this.contentInput = this.editorPanel.querySelector('#content-input');
 
-        addListener(this.editorPanel, 'drop', killEvent);
-        setElementDragoverDropEffect(this.editorPanel, 'none');
+        // card editor listener
+        this.contentInput.addEventListener('input', () => {
+            if (!this.selectedCard) return;
+            this.selectedCard.text = this.contentInput.value;
+            this.refreshAllCardViews();
+        });
 
+        // clicking listeners
+        addListener(screen,         'click', () => onClickedEmptyCell());
         addListener(editCard,       'click', () => this.editorPanel.hidden = false);
         addListener('#center',      'click', () => location.hash = '0,0');
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
@@ -666,44 +669,43 @@ class Domino {
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
 
-        const jumpFromHash = () => this.centerCell(getCoordsFromHash());
-        window.addEventListener('hashchange', jumpFromHash);
-        window.addEventListener('resize', jumpFromHash);
-
+        // file select listener
         addListener(importFile, 'change', async event => {
             this.setData(await extractDataFromHtmlFile(event.target.files[0]));
         });
 
-        this.contentInput.addEventListener('input', () => {
-            if (!this.selectedCard) return;
-            this.selectedCard.text = this.contentInput.value;
-            this.refreshAllCardViews();
-        });
-
-        addListener(this.addDeleteCardIcon, 'dragstart', event => {
-            event.dataTransfer.setData('card/new', '');
-        });
-    
-        setElementDragoverDropEffect(this.addDeleteCardIcon, 'move');
-    
-        addListener(this.addDeleteCardIcon, 'drop', event => {
-            killEvent(event);
-            if (event.dataTransfer.types.includes('card/move')) {
-                const originJson = event.dataTransfer.getData('card-origin-cell');
-                const view = this.cellToView.get(JSON.parse(originJson));
-                this.removeCardView(view);
-            }
-        });
-
+        // dragging and dropping listeners
         setElementDragoverDropEffect(screen, 'copy');
-        addListener(screen, 'click', event => {
+        setElementDragoverDropEffect(this.editorPanel, 'none');
+        setElementDragoverDropEffect(this.addDeleteCardIcon, 'move');
+
+        addListener(this.addDeleteCardIcon, 'dragstart', onDragFromNewCard);
+
+        addListener(this.editorPanel,       'drop', killEvent);
+        addListener(this.addDeleteCardIcon, 'drop', onDroppedOnDelete);
+        addListener(screen,                 'drop', onDroppedOnEmptyCell);
+
+        function onDragFromNewCard(event) {
+            event.dataTransfer.setData('card/new', '');
+        }
+
+        function onDroppedOnDelete(event) {
             killEvent(event);
+            if (!event.dataTransfer.types.includes('card/move')) return;
+            const originJson = event.dataTransfer.getData('card-origin-cell');
+            const view = this.cellToView.get(JSON.parse(originJson));
+            this.removeCardView(view);
+        }
+
+        function onClickedEmptyCell(event) {
+            killEvent(event);
+            this.deselect();
             const clickPixel = eventToElementPixel(event, this.scene);
             const clickCell = this.grid.pixelToCell(clickPixel);
             this.centerCell(clickCell);
-            this.deselect();
-        });
-        addListener(screen, 'drop', async event => {
+        }
+
+        function onDroppedOnEmptyCell(event) {
             killEvent(event);
             const dropPixel = eventToElementPixel(event, this.scene);
             const dropCell = this.grid.pixelToCell(dropPixel);
@@ -729,11 +731,11 @@ class Domino {
     
                 if (content) {
                     const card = { text: content, type: 'black' };
-                    const view = await this.spawnCardView(card, dropCell);
+                    const view = this.spawnCardView(card, dropCell);
                     this.selectCardView(view);
                 }
             }
-        });
+        }
     }
 
     setEditable(editable) {
@@ -803,6 +805,11 @@ async function loaded() {
 
     domino.setup();
 
+    // center the currently selected cell
+    const jumpFromHash = () => domino.centerCell(getCoordsFromHash());
+    window.addEventListener('hashchange', jumpFromHash);
+    window.addEventListener('resize', jumpFromHash);
+    
     // load data from embeded #data script tag
     const data = getElementJsonData('#data');
     domino.setEditable(data.editable);

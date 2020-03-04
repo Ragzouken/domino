@@ -280,7 +280,28 @@ main {
 }
 
     </style>
-    <script>function sleep(ms) {
+    <script>const makeCounter = (count=0) => () => count++;
+const remToPx = em => emToPx(document.documentElement, em);
+const emToPx = (element, em) => Math.round(em * parseFloat(getComputedStyle(element).fontSize));
+
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        return document.exitFullscreen();
+    } else {
+        return document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    }
+}
+
+async function textFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => resolve(reader.result);
+        reader.readAsText(file); 
+    });
+}
+
+async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -396,35 +417,10 @@ var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof na
     </script>
     <script>'use strict';
 
+const cardSpacing = [remToPx(2), remToPx(2)];
 const colors = ['black', 'red', 'green', 'blue'];
 
-class CardView {
-    constructor(cell, card) {
-        this.cell = cell;
-        this.card = card;
-
-        this.root = cloneTemplateElement('#card-template');
-        this.text = this.root.querySelector('.card-text');
-        this.icons = this.root.querySelector('.icon-bar');
-        
-        this.refresh();
-    }
-
-    setPosition(x, y, scale=1) {
-        const position = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
-        const scaling = `scale(${scale}, ${scale})`;
-        this.root.style.transform = `${position} ${scaling}`;
-    }
-
-    refresh() {
-        this.root.classList.remove(...colors);
-        this.root.classList.add(this.card.type);
-        this.text.innerHTML = this.card.text;
-    }
-}
-
-async function playableHTMLBlob(json)
-{
+async function playableHTMLBlob(json) {
     const doc = document.documentElement.cloneNode(true);
     const data = doc.querySelector("#data");
     data.innerHTML = `\n${json}\n`;
@@ -449,95 +445,42 @@ function setupClassHooks() {
     });
 }
 
-let makeEditable, selectCardView;
-let editable = false;
-let grid, scene, selectedCard;
-
-const cellToView = new CoordStore();
-
 function setCardType(type) {
-    if (!selectedCard) return;
+    if (!domino.selectedCard) return;
 
-    selectedCard.type = type;
+    domino.selectedCard.type = type;
     refreshTypeSelect();
     updateAllViewContent();
 }
 
 function refreshTypeSelect() {
-    if (!selectedCard) return;
+    if (!domino.selectedCard) return;
 
     document.querySelectorAll('.type-button').forEach(button => {
         button.classList.remove('selected');
-        if (button.classList.contains(selectedCard.type))
+        if (button.classList.contains(domino.selectedCard.type))
             button.classList.add('selected');
     });
 }
 
 function computeCardSize(parent) {
-    const testCard = document.createElement('div');
-    testCard.classList.add('card');
+    const testCard = cloneTemplateElement('#card-template');
     parent.appendChild(testCard);
     const size = [testCard.clientWidth, testCard.clientHeight];
     parent.removeChild(testCard);
     return size;
 }
 
-function centerCell(coords) {
-    const [cx, cy] = getElementCenter(document.documentElement);
-    const [nx, ny] = grid.cellToPixel(coords);
-    setPan(cx - nx , cy - ny);
-    location.hash = `${coords[0]},${coords[1]}`;
-}
+const extractDataFromDocument = document => JSON.parse(document.querySelector('#data').innerHTML);
 
-const setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
-
-function projectDataFromDocument(document) {
-    const json = document.querySelector('#data').innerHTML;
-    return JSON.parse(json);
-}
-
-async function htmlFileToData(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = reject;
-        reader.onload = () => {
-            const html = document.createElement('html');
-            html.innerHTML = reader.result;
-            const data = projectDataFromDocument(html);
-            resolve(data);
-        };
-        reader.readAsText(file); 
-    });
-}
-
-function projectToData() {
-    const cardData = {};
-    const viewData = [];
-    const cardToId = new Map();
-
-    let nextId = 0;
-    const generateID = () => (nextId++).toString();
-
-    function getCardId(card) {
-        let id = cardToId.get(card) || generateID();
-        cardToId.set(card, id);
-        cardData[id] = card;
-        return id;
-    }
-    
-    cellToView.store.forEach((view) => {
-        viewData.push({ cell: view.cell, card: getCardId(view.card) });
-    });
-
-    return {
-        editable: false,
-        cards: cardData,
-        views: viewData, 
-    };
+async function extractDataFromHtmlFile(file) {
+    const html = document.createElement('html');
+    html.innerHTML = await textFromFile(file);
+    return extractDataFromDocument(html);
 }
 
 async function exportProject() {
-    const json = JSON.stringify(projectToData());
+    const json = JSON.stringify(domino.getData());
     document.querySelector('#data').innerHTML = json;
 
     const name = "test";
@@ -545,43 +488,10 @@ async function exportProject() {
     saveAs(blob, `domino-${name}.html`);
 }
 
-function toggleFullscreen() {
-    if (document.fullscreenElement) {
-        return document.exitFullscreen();
-    } else {
-        return document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-    }
-}
-
-function moveViewToCell(view, cell, scale=1) {
-    view.cell = cell;
-    console.assert(!cellToView.has(cell) || cellToView.get(cell) === view);
-    cellToView.set(cell, view);
-
-    const [x, y] = grid.cellToPixel(cell);
-    view.setPosition(x, y, scale);
-}
-
-function swapViewCells(a, b) {
-    if (coordsAreEqual(a, b))
-        return;
-    
-    const aView = cellToView.get(a);
-    const bView = cellToView.get(b);
-
-    cellToView.delete(a);
-    cellToView.delete(b);
-
-    if (aView)
-        moveViewToCell(aView, b);
-    if (bView)
-        moveViewToCell(bView, a);
-}
-
-function addCardViewListeners(view) {
+function addCardViewListeners(domino, view) {
     view.root.addEventListener('click', () => {
-        selectCardView(view);
-        centerCell(view.cell);
+        domino.selectCardView(view);
+        domino.centerCell(view.cell);
     });
     view.root.addEventListener('dragstart', event => {
         event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
@@ -603,11 +513,11 @@ function addCardViewListeners(view) {
 
         const originJson = event.dataTransfer.getData('card-origin-cell');
         const cell = JSON.parse(originJson);
-        swapViewCells(cell, view.cell);
+        domino.swapCells(cell, view.cell);
     });
 }
 
-function hashToCoords() {
+function getCoordsFromHash() {
     try {
         const coords = location.hash.slice(1).split(',').map(i => parseInt(i) || 0);
         if (coords.length === 2) return coords;
@@ -617,51 +527,21 @@ function hashToCoords() {
 }
 
 async function centerCellNoTransition(coords) {
-    scene.classList.add('skiptransition');
-    centerCell(coords);
+    domino.scene.classList.add('skiptransition');
+    domino.centerCell(coords);
     await sleep(10);
-    scene.classList.remove('skiptransition');
+    domino.scene.classList.remove('skiptransition');
 }
 
-function addCardView(card, cell) {
-    const view = new CardView(cell, card);
-
-    addCardViewListeners(view);
-    scene.appendChild(view.root);
-    moveViewToCell(view, cell);
-
-    return view;
+function loadDataFromEmbed() {
+    const data = extractDataFromDocument(document);
+    domino.setEditable(data.editable);
+    domino.setData(data);
 }
 
-function removeCardView(view) {
-    scene.removeChild(view.root);
-    cellToView.delete(view.cell);
-    if (selectedCard === view.card)
-        deselect();
-}
-
-async function spawnCardView(card, cell) {
-    const view = addCardView(card, cell);
-    moveViewToCell(view, view.cell, 0);
-    await sleep(10);
-    moveViewToCell(view, view.cell, 1);
-    return view;
-}
-
-function loadData(data) {
-    scene.innerHTML = "";
-    cellToView.store.clear();
-
-    for (let view of data.views) {
-        addCardView(data.cards[view.card], view.cell);
-    }
-    updateAllViewContent();
-}
-
-const jumpFromHash = () => centerCell(hashToCoords());
-const updateAllViewContent = () => cellToView.store.forEach(view => view.refresh());
-const clearBoard = () => loadData({editable: true, cards:[], views:[]});
-const deselect = () => selectCardView(undefined);
+const updateAllViewContent = () => domino.cellToView.store.forEach(view => view.refresh());
+const clearBoard = () => domino.setData({editable: true, cards:[], views:[]});
+const deselect = () => domino.selectCardView(undefined);
 
 const dropContentTransformers = [
     ['card/new',      c => 'new card'],
@@ -671,137 +551,275 @@ const dropContentTransformers = [
     ['text',          c => c],
 ];
 
-async function loaded() {
-    setupClassHooks();
+class Domino {
+    constructor() {
+        this.cellToView = new CoordStore();
+        this.selectedCard = undefined;
+    }
 
-    scene = document.querySelector('#scene');
-    const [cw, ch] = computeCardSize(scene);
-    grid = new HexGrid([cw + 32, ch + 32]);
+    centerCell(coords) {
+        const [cx, cy] = getElementCenter(document.documentElement);
+        const [nx, ny] = this.grid.cellToPixel(coords);
+        const [x, y] = [cx - nx, cy - ny];
+        this.scene.style.transform = `translate(${x}px, ${y}px)`;
+        location.hash = coordsToKey(coords);
+    }
 
-    const cardbar = cloneTemplateElement('#cardbar-template');
-    cardbar.id = 'cardbar'
-    const editCard = cardbar.querySelector('#edit-card');
+    async spawnCardView(card, cell) {
+        const view = this.createCardView(card, cell);
+        view.scale = 0;
+        await sleep(10);
+        view.scale = 1;
+        return view;
+    }
 
-    const contentInput = document.querySelector('#content-input');
-    const importFile = document.querySelector('#import-file');
-    const screen = document.querySelector('#screen');
+    createCardView(card, cell) {
+        const view = new CardView(cell, card);
+    
+        addCardViewListeners(this, view);
+        this.scene.appendChild(view.root);
+        this.moveCardViewToCell(view, cell);
+    
+        return view;
+    }
 
-    const aboutScreen = document.querySelector('#about-screen');
-    const editorPanel = document.querySelector('#editor-panel');
-    setElementDragoverDropEffect(editorPanel, 'none');
-    addListener(editorPanel, 'drop', killEvent);
+    removeCardView(view) {
+        this.scene.removeChild(view.root);
+        this.cellToView.delete(view.cell);
+        if (this.selectedCard === view.card)
+            deselect();
+    }
 
-    addListener(editCard,       'click', () => editorPanel.hidden = false);
-    addListener('#center',      'click', () => location.hash = '0,0');
-    addListener('#open-about',  'click', () => aboutScreen.hidden = false);
-    addListener('#enable-edit', 'click', () => setEditable(true));
-    addListener('#reset',       'click', () => clearBoard());
-    addListener('#import',      'click', () => importFile.click());
-    addListener('#export',      'click', () => exportProject());
-    addListener('#fullscreen',  'click', () => toggleFullscreen());
+    moveCardViewToCell(view, cell) {
+        view.cell = cell;
+        view.position = this.grid.cellToPixel(cell);
+        this.cellToView.set(cell, view);
+    }
 
-    document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
+    swapCells(a, b) {
+        if (coordsAreEqual(a, b))
+            return;
+        
+        const aView = this.cellToView.get(a);
+        const bView = this.cellToView.get(b);
+    
+        this.cellToView.delete(a);
+        this.cellToView.delete(b);
+    
+        if (aView)
+            this.moveCardViewToCell(aView, b);
+        if (bView)
+            this.moveCardViewToCell(bView, a);
+    }
 
-    window.addEventListener('hashchange', jumpFromHash);
-    window.addEventListener('resize', jumpFromHash);
-
-    addListener(importFile, 'change', async event => {
-        loadData(await htmlFileToData(event.target.files[0]));
-    });
-
-    const addCard = document.querySelector('#add-delete-icon');
-    addListener(addCard, 'dragstart', event => {
-        event.dataTransfer.setData('card/new', '');
-    });
-
-    setElementDragoverDropEffect(addCard, 'move');
-
-    addListener(addCard, 'drop', event => {
-        killEvent(event);
-        if (event.dataTransfer.types.includes('card/move')) {
-            const originJson = event.dataTransfer.getData('card-origin-cell');
-            const view = cellToView.get(JSON.parse(originJson));
-            removeCardView(view);
+    setData(data) {
+        this.scene.innerHTML = "";
+        this.cellToView.store.clear();
+    
+        for (let view of data.views) {
+            this.createCardView(data.cards[view.card], view.cell);
         }
-    });
 
-    contentInput.addEventListener('input', () => {
-        if (!selectedCard) return;
-
-        selectedCard.text = contentInput.value;
         updateAllViewContent();
-    });
+    }
 
-    selectCardView = function(view) {
-        selectedCard = view ? view.card : undefined;
-        cardbar.hidden = (view === undefined) || !editable;
+    getData() {
+        const cardData = {};
+        const viewData = [];
+        const cardToId = new Map();
+        const generateID = makeCounter();
+    
+        function getCardId(card) {
+            let id = cardToId.get(card) || generateID();
+            cardToId.set(card, id);
+            cardData[id] = card;
+            return id;
+        }
+        
+        this.cellToView.store.forEach((view) => {
+            viewData.push({ cell: view.cell, card: getCardId(view.card) });
+        });
+    
+        return {
+            editable: false,
+            cards: cardData,
+            views: viewData, 
+        };
+    }
+
+    start() {
+        this.scene = document.querySelector('#scene');
+        const [cw, ch] = computeCardSize(this.scene);
+        const [sw, sh] = cardSpacing;
+        this.grid = new HexGrid([cw + sw, ch + sh]);
+
+        // hide fullscreen button if fullscreen is not possible
+        document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
+
+        this.cardbar = cloneTemplateElement('#cardbar-template');
+        this.cardbar.id = 'cardbar';
+        const editCard = this.cardbar.querySelector('#edit-card');
+
+        const importFile = document.querySelector('#import-file');
+        const screen = document.querySelector('#screen');
+        this.addDeleteCardIcon = document.querySelector('#add-delete-icon');
+        this.enableEdit = document.querySelector('#enable-edit')
+
+        this.aboutScreen = document.querySelector('#about-screen');
+
+        this.editorPanel = document.querySelector('#editor-panel');
+        this.contentInput = this.editorPanel.querySelector('#content-input');
+
+        addListener(this.editorPanel, 'drop', killEvent);
+        setElementDragoverDropEffect(this.editorPanel, 'none');
+
+        addListener(editCard,       'click', () => this.editorPanel.hidden = false);
+        addListener('#center',      'click', () => location.hash = '0,0');
+        addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
+        addListener('#enable-edit', 'click', () => this.setEditable(true));
+        addListener('#reset',       'click', () => clearBoard());
+        addListener('#import',      'click', () => importFile.click());
+        addListener('#export',      'click', () => exportProject());
+        addListener('#fullscreen',  'click', () => toggleFullscreen());
+
+        const jumpFromHash = () => this.centerCell(getCoordsFromHash());
+        window.addEventListener('hashchange', jumpFromHash);
+        window.addEventListener('resize', jumpFromHash);
+
+        addListener(importFile, 'change', async event => {
+            this.setData(await extractDataFromHtmlFile(event.target.files[0]));
+        });
+
+        this.contentInput.addEventListener('input', () => {
+            if (!this.selectedCard) return;
+            this.selectedCard.text = this.contentInput.value;
+            updateAllViewContent();
+        });
+
+        addListener(this.addDeleteCardIcon, 'dragstart', event => {
+            event.dataTransfer.setData('card/new', '');
+        });
+    
+        setElementDragoverDropEffect(this.addDeleteCardIcon, 'move');
+    
+        addListener(this.addDeleteCardIcon, 'drop', event => {
+            killEvent(event);
+            if (event.dataTransfer.types.includes('card/move')) {
+                const originJson = event.dataTransfer.getData('card-origin-cell');
+                const view = this.cellToView.get(JSON.parse(originJson));
+                this.removeCardView(view);
+            }
+        });
+
+        setElementDragoverDropEffect(screen, 'copy');
+        addListener(screen, 'click', event => {
+            killEvent(event);
+            const clickPixel = eventToElementPixel(event, this.scene);
+            const clickCell = this.grid.pixelToCell(clickPixel);
+            this.centerCell(clickCell);
+            deselect();
+        });
+        addListener(screen, 'drop', async event => {
+            killEvent(event);
+            const dropPixel = eventToElementPixel(event, this.scene);
+            const dropCell = this.grid.pixelToCell(dropPixel);
+            
+            const amMovingCard = event.dataTransfer.types.includes('card/move');
+            const cellIsEmpty = !this.cellToView.has(dropCell);
+    
+            if (amMovingCard) {
+                const originJson = event.dataTransfer.getData('card-origin-cell');
+                const originCell = JSON.parse(originJson);
+    
+                this.swapCells(originCell, dropCell);
+            } else if (cellIsEmpty) {
+                let content = undefined;
+    
+                for (let [field, transformer] of dropContentTransformers) {
+                    if (event.dataTransfer.types.includes(field)) {
+                        const data = event.dataTransfer.getData(field);
+                        content = transformer(data);
+                        break;
+                    }
+                }
+    
+                if (content) {
+                    const card = { text: content, type: 'black' };
+                    const view = await this.spawnCardView(card, dropCell);
+                    this.selectCardView(view);
+                }
+            }
+        });
+    }
+
+    setEditable(editable) {
+        this.editable = editable;
+        this.enableEdit.disabled = editable;
+        this.addDeleteCardIcon.hidden = !editable;
+    }
+    
+    selectCardView(view) {
+        this.selectedCard = view ? view.card : undefined;
+        this.cardbar.hidden = (view === undefined) || !this.editable;
 
         if (view) {
-            contentInput.value = view.card.text;
-            view.root.appendChild(cardbar);
+            this.contentInput.value = view.card.text;
+            view.root.appendChild(this.cardbar);
         }
 
         refreshTypeSelect();
         updateAllViewContent();
     }
+}
 
-    setElementDragoverDropEffect(screen, 'copy');
-    addListener(screen, 'click', event => {
-        killEvent(event);
-        const clickPixel = eventToElementPixel(event, scene);
-        const clickCell = grid.pixelToCell(clickPixel);
-        centerCell(clickCell);
-        deselect();
-    });
-    addListener(screen, 'drop', async event => {
-        killEvent(event);
+class CardView {
+    constructor(cell, card) {
+        this._position = [0, 0];
+        this._scale = 1;
+        this.cell = cell;
+        this.card = card;
 
-        const rect = scene.getBoundingClientRect();
-        const dropPixel = [event.clientX - rect.x, event.clientY - rect.y];
-        const dropCell = grid.pixelToCell(dropPixel);
+        this.root = cloneTemplateElement('#card-template');
+        this.text = this.root.querySelector('.card-text');
+        this.icons = this.root.querySelector('.icon-bar');
         
-        const amMovingCard = event.dataTransfer.types.includes('card/move');
-        const cellIsEmpty = !cellToView.has(dropCell);
-
-        if (amMovingCard) {
-            const originJson = event.dataTransfer.getData('card-origin-cell');
-            const originCell = JSON.parse(originJson);
-
-            swapViewCells(originCell, dropCell);
-        } else if (cellIsEmpty) {
-            let content = undefined;
-
-            for (let [field, transformer] of dropContentTransformers) {
-                if (event.dataTransfer.types.includes(field)) {
-                    const data = event.dataTransfer.getData(field);
-                    content = transformer(data);
-                    break;
-                }
-            }
-
-            if (content) {
-                const card = { text: content, type: 'black' };
-                const view = await spawnCardView(card, dropCell);
-                selectCardView(view);
-            }
-        }
-    });
-
-    function setEditable(state) {
-        editable = state;
-        document.querySelector('#enable-edit').disabled = editable;
-        addCard.hidden = !editable;
+        this.refresh();
     }
 
-    function loadDataFromEmbed() {
-        const data = projectDataFromDocument(document);
-        setEditable(data.editable);
-        loadData(data);
+    set position(value) { 
+        this._position = value;
+        this.updateTransform();
     }
-    
+
+    set scale(value) { 
+        this._scale = value;
+        this.updateTransform();
+    }
+
+    updateTransform() {
+        const [x, y] = this._position;
+        const position = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
+        const scaling = `scale(${this._scale}, ${this._scale})`;
+        this.root.style.transform = `${position} ${scaling}`;
+    }
+
+    refresh() {
+        this.root.classList.remove(...colors);
+        this.root.classList.add(this.card.type);
+        this.text.innerHTML = this.card.text;
+    }
+}
+
+const domino = new Domino();
+
+async function loaded() {
+    setupClassHooks();
+
+    domino.start();
+
     loadDataFromEmbed();
-    selectCardView(undefined);
-    centerCellNoTransition(hashToCoords());
+    deselect();
+    centerCellNoTransition(getCoordsFromHash());
 }
 
     </script>
@@ -814,10 +832,10 @@ async function loaded() {
       </div>
       <div class="icon-bar" id="cardbar-template" hidden>
         <button id="edit-card" title="edit this card">📝</button>
-        <button>🔗</button>
-        <button>🌍</button>
-        <button>📖</button>
-        <button>H</button>
+        <!--button 🔗-->
+        <!--button 🌍-->
+        <!--button 📖-->
+        <!--button H-->
       </div>
     </div>
     <div class="no-select" id="screen"></div>

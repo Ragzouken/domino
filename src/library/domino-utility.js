@@ -1,4 +1,25 @@
-function sleep(ms) {
+const makeCounter = (count=0) => () => count++;
+const remToPx = em => emToPx(document.documentElement, em);
+const emToPx = (element, em) => Math.round(em * parseFloat(getComputedStyle(element).fontSize));
+
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        return document.exitFullscreen();
+    } else {
+        return document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    }
+}
+
+async function textFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => resolve(reader.result);
+        reader.readAsText(file); 
+    });
+}
+
+async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 

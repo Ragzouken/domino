@@ -60,12 +60,29 @@ function setupClassHooks() {
     });
 }
 
-
-let setCardType, deselect, makeEditable, clearBoard;
+let deselect, makeEditable, clearBoard;
 let editable = false;
 let grid, scene, selectedCard;
 
 const cellToView = new CoordStore();
+
+function setCardType(type) {
+    if (!selectedCard) return;
+
+    selectedCard.type = type;
+    refreshTypeSelect();
+    updateAllViewContent();
+}
+
+function refreshTypeSelect() {
+    if (!selectedCard) return;
+
+    document.querySelectorAll('.type-button').forEach(button => {
+        button.classList.remove('selected');
+        if (button.classList.contains(selectedCard.type))
+            button.classList.add('selected');
+    });
+}
 
 function computeCardSize(parent) {
     const testCard = document.createElement('div');
@@ -85,6 +102,11 @@ function centerCell(coords) {
 
 const setPan = (x, y) => scene.style.transform = `translate(${x}px, ${y}px)`;
 
+function projectDataFromDocument(document) {
+    const json = document.querySelector('#data').innerHTML;
+    return JSON.parse(json);
+}
+
 async function htmlFileToData(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -92,8 +114,8 @@ async function htmlFileToData(file) {
         reader.onload = () => {
             const html = document.createElement('html');
             html.innerHTML = reader.result;
-            const json = html.querySelector('#data').innerHTML;
-            resolve(JSON.parse(json));
+            const data = projectDataFromDocument(html);
+            resolve(data);
         };
         reader.readAsText(file); 
     });
@@ -134,11 +156,22 @@ async function exportProject() {
     saveAs(blob, `domino-${name}.html`);
 }
 
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        return document.exitFullscreen();
+    } else {
+        return document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    }
+}
+
+const updateAllViewContent = () => cellToView.store.forEach(view => view.refresh());
+
 async function loaded() {
     setupClassHooks();
 
     scene = document.querySelector('#scene');
-    grid = new HexGrid(computeCardSize(scene), [32, 32]);
+    const [cw, ch] = computeCardSize(scene);
+    grid = new HexGrid([cw + 32, ch + 32]);
 
     clearBoard = () => loadData({editable: true, cards:[], views:[]});
     deselect = () => selectCardView(undefined);
@@ -161,14 +194,6 @@ async function loaded() {
     addListener('#fullscreen',  'click', () => toggleFullscreen());
 
     document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
-
-    function toggleFullscreen() {
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        } else {
-            document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-        }
-    }
 
     function moveViewToCell(view, cell, scale=1) {
         view.cell = cell;
@@ -209,24 +234,6 @@ async function loaded() {
         updateAllViewContent();
     });
 
-    setCardType = function(type) {
-        if (!selectedCard) return;
-
-        selectedCard.type = type;
-        refreshTypeSelect();
-        updateAllViewContent();
-    }
-
-    function refreshTypeSelect() {
-        if (!selectedCard) return;
-
-        document.querySelectorAll('.type-button').forEach(button => {
-            button.classList.remove('selected');
-            if (button.classList.contains(selectedCard.type))
-                button.classList.add('selected');
-        });
-    }
-
     function selectCardView(view) {
         selectedCard = view ? view.card : undefined;
         cardbar.hidden = (view === undefined) || !editable;
@@ -240,13 +247,7 @@ async function loaded() {
         updateAllViewContent();
     }
 
-    function updateAllViewContent() {
-        cellToView.store.forEach(view => view.refresh());
-    }
-
-    function addCardView(card, cell) {
-        const view = new CardView(cell, card);
-
+    function addCardViewListeners(view) {
         view.root.addEventListener('click', () => {
             selectCardView(view);
             centerCell(view.cell);
@@ -273,7 +274,12 @@ async function loaded() {
             const cell = JSON.parse(originJson);
             swapViewCells(cell, view.cell);
         });
+    }
 
+    function addCardView(card, cell) {
+        const view = new CardView(cell, card);
+
+        addCardViewListeners(view);
         scene.appendChild(view.root);
         moveViewToCell(view, cell);
 
@@ -369,8 +375,7 @@ async function loaded() {
     }
 
     function loadDataFromEmbed() {
-        const json = document.querySelector('#data').innerText;
-        const data = JSON.parse(json);
+        const data = projectDataFromDocument(document);
         setEditable(data.editable);
         loadData(data);
     }
@@ -407,49 +412,39 @@ async function loaded() {
 
 // based on https://www.redblobgames.com/grids/hexagons/
 class HexGrid {
-    constructor(cellSize, cellSpacing=[0, 0]) {
+    constructor(cellSize) {
         this.cellSize = cellSize;
-        this.cellSpacing = cellSpacing;
     }
 
     cellToPixel(cellCoords) {
         const [q, r] = cellCoords;
         const [w, h] = this.cellSize;
-        const [hs, vs] = this.cellSpacing;
 
-        const x = q * (w + hs);
-        const y = q * (h + vs) * .5 + r * (h + vs);
+        const x = q * w;
+        const y = (r + q / 2) * h;
         return [x, y];
     }
 
     pixelToCell(pixelCoords) {
         const [x, y] = pixelCoords;
         const [w, h] = this.cellSize;
-        const [hs, vs] = this.cellSpacing;
-
-        const q = x / (w + hs);
-        const r = (y - (q * (h + vs) * .5)) / (h + vs);
-
-        const cx = q;
-        const cy = r;
-        const cz = 0 - cx - cy;
-
-        let rx = Math.round(cx);
-        let ry = Math.round(cy);
-        let rz = Math.round(cz);
-
-        var x_diff = Math.abs(rx - cx);
-        var y_diff = Math.abs(ry - cy);
-        var z_diff = Math.abs(rz - cz);
-
-        if (x_diff > y_diff & x_diff > z_diff) {
+        // pixel to axial coordinates
+        const q = x / w;
+        const r = y / h - q / 2;
+        // convert axial to cube coordinates
+        const [cx, cy, cz] = [q, r, -q-r];
+        // determine rounding error
+        let [rx, ry, rz] = [cx, cy, cz].map(Math.round);
+        const [dx, dy, dz] = [rx - cx, ry - cy, rz - cz].map(Math.abs);
+        // recompute worst coordinate from others
+        if (dx > dy && dx > dz) {
             rx = -ry-rz
-        } else if (y_diff > z_diff) {
+        } else if (dy > dz) {
             ry = -rx-rz
         } else {
             rz = -rx-ry
         }
-
+        // return axial components
         return [rx, ry];
     }
 }

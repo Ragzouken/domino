@@ -3,13 +3,6 @@
 const cardSpacing = [remToPx(2), remToPx(2)];
 const colors = ['black', 'red', 'green', 'blue'];
 
-async function playableHTMLBlob() {
-    const doc = document.documentElement.cloneNode(true);
-    doc.querySelector("#scene").innerHTML = "";
-    doc.querySelectorAll(".screen").forEach(screen => screen.hidden = true);
-    return new Blob([doc.outerHTML], {type: "text/html"});
-}
-
 function setupClassHooks() {
     document.querySelectorAll('.block-clicks').forEach(element => {
         element.addEventListener('click', event => event.stopPropagation());
@@ -49,18 +42,18 @@ function computeCardSize(parent) {
     return size;
 }
 
-const setElementJsonData = (element, data) => queryToElement(element).innerHTML = JSON.stringify(data);
-const getElementJsonData = (element) => JSON.parse(queryToElement(element).innerHTML);
-
 async function extractDataFromHtmlFile(file) {
     const html = document.createElement('html');
     html.innerHTML = await textFromFile(file);
     return getElementJsonData(html.querySelector('#data'));
 }
 
-async function exportProject() {
+function exportProject() {
     setElementJsonData('#data', domino.getData());
-    const blob = await playableHTMLBlob();
+    const clone = document.documentElement.cloneNode(true);
+    clone.querySelector("#scene").innerHTML = "";
+    clone.querySelectorAll(".screen").forEach(screen => screen.hidden = true);
+    const blob = new Blob([clone.outerHTML], {type: "text/html"});
     saveAs(blob, `domino-test.html`);
 }
 
@@ -124,17 +117,17 @@ class Domino {
         location.hash = coordsToKey(coords);
     }
 
-    async centerCellNoTransition(coords) {
+    centerCellNoTransition(coords) {
         this.scene.classList.add('skiptransition');
         this.centerCell(coords);
-        await sleep(10);
+        reflow(this.scene);
         this.scene.classList.remove('skiptransition');
     }
 
-    async spawnCardView(card, cell) {
+    spawnCardView(card, cell) {
         const view = this.createCardView(card, cell);
         view.scale = 0;
-        await sleep(10);
+        reflow(view.root);
         view.scale = 1;
         return view;
     }

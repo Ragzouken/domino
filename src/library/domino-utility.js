@@ -1,6 +1,9 @@
 const makeCounter = (count=0) => () => count++;
 const remToPx = em => emToPx(document.documentElement, em);
 const emToPx = (element, em) => Math.round(em * parseFloat(getComputedStyle(element).fontSize));
+const setElementJsonData = (element, data) => queryToElement(element).innerHTML = JSON.stringify(data);
+const getElementJsonData = (element) => JSON.parse(queryToElement(element).innerHTML);
+const reflow = element => void(element.offsetHeight);
 
 function toggleFullscreen() {
     if (document.fullscreenElement) {

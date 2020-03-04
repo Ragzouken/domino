@@ -3,13 +3,10 @@
 const cardSpacing = [remToPx(2), remToPx(2)];
 const colors = ['black', 'red', 'green', 'blue'];
 
-async function playableHTMLBlob(json) {
+async function playableHTMLBlob() {
     const doc = document.documentElement.cloneNode(true);
-    const data = doc.querySelector("#data");
-    data.innerHTML = `\n${json}\n`;
     doc.querySelector("#scene").innerHTML = "";
     doc.querySelectorAll(".screen").forEach(screen => screen.hidden = true);
-
     return new Blob([doc.outerHTML], {type: "text/html"});
 }
 
@@ -17,11 +14,9 @@ function setupClassHooks() {
     document.querySelectorAll('.block-clicks').forEach(element => {
         element.addEventListener('click', event => event.stopPropagation());
     });
-
     document.querySelectorAll('.click-to-hide').forEach(element => {
         element.addEventListener('click', () => element.hidden = true);
     })
-
     document.querySelectorAll('.close-parent-screen').forEach(element => {
         const screen = element.closest('.screen');
         element.addEventListener('click', () => screen.hidden = true);
@@ -33,7 +28,7 @@ function setCardType(type) {
 
     domino.selectedCard.type = type;
     refreshTypeSelect();
-    updateAllViewContent();
+    domino.refreshAllCardViews();
 }
 
 function refreshTypeSelect() {
@@ -54,21 +49,19 @@ function computeCardSize(parent) {
     return size;
 }
 
-const extractDataFromDocument = document => JSON.parse(document.querySelector('#data').innerHTML);
+const setElementJsonData = (element, data) => queryToElement(element).innerHTML = JSON.stringify(data);
+const getElementJsonData = (element) => JSON.parse(queryToElement(element).innerHTML);
 
 async function extractDataFromHtmlFile(file) {
     const html = document.createElement('html');
     html.innerHTML = await textFromFile(file);
-    return extractDataFromDocument(html);
+    return getElementJsonData(html.querySelector('#data'));
 }
 
 async function exportProject() {
-    const json = JSON.stringify(domino.getData());
-    document.querySelector('#data').innerHTML = json;
-
-    const name = "test";
-    const blob = await playableHTMLBlob(json);
-    saveAs(blob, `domino-${name}.html`);
+    setElementJsonData('#data', domino.getData());
+    const blob = await playableHTMLBlob();
+    saveAs(blob, `domino-test.html`);
 }
 
 function addCardViewListeners(domino, view) {
@@ -109,23 +102,6 @@ function getCoordsFromHash() {
     return [0, 0];
 }
 
-async function centerCellNoTransition(coords) {
-    domino.scene.classList.add('skiptransition');
-    domino.centerCell(coords);
-    await sleep(10);
-    domino.scene.classList.remove('skiptransition');
-}
-
-function loadDataFromEmbed() {
-    const data = extractDataFromDocument(document);
-    domino.setEditable(data.editable);
-    domino.setData(data);
-}
-
-const updateAllViewContent = () => domino.cellToView.store.forEach(view => view.refresh());
-const clearBoard = () => domino.setData({editable: true, cards:[], views:[]});
-const deselect = () => domino.selectCardView(undefined);
-
 const dropContentTransformers = [
     ['card/new',      c => 'new card'],
     ['text/html',     c => c],
@@ -146,6 +122,13 @@ class Domino {
         const [x, y] = [cx - nx, cy - ny];
         this.scene.style.transform = `translate(${x}px, ${y}px)`;
         location.hash = coordsToKey(coords);
+    }
+
+    async centerCellNoTransition(coords) {
+        this.scene.classList.add('skiptransition');
+        this.centerCell(coords);
+        await sleep(10);
+        this.scene.classList.remove('skiptransition');
     }
 
     async spawnCardView(card, cell) {
@@ -170,13 +153,17 @@ class Domino {
         this.scene.removeChild(view.root);
         this.cellToView.delete(view.cell);
         if (this.selectedCard === view.card)
-            deselect();
+            this.deselect();
     }
 
     moveCardViewToCell(view, cell) {
         view.cell = cell;
         view.position = this.grid.cellToPixel(cell);
         this.cellToView.set(cell, view);
+    }
+
+    refreshAllCardViews() {
+        this.cellToView.store.forEach(view => view.refresh());
     }
 
     swapCells(a, b) {
@@ -195,15 +182,16 @@ class Domino {
             this.moveCardViewToCell(bView, a);
     }
 
-    setData(data) {
+    clear() {
+        this.deselect();
         this.scene.innerHTML = "";
         this.cellToView.store.clear();
-    
-        for (let view of data.views) {
-            this.createCardView(data.cards[view.card], view.cell);
-        }
+    }
 
-        updateAllViewContent();
+    setData(data) {
+        this.clear();
+        for (let view of data.views)
+            this.createCardView(data.cards[view.card], view.cell);
     }
 
     getData() {
@@ -230,7 +218,7 @@ class Domino {
         };
     }
 
-    start() {
+    setup() {
         this.scene = document.querySelector('#scene');
         const [cw, ch] = computeCardSize(this.scene);
         const [sw, sh] = cardSpacing;
@@ -260,7 +248,7 @@ class Domino {
         addListener('#center',      'click', () => location.hash = '0,0');
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
         addListener('#enable-edit', 'click', () => this.setEditable(true));
-        addListener('#reset',       'click', () => clearBoard());
+        addListener('#reset',       'click', () => this.clear());
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
@@ -276,7 +264,7 @@ class Domino {
         this.contentInput.addEventListener('input', () => {
             if (!this.selectedCard) return;
             this.selectedCard.text = this.contentInput.value;
-            updateAllViewContent();
+            this.refreshAllCardViews();
         });
 
         addListener(this.addDeleteCardIcon, 'dragstart', event => {
@@ -300,7 +288,7 @@ class Domino {
             const clickPixel = eventToElementPixel(event, this.scene);
             const clickCell = this.grid.pixelToCell(clickPixel);
             this.centerCell(clickCell);
-            deselect();
+            this.deselect();
         });
         addListener(screen, 'drop', async event => {
             killEvent(event);
@@ -341,6 +329,8 @@ class Domino {
         this.addDeleteCardIcon.hidden = !editable;
     }
     
+    deselect() { this.selectCardView(undefined); }
+
     selectCardView(view) {
         this.selectedCard = view ? view.card : undefined;
         this.cardbar.hidden = (view === undefined) || !this.editable;
@@ -351,7 +341,7 @@ class Domino {
         }
 
         refreshTypeSelect();
-        updateAllViewContent();
+        this.refreshAllCardViews();
     }
 }
 
@@ -398,9 +388,11 @@ const domino = new Domino();
 async function loaded() {
     setupClassHooks();
 
-    domino.start();
+    domino.setup();
 
-    loadDataFromEmbed();
-    deselect();
-    centerCellNoTransition(getCoordsFromHash());
+    // load data from embeded #data script tag
+    const data = getElementJsonData('#data');
+    domino.setEditable(data.editable);
+    domino.setData(data);
+    domino.centerCellNoTransition(getCoordsFromHash());
 }

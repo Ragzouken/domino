@@ -1,5 +1,6 @@
 - var date = (new Date()).toLocaleDateString();
 - var font = "https://fonts.googleapis.com/css?family=Lora&display=swap"
+- var types = ["black", "red", "green", "blue"]
 
 doctype html
 html
@@ -20,7 +21,6 @@ html
             include library/FileSaver.min.js
         script
             include script.js
-
     body(onload="loaded()")
         #templates(hidden)
             #card-template.card(draggable="true")
@@ -42,6 +42,8 @@ html
             button(onclick!="document.querySelector('#editor-panel').hidden = true;", style="float: right") close
             h3 edit card
             #type-select
+                each type_ in types
+                    div(class="type-button " + type_)
             textarea#content-input
         #about-screen.screen.click-to-hide(hidden)
             .full-panel.block-clicks

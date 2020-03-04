@@ -88,9 +88,11 @@ const dropContentTransformers = [
 class Domino {
     constructor() {
         this.cellToView = new CoordStore();
+        this.focusedCell = [0, 0];
     }
 
     centerCell(coords) {
+        this.focusedCell = coords;
         const [cx, cy] = getElementCenter(document.documentElement);
         const [nx, ny] = this.grid.cellToPixel(coords);
         const [x, y] = [cx - nx, cy - ny];
@@ -320,11 +322,9 @@ class CardEditor {
         const typeSelect = document.querySelector('#type-select');
 
         for (let type of types) {
-            const select = document.createElement('div');
-            select.classList.add(type);
-            select.addEventListener('click', () => this.setType(type));
-            typeSelect.appendChild(select);
-            this.typeButtons[type] = select;
+            const button = typeSelect.querySelector(`.${type}`);
+            button.addEventListener('click', () => this.setType(type));
+            this.typeButtons[type] = button;
         }
 
         this.contentInput.addEventListener('input', () => {
@@ -412,8 +412,9 @@ async function loaded() {
     window.addEventListener('resize', jumpFromHash);
     
     // load data from embeded #data script tag
+    const coords = getCoordsFromHash();
     const data = getElementJsonData('#data');
     domino.setEditable(data.editable);
     domino.setData(data);
-    domino.centerCellNoTransition(getCoordsFromHash());
+    domino.centerCellNoTransition(coords);
 }

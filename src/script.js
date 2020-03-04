@@ -233,6 +233,7 @@ class Domino {
         // file select listener
         addListener(importFile, 'change', async event => {
             this.setData(await extractDataFromHtmlFile(event.target.files[0]));
+            importFile.value = null;
         });
 
         // dragging and dropping listeners

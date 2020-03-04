@@ -139,18 +139,18 @@ main {
     column-gap: .5em;
 }
 
-.type-button {
+#type-select > * {
     height: 100%;
     grid-row: 1;
     border-bottom: 1px solid black;
     cursor: pointer;
 }
 
-.type-button:hover {
+#type-select > *:hover {
     height: calc(100% + .5em);
 }
 
-.type-button.selected {
+#type-select > *.selected {
     height: calc(100% + .5em);
 }
 
@@ -221,15 +221,25 @@ main {
     text-align: center;
 }
 
-#cardbar {
+.card-icon-bar {
     font-size: 1rem;
 
     left: 50%;
     transform: translate(-50%, 50%);
     bottom: 0;
+
+    column-gap: .75em;
 }
 
-#cardbar > button {
+.card-edit-bar {
+    font-size: 1.25em;
+
+    top: 50%;
+    transform: translate(50%, -50%);
+    right: 0;
+}
+
+.card-icon-bar > button {
     border: none;
     background: none;
     text-shadow: 

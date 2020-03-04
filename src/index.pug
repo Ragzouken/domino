@@ -1,6 +1,5 @@
 - var date = (new Date()).toLocaleDateString();
 - var font = "https://fonts.googleapis.com/css?family=Lora&display=swap"
-- var types = ["black", "red", "green", "blue"]
 
 doctype html
 html
@@ -26,13 +25,12 @@ html
         #templates(hidden)
             #card-template.card(draggable="true")
                 .card-text
-                .icon-bar
-            #cardbar-template.icon-bar(hidden)
+                .card-icon-bar.icon-bar
+                    //button 🔗
+                    //button 🌍
+                    //button 📖
+            #cardbar-template.card-edit-bar.icon-bar(hidden)
                 button#edit-card(title="edit this card") 📝
-                //button 🔗
-                //button 🌍
-                //button 📖
-                //button H
         #screen.no-select
         main#scene
         #toolbar.icon-bar
@@ -44,8 +42,6 @@ html
             button(onclick!="document.querySelector('#editor-panel').hidden = true;", style="float: right") close
             h3 edit card
             #type-select
-                each type_ in types
-                    div(onclick!=`setCardType('${type_}')`, class="type-button " + type_)
             textarea#content-input
         #about-screen.screen.click-to-hide(hidden)
             .full-panel.block-clicks

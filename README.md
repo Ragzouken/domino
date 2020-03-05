@@ -21,7 +21,7 @@ whenever you make changes:
 ./serve.cmd
 ```
 
-build the standalone domino page to `dist/index.html`
+build the standalone domino page to `dist/index.html`:
 ```
 ./build.cmd
 ```

@@ -16,6 +16,11 @@ function setupClassHooks() {
     });
 }
 
+function updateDocumentVariables() {
+    const vh = window.innerHeight / 100;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
 function computeCardSize(parent) {
     const testCard = cloneTemplateElement('#card-template');
     parent.appendChild(testCard);
@@ -186,8 +191,7 @@ class Domino {
             viewData.push({ cell: view.cell, card: getCardId(view.card) });
         });
     
-        return {
-            editable: false,
+        return { 
             cards: cardData,
             views: viewData, 
         };
@@ -201,13 +205,19 @@ class Domino {
         this.grid = new HexGrid([cw + sw, ch + sh]);
 
         // hide fullscreen button if fullscreen is not possible
-        document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
+        if (!document.fullscreenEnabled)
+            document.querySelector('#fullscreen').hidden = true;
 
         this.cardbar = cloneTemplateElement('#cardbar-template');
         this.cardbar.id = 'cardbar';
         this.addDeleteCardIcon = document.querySelector('#add-delete-icon');
-        this.enableEdit = document.querySelector('#enable-edit')
         this.aboutScreen = document.querySelector('#about-screen');
+
+        this.lockedButton = document.querySelector('#locked');
+        this.unlockedButton = document.querySelector('#unlocked');
+
+        addListener(this.lockedButton,   'click', () => this.setUnlocked(true));
+        addListener(this.unlockedButton, 'click', () => this.setUnlocked(false));
 
         const cardEditButton = this.cardbar.querySelector('#edit-card');
         const importFile = document.querySelector('#import-file');
@@ -224,7 +234,6 @@ class Domino {
         addListener(cardEditButton, 'click', () => this.editorPanel.hidden = false);
         addListener('#center',      'click', () => location.hash = '0,0');
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
-        addListener('#enable-edit', 'click', () => this.setEditable(true));
         addListener('#reset',       'click', () => this.clear());
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
@@ -296,17 +305,19 @@ class Domino {
         addListener(screen,                 'drop', onDroppedOnEmptyCell);
     }
 
-    setEditable(editable) {
-        this.editable = editable;
-        this.enableEdit.disabled = editable;
-        this.addDeleteCardIcon.hidden = !editable;
+    setUnlocked(unlocked) {
+        this.unlocked = unlocked;
+        this.addDeleteCardIcon.hidden = !unlocked;
+
+        this.lockedButton.hidden = unlocked;
+        this.unlockedButton.hidden = !unlocked;
     }
     
     deselect() { this.selectCardView(undefined); }
 
     selectCardView(view) {
         this.editorPanel.setActiveView(view);
-        this.cardbar.hidden = (view === undefined) || !this.editable;
+        this.cardbar.hidden = (view === undefined) || !this.unlocked;
 
         if (view)
             view.root.appendChild(this.cardbar);
@@ -406,6 +417,9 @@ async function loaded() {
 
     domino.setup();
 
+    window.addEventListener('resize', updateDocumentVariables);
+    updateDocumentVariables();
+
     // center the currently selected cell
     const jumpFromHash = () => domino.centerCell(getCoordsFromHash());
     window.addEventListener('hashchange', jumpFromHash);
@@ -414,7 +428,6 @@ async function loaded() {
     // load data from embeded #data script tag
     const coords = getCoordsFromHash();
     const data = getElementJsonData('#data');
-    domino.setEditable(data.editable);
     domino.setData(data);
     domino.centerCellNoTransition(coords);
 }

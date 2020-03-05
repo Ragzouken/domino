@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>domino</title>
     <script id="data" type="text/json">{
-    "editable": true, 
     "cards": {
         "0": {"text": "<center><h2>domino</h2></center>a tool for collaging thoughts", "type": "black"}
     }, 
@@ -58,11 +57,16 @@
 
 html, body {
     position: absolute;
-    margin: 0;
-    width: 100vw;
-    height: 100vh;
-
     overflow: hidden;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+html {
+    width: 100vw;
+    height: calc(var(--vh, 1vh) * 100);
 }
 
 html {
@@ -435,6 +439,11 @@ function setupClassHooks() {
     });
 }
 
+function updateDocumentVariables() {
+    const vh = window.innerHeight / 100;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
 function computeCardSize(parent) {
     const testCard = cloneTemplateElement('#card-template');
     parent.appendChild(testCard);
@@ -605,8 +614,7 @@ class Domino {
             viewData.push({ cell: view.cell, card: getCardId(view.card) });
         });
     
-        return {
-            editable: false,
+        return { 
             cards: cardData,
             views: viewData, 
         };
@@ -620,13 +628,19 @@ class Domino {
         this.grid = new HexGrid([cw + sw, ch + sh]);
 
         // hide fullscreen button if fullscreen is not possible
-        document.querySelector('#fullscreen').hidden = !document.fullscreenEnabled;
+        if (!document.fullscreenEnabled)
+            document.querySelector('#fullscreen').hidden = true;
 
         this.cardbar = cloneTemplateElement('#cardbar-template');
         this.cardbar.id = 'cardbar';
         this.addDeleteCardIcon = document.querySelector('#add-delete-icon');
-        this.enableEdit = document.querySelector('#enable-edit')
         this.aboutScreen = document.querySelector('#about-screen');
+
+        this.lockedButton = document.querySelector('#locked');
+        this.unlockedButton = document.querySelector('#unlocked');
+
+        addListener(this.lockedButton,   'click', () => this.setUnlocked(true));
+        addListener(this.unlockedButton, 'click', () => this.setUnlocked(false));
 
         const cardEditButton = this.cardbar.querySelector('#edit-card');
         const importFile = document.querySelector('#import-file');
@@ -643,7 +657,6 @@ class Domino {
         addListener(cardEditButton, 'click', () => this.editorPanel.hidden = false);
         addListener('#center',      'click', () => location.hash = '0,0');
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
-        addListener('#enable-edit', 'click', () => this.setEditable(true));
         addListener('#reset',       'click', () => this.clear());
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
@@ -715,17 +728,19 @@ class Domino {
         addListener(screen,                 'drop', onDroppedOnEmptyCell);
     }
 
-    setEditable(editable) {
-        this.editable = editable;
-        this.enableEdit.disabled = editable;
-        this.addDeleteCardIcon.hidden = !editable;
+    setUnlocked(unlocked) {
+        this.unlocked = unlocked;
+        this.addDeleteCardIcon.hidden = !unlocked;
+
+        this.lockedButton.hidden = unlocked;
+        this.unlockedButton.hidden = !unlocked;
     }
     
     deselect() { this.selectCardView(undefined); }
 
     selectCardView(view) {
         this.editorPanel.setActiveView(view);
-        this.cardbar.hidden = (view === undefined) || !this.editable;
+        this.cardbar.hidden = (view === undefined) || !this.unlocked;
 
         if (view)
             view.root.appendChild(this.cardbar);
@@ -825,6 +840,9 @@ async function loaded() {
 
     domino.setup();
 
+    window.addEventListener('resize', updateDocumentVariables);
+    updateDocumentVariables();
+
     // center the currently selected cell
     const jumpFromHash = () => domino.centerCell(getCoordsFromHash());
     window.addEventListener('hashchange', jumpFromHash);
@@ -833,7 +851,6 @@ async function loaded() {
     // load data from embeded #data script tag
     const coords = getCoordsFromHash();
     const data = getElementJsonData('#data');
-    domino.setEditable(data.editable);
     domino.setData(data);
     domino.centerCellNoTransition(coords);
 }
@@ -860,7 +877,9 @@ async function loaded() {
       <button id="open-about" title="information about this tool">❔</button>
       <button id="center" title="jump to center">🧭</button>
       <button id="add-delete-icon" hidden draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</button>
-      <button id="fullscreen" title="toggle fullscreen">💢</button>
+      <button id="fullscreen" title="toggle fullscreen" hidden>💢</button>
+      <button id="unlocked" title="prevent accidental editing">🔓</button>
+      <button id="locked" title="enable editing" hidden>🔒</button>
     </div>
     <div class="block-clicks" id="editor-panel" hidden>
       <button onclick="document.querySelector('#editor-panel').hidden = true;" style="float: right">close</button>
@@ -877,9 +896,8 @@ async function loaded() {
       <div class="full-panel block-clicks">
         <button class="close-parent-screen">exit window</button>
         <div id="version">
-          version—alpha (2020-3-4)</div>
+          version—alpha (2020-3-5)</div>
         <div id="project-menu">
-          <button id="enable-edit" title="enable editing">📝 enable editing</button>
           <button id="import" title="import a domino project">📂 import from html</button>
           <button id="export" title="export as html">📦 export to html</button>
           <button id="reset" title="remove all cards">❌ remove all cards</button>

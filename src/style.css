@@ -65,10 +65,13 @@ button, textarea {
 }
 
 #screen {
+    width: 100%;
+    height: 100%;
+
     position: absolute;
     margin: 0;
-    width: 100vw;
-    height: 100vh;
+    padding: 0;
+
     cursor: pointer;
 }
 
@@ -79,14 +82,17 @@ main {
 }
 
 .screen {
+    background-color: rgb(0, 0, 0, .25);
+    
     pointer-events: auto;
     cursor: pointer;
     
     position: absolute;
     box-sizing: border-box;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgb(0, 0, 0, .25);
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 .full-panel {
@@ -128,13 +134,9 @@ main {
 
 #content-input {
     padding: 1em;
-    width: calc(var(--card-width) - 2em);
-    height: calc(var(--card-height) - 2em);
-
-    display: block;
+    flex: 1;
     border: none;
     border-bottom: 2px solid black;
-    margin-bottom: 1em;
 }
 
 #type-select {
@@ -274,4 +276,32 @@ main {
 
 #project-menu > button {
     grid-row: 1;
+}
+
+#editor-preview {
+    width: 100%;
+    height: calc(var(--card-height) * 2);
+    min-height: calc(100% - var(--card-height) * 2);
+}
+
+#editor-section {
+    background: var(--dark);
+    pointer-events: initial;
+    cursor: initial;
+
+    position: absolute;
+    width: calc(var(--card-width) + 4em);
+    max-width: 100%;
+    height: calc(100% - var(--card-height) * 2);
+    max-height: calc(var(--card-height) * 2);
+
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+
+    box-sizing: border-box;
+    padding: 1em;
+
+    display: flex;
+    flex-direction: column;
 }

@@ -21,7 +21,7 @@ html
             include library/FileSaver.min.js
         script
             include script.js
-    body(onload="loaded()")
+    body(onload="loaded()").no-select
         #templates(hidden)
             #card-template.card(draggable="true")
                 .card-text
@@ -31,7 +31,7 @@ html
                     //button 📖
             #cardbar-template.card-edit-bar.icon-bar(hidden)
                 button#edit-card(title="edit this card") 📝
-        #screen.no-select
+        #screen
         main#scene
         #toolbar.icon-bar
             button#open-about(title="information about this tool") ❔
@@ -40,13 +40,14 @@ html
             button#fullscreen(title="toggle fullscreen", hidden) 💢
             button#unlocked(title="prevent accidental editing") 🔓
             button#locked(title="enable editing", hidden) 🔒
-        #editor-panel.block-clicks(hidden)
-            button(onclick!="document.querySelector('#editor-panel').hidden = true;", style="float: right") close
-            h3 edit card
-            #type-select
-                each type_ in types
-                    div(class="type-button " + type_)
-            textarea#content-input
+        #editor-screen.screen.click-to-hide(hidden)
+            #editor-preview
+            #editor-section.block-clicks
+                h3 edit card
+                #type-select
+                    each type_ in types
+                        div(class="type-button " + type_)
+                textarea#content-input
         #about-screen.screen.click-to-hide(hidden)
             .full-panel.block-clicks
                 button.close-parent-screen exit window

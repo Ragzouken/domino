@@ -94,11 +94,13 @@ class Domino {
     constructor() {
         this.cellToView = new CoordStore();
         this.focusedCell = [0, 0];
+        this.selectedCardView = undefined;
     }
 
     centerCell(coords) {
+        const element = this.editorScreen.hidden ? document.documentElement : this.editorPreview;
         this.focusedCell = coords;
-        const [cx, cy] = getElementCenter(document.documentElement);
+        const [cx, cy] = getElementCenter(element);
         const [nx, ny] = this.grid.cellToPixel(coords);
         const [x, y] = [cx - nx, cy - ny];
         this.scene.style.transform = `translate(${x}px, ${y}px)`;
@@ -134,8 +136,8 @@ class Domino {
         this.scene.removeChild(view.root);
         this.cellToView.delete(view.cell);
 
-        if (this.editorPanel.activeView === view)
-            this.editorPanel.setActiveView(undefined);
+        if (this.editorScreen.activeView === view)
+            this.editorScreen.setActiveView(undefined);
     }
 
     moveCardViewToCell(view, cell) {
@@ -198,7 +200,8 @@ class Domino {
     }
 
     setup() {
-        this.editorPanel = new CardEditor();
+        this.editorScreen = new CardEditor();
+        this.editorPreview = document.querySelector('#editor-preview');
         this.scene = document.querySelector('#scene');
         const [cw, ch] = computeCardSize(this.scene);
         const [sw, sh] = cardSpacing;
@@ -231,7 +234,7 @@ class Domino {
 
         // clicking listeners
         addListener(screen,         'click', onClickedEmptyCell);
-        addListener(cardEditButton, 'click', () => this.editorPanel.hidden = false);
+        addListener(cardEditButton, 'click', () => this.editCardView(this.selectedCardView));
         addListener('#center',      'click', () => location.hash = '0,0');
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
         addListener('#reset',       'click', () => this.clear());
@@ -247,7 +250,7 @@ class Domino {
 
         // dragging and dropping listeners
         setElementDragoverDropEffect(screen, 'copy');
-        setElementDragoverDropEffect(this.editorPanel.root, 'none');
+        setElementDragoverDropEffect(this.editorScreen.root, 'none');
         setElementDragoverDropEffect(this.addDeleteCardIcon, 'move');
 
         const onDragFromNewCard = (event) => {
@@ -294,13 +297,13 @@ class Domino {
                 if (content) {
                     const card = { text: content, type: 'black' };
                     const view = this.spawnCardView(card, dropCell);
-                    this.editorPanel.setActiveView(view);
+                    this.editorScreen.setActiveView(view);
                 }
             }
         }
 
         addListener(this.addDeleteCardIcon, 'dragstart', onDragFromNewCard);
-        addListener(this.editorPanel.root,  'drop', killEvent);
+        addListener(this.editorScreen.root,  'drop', killEvent);
         addListener(this.addDeleteCardIcon, 'drop', onDroppedOnDelete);
         addListener(screen,                 'drop', onDroppedOnEmptyCell);
     }
@@ -315,8 +318,15 @@ class Domino {
     
     deselect() { this.selectCardView(undefined); }
 
+    editCardView(view) {
+        if (!this.selectCardView) return;
+        this.editorScreen.hidden = false;
+        this.editorScreen.setActiveView(view);
+        this.centerCell(view.cell, this.editorPreview);
+    }
+
     selectCardView(view) {
-        this.editorPanel.setActiveView(view);
+        this.selectedCardView = view;
         this.cardbar.hidden = (view === undefined) || !this.unlocked;
 
         if (view)
@@ -326,7 +336,7 @@ class Domino {
 
 class CardEditor {
     constructor() {
-        this.root = document.querySelector('#editor-panel');
+        this.root = document.querySelector('#editor-screen');
         this.contentInput = this.root.querySelector('#content-input');
         this.typeButtons = {};
 
@@ -346,6 +356,7 @@ class CardEditor {
         });
     }
 
+    get hidden() { return this.root.hidden; }
     set hidden(value) { this.root.hidden = value; }
 
     setActiveView(view) {

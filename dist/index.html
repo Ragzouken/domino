@@ -317,10 +317,36 @@ main {
     transform: translateX(-50%);
 
     box-sizing: border-box;
+    
+    display: flex;
+    flex-direction: column;
+}
+
+#editor-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: var(--black-stiple);
+}
+
+#editor-tabs > div {
     padding: 1em;
+    border: initial;
+    /*border-bottom: 2px solid black;*/
+
+    text-align: center;
+}
+
+#editor-tabs > div.selected {
+    border: none;
+    background: var(--dark);
+}
+
+.editor-page {
+    flex: 1;
 
     display: flex;
     flex-direction: column;
+    padding: 1em;
 }
 
     </style>
@@ -793,6 +819,25 @@ class CardEditor {
         this.contentInput = this.root.querySelector('#content-input');
         this.typeButtons = {};
 
+        const names = ['text', 'icons', 'style'];
+        const tabs = {};
+        const pages = {};
+
+        function setPage(name) {
+            names.forEach(name => {
+                tabs[name].classList.remove('selected');
+                pages[name].hidden = true;
+            });
+            tabs[name].classList.add('selected');
+            pages[name].hidden = false;
+        }
+
+        for (let name of names) {
+            tabs[name] = this.root.querySelector(`#editor-tab-${name}`);
+            pages[name] = this.root.querySelector(`#editor-page-${name}`);
+            addListener(tabs[name], 'click', () => setPage(name));
+        }
+
         const typeSelect = document.querySelector('#type-select');
 
         for (let type of types) {
@@ -926,14 +971,23 @@ async function loaded() {
     <div class="screen click-to-hide" id="editor-screen" hidden>
       <div id="editor-preview"></div>
       <div class="block-clicks" id="editor-section">
-        <h3>edit card</h3>
-        <div id="type-select">
-          <div class="type-button black"></div>
-          <div class="type-button red"></div>
-          <div class="type-button green"></div>
-          <div class="type-button blue"></div>
+        <div id="editor-tabs">
+          <div id="editor-tab-text">TEXT</div>
+          <div id="editor-tab-icons">ICONS</div>
+          <div id="editor-tab-style">STYLE</div>
         </div>
-        <textarea id="content-input"></textarea>
+        <div class="editor-page" id="editor-page-text" hidden>
+          <textarea id="content-input"></textarea>
+        </div>
+        <div class="editor-page" id="editor-page-icons" hidden></div>
+        <div class="editor-page" id="editor-page-style" hidden>
+          <div id="type-select">
+            <div class="type-button black"></div>
+            <div class="type-button red"></div>
+            <div class="type-button green"></div>
+            <div class="type-button blue"></div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="screen click-to-hide" id="about-screen" hidden>

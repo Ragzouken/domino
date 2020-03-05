@@ -43,11 +43,18 @@ html
         #editor-screen.screen.click-to-hide(hidden)
             #editor-preview
             #editor-section.block-clicks
-                h3 edit card
-                #type-select
-                    each type_ in types
-                        div(class="type-button " + type_)
-                textarea#content-input
+                #editor-tabs
+                    #editor-tab-text TEXT
+                    #editor-tab-icons ICONS
+                    #editor-tab-style STYLE
+                #editor-page-text.editor-page(hidden)
+                    textarea#content-input
+                #editor-page-icons.editor-page(hidden)
+                #editor-page-style.editor-page(hidden)
+                    #type-select
+                        each type_ in types
+                            div(class="type-button " + type_)
+                
         #about-screen.screen.click-to-hide(hidden)
             .full-panel.block-clicks
                 button.close-parent-screen exit window

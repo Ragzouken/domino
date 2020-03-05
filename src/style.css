@@ -300,8 +300,34 @@ main {
     transform: translateX(-50%);
 
     box-sizing: border-box;
+    
+    display: flex;
+    flex-direction: column;
+}
+
+#editor-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: var(--black-stiple);
+}
+
+#editor-tabs > div {
     padding: 1em;
+    border: initial;
+    /*border-bottom: 2px solid black;*/
+
+    text-align: center;
+}
+
+#editor-tabs > div.selected {
+    border: none;
+    background: var(--dark);
+}
+
+.editor-page {
+    flex: 1;
 
     display: flex;
     flex-direction: column;
+    padding: 1em;
 }

@@ -340,6 +340,25 @@ class CardEditor {
         this.contentInput = this.root.querySelector('#content-input');
         this.typeButtons = {};
 
+        const names = ['text', 'icons', 'style'];
+        const tabs = {};
+        const pages = {};
+
+        function setPage(name) {
+            names.forEach(name => {
+                tabs[name].classList.remove('selected');
+                pages[name].hidden = true;
+            });
+            tabs[name].classList.add('selected');
+            pages[name].hidden = false;
+        }
+
+        for (let name of names) {
+            tabs[name] = this.root.querySelector(`#editor-tab-${name}`);
+            pages[name] = this.root.querySelector(`#editor-page-${name}`);
+            addListener(tabs[name], 'click', () => setPage(name));
+        }
+
         const typeSelect = document.querySelector('#type-select');
 
         for (let type of types) {

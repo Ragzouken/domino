@@ -259,14 +259,25 @@ main {
     0 0 3px var(--light), 
     0 0 3px var(--light), 
     0 0 3px var(--light);
+
+    transition: transform .1s ease-in-out;
+}
+
+.card-icon-bar > button:hover {
+    transform: scale(1.5);
+}
+.card-icon-bar > button:active {
+    transform: scale(2);
 }
 
 .card-icon-bar > button.cosmetic {
     cursor: initial;
+    transform: unset;
 }
 
 .card-icon-bar > button.blank {
     pointer-events: none;
+    transform: unset;
 }
 
 #toolbar {

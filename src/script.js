@@ -429,5 +429,6 @@ async function loaded() {
     const coords = getCoordsFromHash();
     const data = getElementJsonData('#data');
     domino.setData(data);
+    domino.setUnlocked(true);
     domino.centerCellNoTransition(coords);
 }

@@ -261,6 +261,14 @@ main {
     0 0 3px var(--light);
 }
 
+.card-icon-bar > button.cosmetic {
+    cursor: initial;
+}
+
+.card-icon-bar > button.blank {
+    pointer-events: none;
+}
+
 #toolbar {
     left: 50%;
     transform: translate(-50%, 0);

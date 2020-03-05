@@ -100,7 +100,7 @@ class Domino {
     runCommand(command) {
         if (command.slice(0, 1) === '#') {
             location.href = command;
-        } else {
+        } else if (command.length > 0) {
             window.open(command);
         }
     }
@@ -488,6 +488,11 @@ class CardView {
             button.innerHTML = row.icon;
             addListener(button, 'click', e => { killEvent(e); domino.runCommand(row.command)});
             this.icons.appendChild(button);
+
+            if (row.icon.length === 0)
+                button.classList.add('blank');
+            if (row.command.length === 0)
+                button.classList.add('cosmetic');
         });
     }
 }

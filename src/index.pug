@@ -50,6 +50,9 @@ html
                 #editor-page-text.editor-page(hidden)
                     textarea#content-input
                 #editor-page-icons.editor-page(hidden)
+                    each row in [1, 2, 3, 4]
+                        input(id=`editor-icon-select-${row}`, type="text").icon-select
+                        input(id=`editor-icon-command-${row}`, type="text").icon-command
                 #editor-page-style.editor-page(hidden)
                     #type-select
                         each type_ in types

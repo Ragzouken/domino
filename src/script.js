@@ -97,6 +97,14 @@ class Domino {
         this.selectedCardView = undefined;
     }
 
+    runCommand(command) {
+        if (command.slice(0, 1) === '#') {
+            location.href = command;
+        } else {
+            window.open(command);
+        }
+    }
+
     centerCell(coords) {
         const element = this.editorScreen.hidden ? document.documentElement : this.editorPreview;
         this.focusedCell = coords;
@@ -359,6 +367,30 @@ class CardEditor {
             addListener(tabs[name], 'click', () => setPage(name));
         }
 
+        setPage(names[0]);
+
+        this.iconRows = [];
+
+        const refreshIcons = () => {
+            const icons = [];
+            this.iconRows.forEach(row => {
+                icons.push({
+                    icon: row.select.value,
+                    command: row.command.value,
+                });
+            });
+            this.activeView.card.icons = icons;
+            domino.refreshAllCardViews();
+        }
+
+        for (let row of [1, 2, 3, 4]) {
+            const select = this.root.querySelector(`#editor-icon-select-${row}`);
+            const command = this.root.querySelector(`#editor-icon-command-${row}`);
+            this.iconRows.push({ select, command });
+            addListener(select, 'input', () => refreshIcons());
+            addListener(command, 'input', () => refreshIcons());
+        }
+
         const typeSelect = document.querySelector('#type-select');
 
         for (let type of types) {
@@ -391,6 +423,18 @@ class CardEditor {
             this.typeButtons[type].classList.remove('selected');
         this.typeButtons[this.activeView.card.type].classList.add('selected');
         this.contentInput.value = this.activeView.card.text;
+
+        this.iconRows.forEach(row => {
+            row.select.value = "";
+            row.command.value = "";
+        })
+
+        const icons = this.activeView.card.icons || [];
+        icons.slice(0, 4).forEach((row, i) => {
+            const { select, command } = this.iconRows[i];
+            select.value = row.icon
+            command.value = row.command;
+        });
     }
 
     setType(type) {
@@ -437,6 +481,14 @@ class CardView {
         this.root.classList.remove(...types);
         this.root.classList.add(this.card.type);
         this.text.innerHTML = this.card.text;
+
+        this.icons.innerHTML = "";
+        (this.card.icons || []).forEach(row => {
+            const button = document.createElement('button');
+            button.innerHTML = row.icon;
+            addListener(button, 'click', e => { killEvent(e); domino.runCommand(row.command)});
+            this.icons.appendChild(button);
+        });
     }
 }
 

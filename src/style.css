@@ -247,6 +247,7 @@ main {
 }
 
 .card-icon-bar > button {
+    cursor: pointer;
     border: none;
     background: none;
     text-shadow: 
@@ -330,4 +331,37 @@ main {
     display: flex;
     flex-direction: column;
     padding: 1em;
+}
+
+#editor-page-icons {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+
+    column-gap: 1em;
+    row-gap: 1em;
+}
+
+#editor-page-icons > input {
+    border: none;
+    border-left: 2px solid black;
+    padding: .5em;
+}
+
+.icon-select {
+    min-width: 0;
+    text-align: center;
+    font-size: 1em;
+
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.icon-command {
+    font-size: 1em;
+    font-family: monospace;
+
+    grid-column-start: 2;
+    grid-column-end: 5;
 }

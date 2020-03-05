@@ -264,6 +264,7 @@ main {
 }
 
 .card-icon-bar > button {
+    cursor: pointer;
     border: none;
     background: none;
     text-shadow: 
@@ -347,6 +348,39 @@ main {
     display: flex;
     flex-direction: column;
     padding: 1em;
+}
+
+#editor-page-icons {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+
+    column-gap: 1em;
+    row-gap: 1em;
+}
+
+#editor-page-icons > input {
+    border: none;
+    border-left: 2px solid black;
+    padding: .5em;
+}
+
+.icon-select {
+    min-width: 0;
+    text-align: center;
+    font-size: 1em;
+
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.icon-command {
+    font-size: 1em;
+    font-family: monospace;
+
+    grid-column-start: 2;
+    grid-column-end: 5;
 }
 
     </style>
@@ -574,6 +608,14 @@ class Domino {
         this.cellToView = new CoordStore();
         this.focusedCell = [0, 0];
         this.selectedCardView = undefined;
+    }
+
+    runCommand(command) {
+        if (command.slice(0, 1) === '#') {
+            location.href = command;
+        } else {
+            window.open(command);
+        }
     }
 
     centerCell(coords) {
@@ -838,6 +880,30 @@ class CardEditor {
             addListener(tabs[name], 'click', () => setPage(name));
         }
 
+        setPage(names[0]);
+
+        this.iconRows = [];
+
+        const refreshIcons = () => {
+            const icons = [];
+            this.iconRows.forEach(row => {
+                icons.push({
+                    icon: row.select.value,
+                    command: row.command.value,
+                });
+            });
+            this.activeView.card.icons = icons;
+            domino.refreshAllCardViews();
+        }
+
+        for (let row of [1, 2, 3, 4]) {
+            const select = this.root.querySelector(`#editor-icon-select-${row}`);
+            const command = this.root.querySelector(`#editor-icon-command-${row}`);
+            this.iconRows.push({ select, command });
+            addListener(select, 'input', () => refreshIcons());
+            addListener(command, 'input', () => refreshIcons());
+        }
+
         const typeSelect = document.querySelector('#type-select');
 
         for (let type of types) {
@@ -870,6 +936,18 @@ class CardEditor {
             this.typeButtons[type].classList.remove('selected');
         this.typeButtons[this.activeView.card.type].classList.add('selected');
         this.contentInput.value = this.activeView.card.text;
+
+        this.iconRows.forEach(row => {
+            row.select.value = "";
+            row.command.value = "";
+        })
+
+        const icons = this.activeView.card.icons || [];
+        icons.slice(0, 4).forEach((row, i) => {
+            const { select, command } = this.iconRows[i];
+            select.value = row.icon
+            command.value = row.command;
+        });
     }
 
     setType(type) {
@@ -916,6 +994,14 @@ class CardView {
         this.root.classList.remove(...types);
         this.root.classList.add(this.card.type);
         this.text.innerHTML = this.card.text;
+
+        this.icons.innerHTML = "";
+        (this.card.icons || []).forEach(row => {
+            const button = document.createElement('button');
+            button.innerHTML = row.icon;
+            addListener(button, 'click', e => { killEvent(e); domino.runCommand(row.command)});
+            this.icons.appendChild(button);
+        });
     }
 }
 
@@ -979,7 +1065,16 @@ async function loaded() {
         <div class="editor-page" id="editor-page-text" hidden>
           <textarea id="content-input"></textarea>
         </div>
-        <div class="editor-page" id="editor-page-icons" hidden></div>
+        <div class="editor-page" id="editor-page-icons" hidden>
+          <input class="icon-select" id="editor-icon-select-1" type="text">
+          <input class="icon-command" id="editor-icon-command-1" type="text">
+          <input class="icon-select" id="editor-icon-select-2" type="text">
+          <input class="icon-command" id="editor-icon-command-2" type="text">
+          <input class="icon-select" id="editor-icon-select-3" type="text">
+          <input class="icon-command" id="editor-icon-command-3" type="text">
+          <input class="icon-select" id="editor-icon-select-4" type="text">
+          <input class="icon-command" id="editor-icon-command-4" type="text">
+        </div>
         <div class="editor-page" id="editor-page-style" hidden>
           <div id="type-select">
             <div class="type-button black"></div>

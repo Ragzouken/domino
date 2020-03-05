@@ -219,13 +219,17 @@ main {
     margin: 0;
 }
 
-.icon-bar > button {
+.icon-bar > button, a {
     width: 2em;
     height: 2em;
     grid-row: 1;
 
     padding: 0;
-    text-align: center;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
 }
 
 .card-icon-bar {
@@ -246,7 +250,7 @@ main {
     right: 0;
 }
 
-.card-icon-bar > button {
+.card-icon-bar > a {
     cursor: pointer;
     border: none;
     background: none;
@@ -263,19 +267,19 @@ main {
     transition: transform .1s ease-in-out;
 }
 
-.card-icon-bar > button:hover {
+.card-icon-bar > a:hover {
     transform: scale(1.5);
 }
-.card-icon-bar > button:active {
+.card-icon-bar > a:active {
     transform: scale(2);
 }
 
-.card-icon-bar > button.cosmetic {
+.card-icon-bar > a.cosmetic {
     cursor: initial;
     transform: unset;
 }
 
-.card-icon-bar > button.blank {
+.card-icon-bar > a.blank {
     pointer-events: none;
     transform: unset;
 }

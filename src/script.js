@@ -484,10 +484,11 @@ class CardView {
 
         this.icons.innerHTML = "";
         (this.card.icons || []).forEach(row => {
-            const button = document.createElement('button');
+            const button = document.createElement('a');
             button.innerHTML = row.icon;
             addListener(button, 'click', e => { killEvent(e); domino.runCommand(row.command)});
             this.icons.appendChild(button);
+            button.href = row.command;
 
             if (row.icon.length === 0)
                 button.classList.add('blank');

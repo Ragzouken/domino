@@ -1,2 +1,5 @@
+# tell github what's our code
 dist/* linguist-generated
 *.min.js linguist-vendored
+*.md linguist-detectable
+*.pug linguist-detectable

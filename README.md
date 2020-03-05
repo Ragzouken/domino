@@ -27,4 +27,4 @@ build the standalone domino page to `dist/index.html`
 ```
 
 ## license
-[MIT License](./LICENSE);
+[MIT License](./LICENSE)

@@ -122,25 +122,17 @@ class Domino {
         this.scene.classList.remove('skiptransition');
     }
 
-    spawnCardView(card, cell) {
-        const view = this.createCardView(card, cell);
-        view.scale = 0;
-        reflow(view.root);
-        view.scale = 1;
-        return view;
-    }
-
-    createCardView(card, cell) {
-        const view = new CardView(cell, card);
+    addCard(card) {
+        const view = new CardView(card);
     
         addCardViewListeners(this, view);
         this.scene.appendChild(view.root);
-        this.moveCardViewToCell(view, cell);
+        this.moveCardToCell(view, card.cell);
     
         return view;
     }
 
-    removeCardView(view) {
+    removeCard(view) {
         this.scene.removeChild(view.root);
         this.cellToView.delete(view.cell);
 
@@ -148,14 +140,14 @@ class Domino {
             this.editorScreen.setActiveView(undefined);
     }
 
-    moveCardViewToCell(view, cell) {
-        view.cell = cell;
+    moveCardToCell(view, cell) {
+        view.card.cell = cell;
         view.position = this.grid.cellToPixel(cell);
         this.cellToView.set(cell, view);
     }
 
-    refreshAllCardViews() {
-        this.cellToView.store.forEach(view => view.refresh());
+    refreshCard(card) {
+        this.cellToView.get(card.cell).refresh();
     }
 
     swapCells(a, b) {
@@ -166,9 +158,9 @@ class Domino {
         this.cellToView.delete(b);
     
         if (aView)
-            this.moveCardViewToCell(aView, b);
+            this.moveCardToCell(aView, b);
         if (bView)
-            this.moveCardViewToCell(bView, a);
+            this.moveCardToCell(bView, a);
     }
 
     clear() {
@@ -180,31 +172,14 @@ class Domino {
 
     setData(data) {
         this.clear();
-        for (let view of data.views)
-            this.createCardView(data.cards[view.card], view.cell);
+        for (let card of data.cards)
+            this.addCard(card);
     }
 
     getData() {
-        const cardData = {};
-        const viewData = [];
-        const cardToId = new Map();
-        const generateID = makeCounter();
-    
-        function getCardId(card) {
-            let id = cardToId.get(card) || generateID();
-            cardToId.set(card, id);
-            cardData[id] = card;
-            return id;
-        }
-        
-        this.cellToView.store.forEach((view) => {
-            viewData.push({ cell: view.cell, card: getCardId(view.card) });
-        });
-    
-        return { 
-            cards: cardData,
-            views: viewData, 
-        };
+        const views = Array.from(this.cellToView.store.values());
+        const cards = views.map(view => view.card);
+        return { cards };
     }
 
     setup() {
@@ -270,7 +245,7 @@ class Domino {
             if (!event.dataTransfer.types.includes('card/move')) return;
             const originJson = event.dataTransfer.getData('card-origin-cell');
             const view = this.cellToView.get(JSON.parse(originJson));
-            this.removeCardView(view);
+            this.removeCard(view);
         }
 
         const pointerEventToCell = (event) => {
@@ -303,15 +278,16 @@ class Domino {
                 }
     
                 if (content) {
-                    const card = { text: content, type: 'black' };
-                    const view = this.spawnCardView(card, dropCell);
+                    const card = { text: content, type: 'black', cell: dropCell };
+                    const view = this.addCard(card);
+                    view.triggerSpawnAnimation();
                     this.editorScreen.setActiveView(view);
                 }
             }
         }
 
         addListener(this.addDeleteCardIcon, 'dragstart', onDragFromNewCard);
-        addListener(this.editorScreen.root,  'drop', killEvent);
+        addListener(this.editorScreen.root, 'drop', killEvent);
         addListener(this.addDeleteCardIcon, 'drop', onDroppedOnDelete);
         addListener(screen,                 'drop', onDroppedOnEmptyCell);
     }
@@ -380,7 +356,7 @@ class CardEditor {
                 });
             });
             this.activeView.card.icons = icons;
-            domino.refreshAllCardViews();
+            domino.refreshCard(this.activeView.card);
         }
 
         for (let row of [1, 2, 3, 4]) {
@@ -403,7 +379,7 @@ class CardEditor {
             if (!this.activeView) return;
 
             this.activeView.card.text = this.contentInput.value;
-            domino.refreshAllCardViews();
+            domino.refreshCard(this.activeView.card);
         });
     }
 
@@ -442,15 +418,14 @@ class CardEditor {
 
         this.activeView.card.type = type;
         this.refreshFromCard();
-        domino.refreshAllCardViews();
+        domino.refreshCard(this.activeView.card);
     }
 }
 
 class CardView {
-    constructor(cell, card) {
+    constructor(card) {
         this._position = [0, 0];
         this._scale = 1;
-        this.cell = cell;
         this.card = card;
 
         this.root = cloneTemplateElement('#card-template');
@@ -460,6 +435,8 @@ class CardView {
         this.refresh();
     }
 
+    get cell() { return this.card.cell; }
+
     set position(value) { 
         this._position = value;
         this.updateTransform();
@@ -468,6 +445,12 @@ class CardView {
     set scale(value) { 
         this._scale = value;
         this.updateTransform();
+    }
+
+    triggerSpawnAnimation() {
+        this.scale = 0;
+        reflow(this.root);
+        this.scale = 1;
     }
 
     updateTransform() {

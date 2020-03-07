@@ -80,9 +80,16 @@ function exportProject() {
 }
 
 function addCardViewListeners(domino, view) {
-    view.root.addEventListener('click', () => {
+    view.root.addEventListener('click', event => {
+        if (!domino.unlocked) return;
+
+        killEvent(event);
         domino.selectCardView(view);
         domino.focusCell(view.cell);
+    });
+    view.root.addEventListener('pointerdown', event => {
+        if (!domino.unlocked) return;
+        event.stopPropagation();
     });
     view.root.addEventListener('dragstart', event => {
         if (!domino.unlocked) return;
@@ -277,14 +284,12 @@ class Domino {
         addListener('#fullscreen',  'click', () => toggleFullscreen());
 
         this.pan = undefined;
-        ///*
-        addListener(screen, 'pointerdown', event => {
+        window.addEventListener('pointerdown', event => {
             this.pan = {
                 scenePosition: eventToElementPixel(event, this.scene),
             };
             this.scene.classList.add('skiptransition');
         });
-        //*/
 
         window.addEventListener('pointerup', () => {
             this.pan = undefined;
@@ -384,6 +389,10 @@ class Domino {
 
         this.lockedButton.hidden = unlocked;
         this.unlockedButton.hidden = !unlocked;
+
+        ALL('.card').forEach(element => {
+            element.setAttribute('draggable', unlocked ? 'true' : 'false');
+        });
     }
     
     deselect() { this.selectCardView(undefined); }
@@ -562,6 +571,7 @@ class CardView {
         (this.card.icons || []).forEach(row => {
             const button = document.createElement('a');
             button.innerHTML = row.icon;
+            addListener(button, 'pointerdown', e => e.stopPropagation());
             addListener(button, 'click', e => { killEvent(e); domino.runCommand(row.command)});
             this.icons.appendChild(button);
             button.href = row.command;

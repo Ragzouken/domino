@@ -17,14 +17,20 @@ function findCardStyleNames() {
     return Array.from(styles);
 }
 
+function fakedownToTag(text, fd, tag) {
+    const pattern = new RegExp(`${fd}([^${fd}]+)${fd}`, 'g');
+    return text.replace(pattern, `<${tag}>$1</${tag}>`);
+}
+
 function parseFakedown(text) {
     if (text.startsWith('`'))
         return `<pre>${text.slice(1)}</pre>`;
     text = text.replace(/([^-])--([^-])/g, '$1—$2');
-    text = text.replace(/__([^__]*)__/g, '<strong>$1</strong>');
-    text = text.replace(/_([^_]*)_/g, '<em>$1</em>');
-    text = text.replace(/\*\*([^\*]*)\*\*/g, '<strong>$1</strong>');
-    text = text.replace(/\*([^\*]*)\*/g, '<em>$1</em>');
+    text = fakedownToTag(text, '~~', 's');
+    text = fakedownToTag(text, '__', 'strong');
+    text = fakedownToTag(text, '\\*\\*', 'strong');
+    text = fakedownToTag(text, '_', 'em');
+    text = fakedownToTag(text, '\\*', 'em');
     text = text.replace(/\n/g, '<br><br>');
     return text;
 }

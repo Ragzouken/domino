@@ -14,7 +14,9 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
-.black { background: var(--black-stiple) repeat; }
+.black { 
+    background: var(--black-stiple) repeat; 
+}
 .black strong { 
     display: block; 
     font-size: 1.5em; 

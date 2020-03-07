@@ -17,11 +17,13 @@ function parseFakedown(text) {
 
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
+        element.addEventListener('pointerdown', event => event.stopPropagation());
+        element.addEventListener('pointerup', event => event.stopPropagation());
         element.addEventListener('click', event => event.stopPropagation());
     });
     ALL('[data-click-to-hide]').forEach(element => {
-        element.addEventListener('click', () => element.hidden = true);
-    })
+        element.addEventListener('pointerdown', () => element.hidden = true);
+    });
     ALL('[data-close-parent-screen]').forEach(element => {
         const screen = element.closest('.screen');
         element.addEventListener('click', () => screen.hidden = true);
@@ -51,7 +53,7 @@ function exportProject() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
     ALL('[data-export-clear]', clone).forEach(element => element.innerHTML = '');
-    ALL('[data-export-hide]', clone).forEach(screen => screen.hidden = true);
+    ALL('[data-export-hide]', clone).forEach(element => element.hidden = true);
     const blob = new Blob([clone.outerHTML], {type: "text/html"});
     saveAs(blob, `domino-test.html`);
 }

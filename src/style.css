@@ -16,7 +16,11 @@
 
 .black { 
     background: var(--black-stiple) repeat; 
+
+    display: flex !important;
+    align-items: center;
 }
+
 .black strong { 
     display: block; 
     font-size: 1.5em; 
@@ -204,14 +208,8 @@ main {
     text-shadow: none;
 }
 
-.card > h3 {
-    display: inline;
-    font-size: 1em;
-}
-
-.card > h3::after {
-    font-weight: normal;
-    content: " — ";
+.card-text {
+    width: 100%;
 }
 
 #version {

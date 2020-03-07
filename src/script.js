@@ -36,11 +36,11 @@ function parseFakedown(text) {
     return text;
 }
 
+const clicks = ['pointerdown', 'pointerup', 'click'];
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
-        element.addEventListener('pointerdown', event => event.stopPropagation());
-        element.addEventListener('pointerup', event => event.stopPropagation());
-        element.addEventListener('click', event => event.stopPropagation());
+        for (let name of clicks)
+            element.addEventListener(name, event => event.stopPropagation());
     });
     ALL('[data-click-to-hide]').forEach(element => {
         element.addEventListener('pointerdown', () => element.hidden = true);
@@ -49,6 +49,11 @@ function setupClassHooks() {
         const screen = element.closest('.screen');
         element.addEventListener('click', () => screen.hidden = true);
     });
+
+    ALL('button').forEach(element => {
+        for (let name of clicks)
+            element.addEventListener(name, event => event.stopPropagation());
+    })
 }
 
 function updateDocumentVariables() {
@@ -147,8 +152,10 @@ class Domino {
     }
 
     runCommand(command) {
-        if (command.slice(0, 1) === '#') {
+        if (command.startsWith('#')) {
             location.href = command;
+        } else if (command.startsWith('iframe:')) {
+            // everest style iframe embed
         } else if (command.length > 0) {
             window.open(command);
         }
@@ -274,7 +281,6 @@ class Domino {
         }
 
         // clicking listeners
-        //addListener(screen,         'click', onClickedEmptyCell);
         addListener(cardEditButton, 'click', () => this.editCardView(this.selectedCardView));
         addListener('#center',      'click', () => location.hash = '0,0');
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
@@ -283,22 +289,30 @@ class Domino {
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
 
+        addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
+
         this.pan = undefined;
         window.addEventListener('pointerdown', event => {
             this.pan = {
                 scenePosition: eventToElementPixel(event, this.scene),
+                moves: 0,
             };
             this.scene.classList.add('skiptransition');
         });
 
         window.addEventListener('pointerup', () => {
+            const click = this.pan && this.pan.moves < 5;
             this.pan = undefined;
             this.scene.classList.remove('skiptransition');
+            if (click) 
+                onClickedEmptyCell(event);
         });
 
         window.addEventListener('pointermove', event => {
             if (!this.pan) return;
             
+            this.pan.moves += 1;
+
             // where we clicked in the scene
             const [wx, wy] = this.pan.scenePosition;
             // where we are in the scene now

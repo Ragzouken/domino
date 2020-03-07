@@ -12,6 +12,20 @@
 
     --card-width: 15rem;
     --card-height: calc(var(--card-width) * .6);
+
+    touch-action: none;
+}
+
+#coords {
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    font-family: monospace;
+    margin: .25em;
+    padding: .25em .5em;
+    border-radius: .75em;
+    background: var(--light);
 }
 
 .domino-card-black { 

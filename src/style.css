@@ -15,6 +15,14 @@
 }
 
 .black { background: var(--black-stiple) repeat; }
+.black strong { 
+    display: block; 
+    font-size: 1.5em; 
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: .5em;
+}
+
 .red   { background: var(--red-stiple)   repeat; }
 .green { background: var(--green-stiple) repeat; }
 .blue  { background: var(--blue-stiple)  repeat; }

@@ -27,6 +27,14 @@
 }
 
 .black { background: var(--black-stiple) repeat; }
+.black strong { 
+    display: block; 
+    font-size: 1.5em; 
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: .5em;
+}
+
 .red   { background: var(--red-stiple)   repeat; }
 .green { background: var(--green-stiple) repeat; }
 .blue  { background: var(--blue-stiple)  repeat; }
@@ -545,7 +553,7 @@ function parseFakedown(text) {
     text = text.replace(/_([^_]*)_/g, '<em>$1</em>');
     text = text.replace(/\*\*([^\*]*)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/\*([^\*]*)\*/g, '<em>$1</em>');
-    text = text.replace(/\n/g, '<br>');
+    text = text.replace(/\n/g, '<br><br>');
     return text;
 }
 

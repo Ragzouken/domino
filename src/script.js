@@ -11,7 +11,7 @@ function parseFakedown(text) {
     text = text.replace(/_([^_]*)_/g, '<em>$1</em>');
     text = text.replace(/\*\*([^\*]*)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/\*([^\*]*)\*/g, '<em>$1</em>');
-    text = text.replace(/\n/g, '<br>');
+    text = text.replace(/\n/g, '<br><br>');
     return text;
 }
 

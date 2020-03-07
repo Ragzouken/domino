@@ -26,6 +26,7 @@ function parseFakedown(text) {
     if (text.startsWith('`'))
         return `<pre>${text.slice(1)}</pre>`;
     text = text.replace(/([^-])--([^-])/g, '$1—$2');
+    text = fakedownToTag(text, '##', 'h3');
     text = fakedownToTag(text, '~~', 's');
     text = fakedownToTag(text, '__', 'strong');
     text = fakedownToTag(text, '\\*\\*', 'strong');
@@ -543,4 +544,13 @@ async function loaded() {
     domino.setData(data);
     domino.setUnlocked(true);
     domino.centerCellNoTransition(coords);
+
+    // keyboard shortcuts
+    window.addEventListener('keydown', event => {
+        const [q, r] = domino.focusedCell;
+        if (event.key === 'ArrowLeft')  domino.centerCell([q - 1, r + 1]);
+        if (event.key === 'ArrowRight') domino.centerCell([q + 1, r - 1]);
+        if (event.key === 'ArrowUp')    domino.centerCell([q + 0, r - 1]);
+        if (event.key === 'ArrowDown')  domino.centerCell([q + 0, r + 1]);
+    });
 }

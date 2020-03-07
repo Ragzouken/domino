@@ -21,11 +21,13 @@
     align-items: center;
 }
 
-.domino-card-black strong { 
+.card h3 {
     display: block; 
     font-size: 1.5em; 
     font-weight: bold;
     text-align: center;
+
+    margin: 0;
     margin-bottom: .5em;
 }
 

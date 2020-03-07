@@ -16,13 +16,13 @@ function parseFakedown(text) {
 }
 
 function setupClassHooks() {
-    ALL('.block-clicks').forEach(element => {
+    ALL('[data-block-clicks]').forEach(element => {
         element.addEventListener('click', event => event.stopPropagation());
     });
-    ALL('.click-to-hide').forEach(element => {
+    ALL('[data-click-to-hide]').forEach(element => {
         element.addEventListener('click', () => element.hidden = true);
     })
-    ALL('.close-parent-screen').forEach(element => {
+    ALL('[data-close-parent-screen]').forEach(element => {
         const screen = element.closest('.screen');
         element.addEventListener('click', () => screen.hidden = true);
     });
@@ -50,8 +50,8 @@ async function extractDataFromHtmlFile(file) {
 function exportProject() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
-    ONE("#scene", clone).innerHTML = "";
-    ALL(".screen", clone).forEach(screen => screen.hidden = true);
+    ALL('[data-export-clear]', clone).forEach(element => element.innerHTML = '');
+    ALL('[data-export-hide]', clone).forEach(screen => screen.hidden = true);
     const blob = new Blob([clone.outerHTML], {type: "text/html"});
     saveAs(blob, `domino-test.html`);
 }

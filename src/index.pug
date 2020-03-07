@@ -30,7 +30,7 @@ html
             #cardbar-template.card-edit-bar.icon-bar(hidden)
                 button#edit-card(title="edit this card") 📝
         #screen
-        main#scene
+        main#scene(data-export-clear)
         #toolbar.icon-bar
             button#open-about(title="information about this tool") ❔
             button#center(title="jump to center") 🧭
@@ -38,9 +38,9 @@ html
             button#fullscreen(title="toggle fullscreen", hidden) 💢
             button#unlocked(title="prevent accidental editing") 🔓
             button#locked(title="enable editing", hidden) 🔒
-        #editor-screen.screen.click-to-hide(hidden)
+        #editor-screen.screen(hidden, data-click-to-hide)
             #editor-preview
-            #editor-section.block-clicks
+            #editor-section(data-block-clicks)
                 #editor-tabs
                     #editor-tab-text TEXT
                     #editor-tab-icons ICONS
@@ -56,9 +56,9 @@ html
                         each type_ in types
                             div(class="type-button " + type_)
                 
-        #about-screen.screen.click-to-hide(hidden)
-            .full-panel.block-clicks
-                button.close-parent-screen exit window
+        #about-screen.screen(hidden, data-click-to-hide, data-export-hide)
+            .full-panel(data-block-clicks)
+                button(data-close-parent-screen) exit window
                 #version
                     | version—
                     include version.txt

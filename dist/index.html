@@ -550,13 +550,13 @@ function parseFakedown(text) {
 }
 
 function setupClassHooks() {
-    ALL('.block-clicks').forEach(element => {
+    ALL('[data-block-clicks]').forEach(element => {
         element.addEventListener('click', event => event.stopPropagation());
     });
-    ALL('.click-to-hide').forEach(element => {
+    ALL('[data-click-to-hide]').forEach(element => {
         element.addEventListener('click', () => element.hidden = true);
     })
-    ALL('.close-parent-screen').forEach(element => {
+    ALL('[data-close-parent-screen]').forEach(element => {
         const screen = element.closest('.screen');
         element.addEventListener('click', () => screen.hidden = true);
     });
@@ -584,8 +584,8 @@ async function extractDataFromHtmlFile(file) {
 function exportProject() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
-    ONE("#scene", clone).innerHTML = "";
-    ALL(".screen", clone).forEach(screen => screen.hidden = true);
+    ALL('[data-export-clear]', clone).forEach(element => element.innerHTML = '');
+    ALL('[data-export-hide]', clone).forEach(screen => screen.hidden = true);
     const blob = new Blob([clone.outerHTML], {type: "text/html"});
     saveAs(blob, `domino-test.html`);
 }
@@ -1063,7 +1063,7 @@ async function loaded() {
       </div>
     </div>
     <div id="screen"></div>
-    <main id="scene"></main>
+    <main id="scene" data-export-clear></main>
     <div class="icon-bar" id="toolbar">
       <button id="open-about" title="information about this tool">❔</button>
       <button id="center" title="jump to center">🧭</button>
@@ -1072,9 +1072,9 @@ async function loaded() {
       <button id="unlocked" title="prevent accidental editing">🔓</button>
       <button id="locked" title="enable editing" hidden>🔒</button>
     </div>
-    <div class="screen click-to-hide" id="editor-screen" hidden>
+    <div class="screen" id="editor-screen" hidden data-click-to-hide>
       <div id="editor-preview"></div>
-      <div class="block-clicks" id="editor-section">
+      <div id="editor-section" data-block-clicks>
         <div id="editor-tabs">
           <div id="editor-tab-text">TEXT</div>
           <div id="editor-tab-icons">ICONS</div>
@@ -1103,9 +1103,9 @@ async function loaded() {
         </div>
       </div>
     </div>
-    <div class="screen click-to-hide" id="about-screen" hidden>
-      <div class="full-panel block-clicks">
-        <button class="close-parent-screen">exit window</button>
+    <div class="screen" id="about-screen" hidden data-click-to-hide data-export-hide>
+      <div class="full-panel" data-block-clicks>
+        <button data-close-parent-screen>exit window</button>
         <div id="version">
           version—alpha (2020-3-7)</div>
         <div id="project-menu">

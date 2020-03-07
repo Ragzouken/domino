@@ -402,7 +402,10 @@ main {
 }
 
     </style>
-    <script>const makeCounter = (count=0) => () => count++;
+    <script>const ONE = (query, element) => (element || document).querySelector(query);
+const ALL = (query, element) => (element || document).querySelectorAll(query);
+
+const makeCounter = (count=0) => () => count++;
 const remToPx = em => emToPx(document.documentElement, em);
 const emToPx = (element, em) => Math.round(em * parseFloat(getComputedStyle(element).fontSize));
 const setElementJsonData = (element, data) => queryToElement(element).innerHTML = JSON.stringify(data);
@@ -456,7 +459,7 @@ function setElementDragoverDropEffect(query, effect) {
 }
 
 function queryToElement(query) {
-    return (query instanceof Element) ? query : document.querySelector(query);
+    return (query instanceof Element) ? query : ONE(query);
 }
 
 function cloneTemplateElement(query) {
@@ -534,14 +537,26 @@ var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof na
 const cardSpacing = [remToPx(2), remToPx(2)];
 const types = ['black', 'red', 'green', 'blue'];
 
+function parseFakedown(text) {
+    if (text.startsWith('`'))
+        text = `<pre>${text.slice(1)}</pre>`;
+    text = text.replace(/([^-])--([^-])/g, '$1—$2');
+    text = text.replace(/__([^__]*)__/g, '<strong>$1</strong>');
+    text = text.replace(/_([^_]*)_/g, '<em>$1</em>');
+    text = text.replace(/\*\*([^\*]*)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*([^\*]*)\*/g, '<em>$1</em>');
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+
 function setupClassHooks() {
-    document.querySelectorAll('.block-clicks').forEach(element => {
+    ALL('.block-clicks').forEach(element => {
         element.addEventListener('click', event => event.stopPropagation());
     });
-    document.querySelectorAll('.click-to-hide').forEach(element => {
+    ALL('.click-to-hide').forEach(element => {
         element.addEventListener('click', () => element.hidden = true);
     })
-    document.querySelectorAll('.close-parent-screen').forEach(element => {
+    ALL('.close-parent-screen').forEach(element => {
         const screen = element.closest('.screen');
         element.addEventListener('click', () => screen.hidden = true);
     });
@@ -563,14 +578,14 @@ function computeCardSize(parent) {
 async function extractDataFromHtmlFile(file) {
     const html = document.createElement('html');
     html.innerHTML = await textFromFile(file);
-    return getElementJsonData(html.querySelector('#data'));
+    return getElementJsonData(ONE('#data', html));
 }
 
 function exportProject() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
-    clone.querySelector("#scene").innerHTML = "";
-    clone.querySelectorAll(".screen").forEach(screen => screen.hidden = true);
+    ONE("#scene", clone).innerHTML = "";
+    ALL(".screen", clone).forEach(screen => screen.hidden = true);
     const blob = new Blob([clone.outerHTML], {type: "text/html"});
     saveAs(blob, `domino-test.html`);
 }
@@ -715,30 +730,30 @@ class Domino {
 
     setup() {
         this.editorScreen = new CardEditor();
-        this.editorPreview = document.querySelector('#editor-preview');
-        this.scene = document.querySelector('#scene');
+        this.editorPreview = ONE('#editor-preview');
+        this.scene = ONE('#scene');
         const [cw, ch] = computeCardSize(this.scene);
         const [sw, sh] = cardSpacing;
         this.grid = new HexGrid([cw + sw, ch + sh]);
 
         // hide fullscreen button if fullscreen is not possible
         if (!document.fullscreenEnabled)
-            document.querySelector('#fullscreen').hidden = true;
+            ONE('#fullscreen').hidden = true;
 
         this.cardbar = cloneTemplateElement('#cardbar-template');
         this.cardbar.id = 'cardbar';
-        this.addDeleteCardIcon = document.querySelector('#add-delete-icon');
-        this.aboutScreen = document.querySelector('#about-screen');
+        this.addDeleteCardIcon = ONE('#add-delete-icon');
+        this.aboutScreen = ONE('#about-screen');
 
-        this.lockedButton = document.querySelector('#locked');
-        this.unlockedButton = document.querySelector('#unlocked');
+        this.lockedButton = ONE('#locked');
+        this.unlockedButton = ONE('#unlocked');
 
         addListener(this.lockedButton,   'click', () => this.setUnlocked(true));
         addListener(this.unlockedButton, 'click', () => this.setUnlocked(false));
 
-        const cardEditButton = this.cardbar.querySelector('#edit-card');
-        const importFile = document.querySelector('#import-file');
-        const screen = document.querySelector('#screen');
+        const cardEditButton = ONE('#edit-card', this.cardbar);
+        const importFile = ONE('#import-file');
+        const screen = ONE('#screen');
 
         const onClickedEmptyCell = (event) => {
             killEvent(event);
@@ -851,8 +866,8 @@ class Domino {
 
 class CardEditor {
     constructor() {
-        this.root = document.querySelector('#editor-screen');
-        this.contentInput = this.root.querySelector('#content-input');
+        this.root = ONE('#editor-screen');
+        this.contentInput = ONE('#content-input', this.root);
         this.typeButtons = {};
 
         const names = ['text', 'icons', 'style'];
@@ -869,8 +884,8 @@ class CardEditor {
         }
 
         for (let name of names) {
-            tabs[name] = this.root.querySelector(`#editor-tab-${name}`);
-            pages[name] = this.root.querySelector(`#editor-page-${name}`);
+            tabs[name] = ONE(`#editor-tab-${name}`, this.root);
+            pages[name] = ONE(`#editor-page-${name}`, this.root);
             addListener(tabs[name], 'click', () => setPage(name));
         }
 
@@ -891,17 +906,17 @@ class CardEditor {
         }
 
         for (let row of [1, 2, 3, 4]) {
-            const select = this.root.querySelector(`#editor-icon-select-${row}`);
-            const command = this.root.querySelector(`#editor-icon-command-${row}`);
+            const select = ONE(`#editor-icon-select-${row}`, this.root);
+            const command = ONE(`#editor-icon-command-${row}`, this.root);
             this.iconRows.push({ select, command });
             addListener(select, 'input', () => refreshIcons());
             addListener(command, 'input', () => refreshIcons());
         }
 
-        const typeSelect = document.querySelector('#type-select');
+        const typeSelect = ONE('#type-select');
 
         for (let type of types) {
-            const button = typeSelect.querySelector(`.${type}`);
+            const button = ONE(`.${type}`, typeSelect);
             button.addEventListener('click', () => this.setType(type));
             this.typeButtons[type] = button;
         }
@@ -960,8 +975,8 @@ class CardView {
         this.card = card;
 
         this.root = cloneTemplateElement('#card-template');
-        this.text = this.root.querySelector('.card-text');
-        this.icons = this.root.querySelector('.icon-bar');
+        this.text = ONE('.card-text', this.root);
+        this.icons = ONE('.icon-bar', this.root);
         
         this.refresh();
     }
@@ -994,7 +1009,7 @@ class CardView {
     refresh() {
         this.root.classList.remove(...types);
         this.root.classList.add(this.card.type);
-        this.text.innerHTML = this.card.text;
+        this.text.innerHTML = parseFakedown(this.card.text);
 
         this.icons.innerHTML = "";
         (this.card.icons || []).forEach(row => {

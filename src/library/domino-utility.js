@@ -1,3 +1,6 @@
+const ONE = (query, element) => (element || document).querySelector(query);
+const ALL = (query, element) => (element || document).querySelectorAll(query);
+
 const makeCounter = (count=0) => () => count++;
 const remToPx = em => emToPx(document.documentElement, em);
 const emToPx = (element, em) => Math.round(em * parseFloat(getComputedStyle(element).fontSize));
@@ -52,7 +55,7 @@ function setElementDragoverDropEffect(query, effect) {
 }
 
 function queryToElement(query) {
-    return (query instanceof Element) ? query : document.querySelector(query);
+    return (query instanceof Element) ? query : ONE(query);
 }
 
 function cloneTemplateElement(query) {

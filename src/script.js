@@ -82,7 +82,7 @@ function exportProject() {
 function addCardViewListeners(domino, view) {
     view.root.addEventListener('click', () => {
         domino.selectCardView(view);
-        domino.centerCell(view.cell);
+        domino.focusCell(view.cell);
     });
     view.root.addEventListener('dragstart', event => {
         event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
@@ -140,19 +140,24 @@ class Domino {
         }
     }
 
-    centerCell(coords) {
+    set panning(position) {
+        const [x, y] = position;
+        this._panning = position;
+        this.scene.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    focusCell(coords) {
         const element = this.editorScreen.hidden ? document.documentElement : this.editorPreview;
         this.focusedCell = coords;
         const [cx, cy] = getElementCenter(element);
         const [nx, ny] = this.grid.cellToPixel(coords);
-        const [x, y] = [cx - nx, cy - ny];
-        this.scene.style.transform = `translate(${x}px, ${y}px)`;
+        this.panning = [cx - nx, cy - ny];
         location.hash = coordsToKey(coords);
     }
 
-    centerCellNoTransition(coords) {
+    focusCellNoTransition(coords) {
         this.scene.classList.add('skiptransition');
-        this.centerCell(coords);
+        this.focusCell(coords);
         reflow(this.scene);
         this.scene.classList.remove('skiptransition');
     }
@@ -202,7 +207,7 @@ class Domino {
         this.deselect();
         this.scene.innerHTML = "";
         this.cellToView.store.clear();
-        this.centerCell([0, 0]);
+        this.focusCell([0, 0]);
     }
 
     setData(data) {
@@ -247,11 +252,11 @@ class Domino {
         const onClickedEmptyCell = (event) => {
             killEvent(event);
             this.deselect();
-            this.centerCell(pointerEventToCell(event));
+            this.focusCell(pointerEventToCell(event));
         }
 
         // clicking listeners
-        addListener(screen,         'click', onClickedEmptyCell);
+        //addListener(screen,         'click', onClickedEmptyCell);
         addListener(cardEditButton, 'click', () => this.editCardView(this.selectedCardView));
         addListener('#center',      'click', () => location.hash = '0,0');
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
@@ -259,6 +264,38 @@ class Domino {
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
+
+        this.pan = undefined;
+        addListener(screen, 'pointerdown', event => {
+            this.pan = {
+                sceneClick: eventToElementPixel(event, this.scene),
+            }
+            this.scene.classList.add('skiptransition');
+        });
+
+        window.addEventListener('pointerup', () => {
+            this.pan = undefined;
+            this.scene.classList.remove('skiptransition');
+        });
+
+        window.addEventListener('pointermove', event => {
+            if (!this.pan) return;
+            
+            // where we clicked in the scene
+            const [wx, wy] = this.pan.sceneClick;
+            // where we are in the scene now
+            const [ax, ay] = eventToElementPixel(event, this.scene);
+            // the error
+            const [ex, ey] = [wx - ax, wy - ay];
+            const [px, py] = this._panning;
+
+            this.panning = [px - ex, py - ey];
+
+            const [clientX, clientY] = getElementCenterClient(screen);
+            const pixel = eventToElementPixel({ clientX, clientY }, this.scene);
+            const coords = this.grid.pixelToCell(pixel);
+            location.hash = coordsToKey(coords);
+        });
 
         // file select listener
         addListener(importFile, 'change', async event => {
@@ -341,7 +378,7 @@ class Domino {
         if (!this.selectCardView) return;
         this.editorScreen.hidden = false;
         this.editorScreen.setActiveView(view);
-        this.centerCell(view.cell, this.editorPreview);
+        this.focusCell(view.cell, this.editorPreview);
     }
 
     selectCardView(view) {
@@ -534,7 +571,7 @@ async function loaded() {
     updateDocumentVariables();
 
     // center the currently selected cell
-    const jumpFromHash = () => domino.centerCell(getCoordsFromHash());
+    const jumpFromHash = () => domino.focusCell(getCoordsFromHash());
     window.addEventListener('hashchange', jumpFromHash);
     window.addEventListener('resize', jumpFromHash);
     
@@ -543,14 +580,14 @@ async function loaded() {
     const data = getElementJsonData('#data');
     domino.setData(data);
     domino.setUnlocked(true);
-    domino.centerCellNoTransition(coords);
+    domino.focusCellNoTransition(coords);
 
     // keyboard shortcuts
     window.addEventListener('keydown', event => {
         const [q, r] = domino.focusedCell;
-        if (event.key === 'ArrowLeft')  domino.centerCell([q - 1, r + 1]);
-        if (event.key === 'ArrowRight') domino.centerCell([q + 1, r - 1]);
-        if (event.key === 'ArrowUp')    domino.centerCell([q + 0, r - 1]);
-        if (event.key === 'ArrowDown')  domino.centerCell([q + 0, r + 1]);
+        if (event.key === 'ArrowLeft')  domino.focusCell([q - 1, r + 1]);
+        if (event.key === 'ArrowRight') domino.focusCell([q + 1, r - 1]);
+        if (event.key === 'ArrowUp')    domino.focusCell([q + 0, r - 1]);
+        if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
     });
 }

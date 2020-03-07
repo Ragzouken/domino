@@ -47,6 +47,11 @@ function getElementCenter(element) {
     return [element.clientWidth / 2, element.clientHeight / 2];
 }
 
+function getElementCenterClient(element) {
+    const rect = element.getBoundingClientRect();
+    return [rect.x + rect.width / 2, rect.y + rect.height / 2];
+}
+
 function setElementDragoverDropEffect(query, effect) {
     addListener(query, 'dragover', event => {
         killEvent(event);

@@ -1,11 +1,25 @@
 'use strict';
 
 const cardSpacing = [remToPx(2), remToPx(2)];
-const types = ['black', 'red', 'green', 'blue'];
+
+const cardStyleRegex = /\.domino-card-([a-zA-Z0-9-_]+)/;
+function findCardStyleNames() {
+    const styles = new Set();
+    Array.from(document.styleSheets).forEach(sheet => {
+        try {
+            for (const rule of sheet.cssRules) {
+                const names = rule.selectorText.match(cardStyleRegex);
+                if (names)
+                    styles.add(names[1]);
+            }
+        } catch (e) {}
+    });
+    return Array.from(styles);
+}
 
 function parseFakedown(text) {
     if (text.startsWith('`'))
-        text = `<pre>${text.slice(1)}</pre>`;
+        return `<pre>${text.slice(1)}</pre>`;
     text = text.replace(/([^-])--([^-])/g, '$1—$2');
     text = text.replace(/__([^__]*)__/g, '<strong>$1</strong>');
     text = text.replace(/_([^_]*)_/g, '<em>$1</em>');
@@ -292,7 +306,7 @@ class Domino {
                 }
     
                 if (content) {
-                    const card = { text: content, type: 'black', cell: dropCell };
+                    const card = { text: content, type: this.editorScreen.types[0], cell: dropCell };
                     const view = this.addCard(card);
                     view.triggerSpawnAnimation();
                     this.editorScreen.setActiveView(view);
@@ -337,6 +351,8 @@ class CardEditor {
         this.root = ONE('#editor-screen');
         this.contentInput = ONE('#content-input', this.root);
         this.typeButtons = {};
+
+        this.types = findCardStyleNames();
 
         const names = ['text', 'icons', 'style'];
         const tabs = {};
@@ -383,8 +399,12 @@ class CardEditor {
 
         const typeSelect = ONE('#type-select');
 
-        for (let type of types) {
-            const button = ONE(`.${type}`, typeSelect);
+        for (let type of this.types) {
+            const button = document.createElement('div');
+            button.classList.add(`domino-card-${type}`, 'type-button');
+            button.setAttribute('title', `change card style to ${type}`);
+            typeSelect.appendChild(button);
+
             button.addEventListener('click', () => this.setType(type));
             this.typeButtons[type] = button;
         }
@@ -409,7 +429,7 @@ class CardEditor {
     refreshFromCard() {
         if (!this.activeView) return;
 
-        for (let type of types)
+        for (let type of this.types)
             this.typeButtons[type].classList.remove('selected');
         this.typeButtons[this.activeView.card.type].classList.add('selected');
         this.contentInput.value = this.activeView.card.text;
@@ -475,8 +495,9 @@ class CardView {
     }
 
     refresh() {
-        this.root.classList.remove(...types);
-        this.root.classList.add(this.card.type);
+        const types = domino.editorScreen.types;
+        this.root.classList.remove(...types.map(t => `domino-card-${t}`));
+        this.root.classList.add(`domino-card-${this.card.type}`);
         this.text.innerHTML = parseFakedown(this.card.text);
 
         this.icons.innerHTML = "";

@@ -8,7 +8,7 @@
     <meta name="twitter:image" value="https://kool.tools/domino/twitter-card.png">
     <meta name="twitter:image:alt" value="low fidelity image of many dominoes connected">
     <title>domino</title>
-    <script id="data" type="text/json">{"cards":[{"text":"**domino**a tool for collaging thoughts","type":"black","cell":[0,0]},{"text":"this is an exported domino project but it also includes the editor","type":"green","cell":[-1,0]},{"text":"make your own changes and re-export?","type":"blue","cell":[-2,0]},{"text":"development source code available by clicking 👩‍💻 below. you can also view the source in your web browser's menu","type":"green","icons":[{"icon":"👩‍💻","command":"https://github.com/Ragzouken/domino"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[0,1]},{"text":"everything is a single standalone html file that makes a copy of itself when you export a project","type":"green","cell":[-1,1]},{"text":"i'm using pug to generate the html so i can edit the scripts/style/etc separately rather than in one long html file","type":"green","cell":[-1,2]},{"text":"usually i make my tools in typescript via create-react-app (without react)--doing it raw (and now via pug) has been surprisingly easy","type":"green","cell":[-2,2]},{"text":"click anywhere on the board to navigate there","type":"blue","cell":[1,-2]},{"text":"it's supposed to work on mobile, but there's some issues with the dragging, and the editor is clunky","type":"red","cell":[1,0]},{"text":"click the compass icon 🧭 to return to the center of the board","type":"blue","cell":[2,-2]},{"text":"click and drag the cards icon (🗃) onto an empty cell to create a new card","type":"blue","cell":[3,-2]},{"text":"i like the idea that just by distributing an export you're also distributing the tool for someone to create their own","type":"red","cell":[-2,1]},{"text":"a self-replicating and mutating tool?","type":"red","icons":[{"icon":"🧬","command":"https://kool.tools/domino/digital-organism.html"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[-3,1]},{"text":"changing the css and javascript should be straight-forward, if you want to customise","type":"green","cell":[-3,2]},{"text":"everything is cards with text in it","type":"green","cell":[1,-1]},{"text":"domino is attempting to be a tool i can use to collage thought fragments in a presentable way","type":"red","cell":[0,-1]},{"text":"it's supposed to be kinda like a mind map, but with all links implied by proximity","type":"red","cell":[0,-2]},{"text":"been thinking also about adding a list of bookmarked cards to help navigate","type":"red","cell":[1,-3]},{"text":"tweet feedback to me: @ragzouken on twitter","type":"blue","icons":[{"icon":"🐦","command":"http://twitter.com/ragzouken"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[0,2]},{"text":"click the info icon ❔ to open the menu","type":"blue","cell":[3,-3]},{"text":"you can click \"❌ remove all cards\" to completely clear the board--be careful, there is no undo!","type":"green","cell":[4,-3]},{"text":"click \"📂 import from html\" to load domino board for editing","type":"blue","cell":[3,-4]},{"text":"click \"📦 export to html\" to save the board to html","type":"blue","cell":[4,-4]},{"text":"a domino board exported to html can be uploaded as a viewable webpage, imported into domino to edit, or used to edit itself","type":"green","icons":[{"icon":"🎴","command":"#-3,1"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[4,-5]},{"text":"click the lock icon 🔓 to lock the board and prevent accidental changes when reading a board","type":"blue","cell":[2,-4]},{"text":"<s>oh! most importantly (i think) i need to default to a \"viewing mode\" with no editing--just for user ease</s>","type":"red","cell":[2,-5]},{"text":"<s>there's some appeal to just... keeping the immediate editability up front and visible... but the editor adds visual noise</s>","type":"red","cell":[3,-6]},{"text":"<s>i need to clean up the ui (put import/export behind a menu, position the editor more nicely...) </s>","type":"red","cell":[3,-5]},{"text":"\"domino\" because putting thoughts with something in common adjacent to each other reminded me of matching dominoes","type":"red","cell":[0,-3]},{"text":"i need to clean up the html/css/javascript now things are solidifying--want it to be robust straight forward to modify","type":"red","cell":[-2,-1]},{"text":"you can't see enough cards at once on mobile, navigation is clunky, pinch zoom is desirable, and <s>the editor panel needs work</s>","type":"red","cell":[1,1]},{"text":"read more about the inspiration and goals of domino on my blog (✍)","type":"blue","icons":[{"icon":"✍","command":"https://candle.neocities.org/2020/02/26/speculations.html"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[0,-4]},{"text":"i was intending to add expandable cards i.e an expand button to see like a blog post or something in a larger window","type":"red","cell":[0,-5]},{"text":"<s>now thinking i'll have the ability to put buttons at the bottom of each card</s>--they can <s>jump to cards</s>, expand to more text, <s>external link</s>","type":"red","cell":[-1,-4]},{"text":"<s>yeah i probably wanna add better support for linking to other pages</s>, and maybe header cards too...","type":"red","cell":[1,-5]},{"text":"click on a card and then the writing icon 📝 to edit that card","type":"blue","cell":[2,-1]},{"text":"click and drag to move cards around the board (moving to free spaces or swapping with an existing card)","type":"blue","cell":[2,-3]},{"text":"drag a card onto cards icon (🗃) to remove it","type":"blue","cell":[4,-2]},{"text":"<pre>⠀⠀ ⠀  🤠      howdy. im\n　  🤠🤠🤠   the sheriff\n   🤠 🤠 🤠   of cowboy\n  👇  🤠🤠 👇  hat face\n     🤠　🤠\n　  🤠　 🤠","type":"black","icons":[{"icon":"👢","command":""},{"icon":"👢","command":""},{"icon":"","command":""},{"icon":"🐍","command":"#0,0"}],"cell":[4,0]},{"text":"card icons are a way to add hyperlinks (and later, more) to cards. each card has room for four emoji links","type":"green","icons":[{"icon":"🌞","command":"https://solar.lowtechmagazine.com/"},{"icon":"🦀","command":"https://emmadaues.neocities.org/"},{"icon":"🏰","command":"https://spdrcstl.com/"},{"icon":"🐞","command":"https://emreed.net/"}],"cell":[2,0]},{"text":"you can hyperlink to another card by using the coordinates like #3,3 (check the url bar)","type":"green","icons":[{"icon":"🤠","command":"#4,0"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[2,1]}]}</script>
+    <script id="data" type="text/json">{"cards":[{"text":"**domino**a tool for collaging thoughts","type":"black","cell":[0,0]},{"text":"this is an exported domino project but it also includes the editor","type":"green","cell":[-1,0]},{"text":"make your own changes and re-export?","type":"blue","cell":[-2,0]},{"text":"development source code available by clicking 👩‍💻 below. you can also view the source in your web browser's menu","type":"green","icons":[{"icon":"👩‍💻","command":"https://github.com/Ragzouken/domino"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[0,1]},{"text":"everything is a single standalone html file that makes a copy of itself when you export a project","type":"green","cell":[-1,1]},{"text":"i'm using pug to generate the html so i can edit the scripts/style/etc separately rather than in one long html file","type":"green","cell":[-1,2]},{"text":"usually i make my tools in typescript via create-react-app (without react)--doing it raw (and now via pug) has been surprisingly easy","type":"green","cell":[-2,2]},{"text":"click anywhere on the board to navigate there","type":"blue","cell":[1,-2]},{"text":"it's supposed to work on mobile, but there's some issues with the dragging, and the editor is clunky","type":"red","cell":[1,0]},{"text":"click the compass icon 🧭 to return to the center of the board","type":"blue","cell":[2,-2]},{"text":"click and drag the cards icon (🗃) onto an empty cell to create a new card","type":"blue","cell":[3,-2]},{"text":"i like the idea that just by distributing an export you're also distributing the tool for someone to create their own","type":"red","cell":[-2,1]},{"text":"a self-replicating and mutating tool?","type":"red","icons":[{"icon":"🧬","command":"https://kool.tools/domino/digital-organism.html"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[-3,1]},{"text":"changing the css and javascript should be straight-forward, if you want to customise","type":"green","cell":[-3,2]},{"text":"everything is cards with text in it","type":"green","cell":[1,-1]},{"text":"domino is attempting to be a tool i can use to collage thought fragments in a presentable way","type":"red","cell":[0,-1]},{"text":"it's supposed to be kinda like a mind map, but with all links implied by proximity","type":"red","cell":[0,-2]},{"text":"been thinking also about adding a list of bookmarked cards to help navigate","type":"red","cell":[1,-3]},{"text":"tweet feedback to me: @ragzouken on twitter","type":"blue","icons":[{"icon":"🐦","command":"http://twitter.com/ragzouken"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[0,2]},{"text":"click the info icon ❔ to open the menu","type":"blue","cell":[3,-3]},{"text":"you can click \"❌ remove all cards\" to completely clear the board--be careful, there is no undo!","type":"green","cell":[4,-3]},{"text":"click \"📂 import from html\" to load domino board for editing","type":"blue","cell":[3,-4]},{"text":"click \"📦 export to html\" to save the board to html","type":"blue","cell":[4,-4]},{"text":"a domino board exported to html can be uploaded as a viewable webpage, imported into domino to edit, or used to edit itself","type":"green","icons":[{"icon":"🎴","command":"#-3,1"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[4,-5]},{"text":"click the lock icon 🔓 to lock the board and prevent accidental changes when reading a board","type":"blue","cell":[2,-4]},{"text":"<s>oh! most importantly (i think) i need to default to a \"viewing mode\" with no editing--just for user ease</s>","type":"red","cell":[2,-5]},{"text":"<s>there's some appeal to just... keeping the immediate editability up front and visible... but the editor adds visual noise</s>","type":"red","cell":[3,-6]},{"text":"<s>i need to clean up the ui (put import/export behind a menu, position the editor more nicely...) </s>","type":"red","cell":[3,-5]},{"text":"\"domino\" because putting thoughts with something in common adjacent to each other reminded me of matching dominoes","type":"red","cell":[0,-3]},{"text":"i need to clean up the html/css/javascript now things are solidifying--want it to be robust straight forward to modify","type":"red","cell":[-2,-1]},{"text":"you can't see enough cards at once on mobile, navigation is clunky, pinch zoom is desirable, and <s>the editor panel needs work</s>","type":"red","cell":[1,1]},{"text":"read more about the inspiration and goals of domino on my blog (✍)","type":"blue","icons":[{"icon":"✍","command":"https://candle.neocities.org/2020/02/26/speculations.html"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[0,-4]},{"text":"i was intending to add expandable cards i.e an expand button to see like a blog post or something in a larger window","type":"red","cell":[0,-5]},{"text":"<s>now thinking i'll have the ability to put buttons at the bottom of each card</s>--they can <s>jump to cards</s>, expand to more text, <s>external link</s>","type":"red","cell":[-1,-4]},{"text":"<s>yeah i probably wanna add better support for linking to other pages</s>, and maybe header cards too...","type":"red","cell":[1,-5]},{"text":"click on a card and then the writing icon 📝 to edit that card","type":"blue","cell":[2,-1]},{"text":"click and drag to move cards around the board (moving to free spaces or swapping with an existing card)","type":"blue","cell":[2,-3]},{"text":"drag a card onto cards icon (🗃) to remove it","type":"blue","cell":[4,-2]},{"text":"`⠀⠀ ⠀  🤠      howdy. im\n　  🤠🤠🤠   the sheriff\n   🤠 🤠 🤠   of cowboy\n  👇  🤠🤠 👇  hat face\n     🤠　🤠\n　  🤠　 🤠","type":"black","icons":[{"icon":"👢","command":""},{"icon":"👢","command":""},{"icon":"","command":""},{"icon":"🐍","command":"#0,0"}],"cell":[4,0]},{"text":"card icons are a way to add hyperlinks (and later, more) to cards. each card has room for four emoji links","type":"green","icons":[{"icon":"🌞","command":"https://solar.lowtechmagazine.com/"},{"icon":"🦀","command":"https://emmadaues.neocities.org/"},{"icon":"🏰","command":"https://spdrcstl.com/"},{"icon":"🐞","command":"https://emreed.net/"}],"cell":[2,0]},{"text":"you can hyperlink to another card by using the coordinates like #3,3 (check the url bar)","type":"green","icons":[{"icon":"🤠","command":"#4,0"},{"icon":"","command":""},{"icon":"","command":""},{"icon":"","command":""}],"cell":[2,1]}]}</script>
     <link href="https://fonts.googleapis.com/css?family=Lora&display=swap" rel="stylesheet">
     <style>:root {
     --light: rgb(255, 245, 209);
@@ -26,14 +26,14 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
-.black { 
+.domino-card-black { 
     background: var(--black-stiple) repeat; 
 
     display: flex !important;
     align-items: center;
 }
 
-.black strong { 
+.domino-card-black strong { 
     display: block; 
     font-size: 1.5em; 
     font-weight: bold;
@@ -41,9 +41,9 @@
     margin-bottom: .5em;
 }
 
-.red   { background: var(--red-stiple)   repeat; }
-.green { background: var(--green-stiple) repeat; }
-.blue  { background: var(--blue-stiple)  repeat; }
+.domino-card-red   { background: var(--red-stiple)   repeat; }
+.domino-card-green { background: var(--green-stiple) repeat; }
+.domino-card-blue  { background: var(--blue-stiple)  repeat; }
 
 /* hidden elements should be hidden regardless of their display style */
 [hidden] { 
@@ -543,11 +543,25 @@ var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof na
     <script>'use strict';
 
 const cardSpacing = [remToPx(2), remToPx(2)];
-const types = ['black', 'red', 'green', 'blue'];
+
+const cardStyleRegex = /\.domino-card-([a-zA-Z0-9-_]+)/;
+function findCardStyleNames() {
+    const styles = new Set();
+    Array.from(document.styleSheets).forEach(sheet => {
+        try {
+            for (const rule of sheet.cssRules) {
+                const names = rule.selectorText.match(cardStyleRegex);
+                if (names)
+                    styles.add(names[1]);
+            }
+        } catch (e) {}
+    });
+    return Array.from(styles);
+}
 
 function parseFakedown(text) {
     if (text.startsWith('`'))
-        text = `<pre>${text.slice(1)}</pre>`;
+        return `<pre>${text.slice(1)}</pre>`;
     text = text.replace(/([^-])--([^-])/g, '$1—$2');
     text = text.replace(/__([^__]*)__/g, '<strong>$1</strong>');
     text = text.replace(/_([^_]*)_/g, '<em>$1</em>');
@@ -834,7 +848,7 @@ class Domino {
                 }
     
                 if (content) {
-                    const card = { text: content, type: 'black', cell: dropCell };
+                    const card = { text: content, type: this.editorScreen.types[0], cell: dropCell };
                     const view = this.addCard(card);
                     view.triggerSpawnAnimation();
                     this.editorScreen.setActiveView(view);
@@ -879,6 +893,8 @@ class CardEditor {
         this.root = ONE('#editor-screen');
         this.contentInput = ONE('#content-input', this.root);
         this.typeButtons = {};
+
+        this.types = findCardStyleNames();
 
         const names = ['text', 'icons', 'style'];
         const tabs = {};
@@ -925,8 +941,12 @@ class CardEditor {
 
         const typeSelect = ONE('#type-select');
 
-        for (let type of types) {
-            const button = ONE(`.${type}`, typeSelect);
+        for (let type of this.types) {
+            const button = document.createElement('div');
+            button.classList.add(`domino-card-${type}`, 'type-button');
+            button.setAttribute('title', `change card style to ${type}`);
+            typeSelect.appendChild(button);
+
             button.addEventListener('click', () => this.setType(type));
             this.typeButtons[type] = button;
         }
@@ -951,7 +971,7 @@ class CardEditor {
     refreshFromCard() {
         if (!this.activeView) return;
 
-        for (let type of types)
+        for (let type of this.types)
             this.typeButtons[type].classList.remove('selected');
         this.typeButtons[this.activeView.card.type].classList.add('selected');
         this.contentInput.value = this.activeView.card.text;
@@ -1017,8 +1037,9 @@ class CardView {
     }
 
     refresh() {
-        this.root.classList.remove(...types);
-        this.root.classList.add(this.card.type);
+        const types = domino.editorScreen.types;
+        this.root.classList.remove(...types.map(t => `domino-card-${t}`));
+        this.root.classList.add(`domino-card-${this.card.type}`);
         this.text.innerHTML = parseFakedown(this.card.text);
 
         this.icons.innerHTML = "";
@@ -1104,12 +1125,7 @@ async function loaded() {
           <input class="icon-command" id="editor-icon-command-4" type="text">
         </div>
         <div class="editor-page" id="editor-page-style" hidden>
-          <div id="type-select">
-            <div class="type-button black"></div>
-            <div class="type-button red"></div>
-            <div class="type-button green"></div>
-            <div class="type-button blue"></div>
-          </div>
+          <div id="type-select" data-export-clear></div>
         </div>
       </div>
     </div>

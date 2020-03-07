@@ -14,14 +14,14 @@
     --card-height: calc(var(--card-width) * .6);
 }
 
-.black { 
+.domino-card-black { 
     background: var(--black-stiple) repeat; 
 
     display: flex !important;
     align-items: center;
 }
 
-.black strong { 
+.domino-card-black strong { 
     display: block; 
     font-size: 1.5em; 
     font-weight: bold;
@@ -29,9 +29,9 @@
     margin-bottom: .5em;
 }
 
-.red   { background: var(--red-stiple)   repeat; }
-.green { background: var(--green-stiple) repeat; }
-.blue  { background: var(--blue-stiple)  repeat; }
+.domino-card-red   { background: var(--red-stiple)   repeat; }
+.domino-card-green { background: var(--green-stiple) repeat; }
+.domino-card-blue  { background: var(--blue-stiple)  repeat; }
 
 /* hidden elements should be hidden regardless of their display style */
 [hidden] { 

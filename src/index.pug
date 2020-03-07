@@ -1,6 +1,5 @@
 - var date = (new Date()).toLocaleDateString();
 - var font = "https://fonts.googleapis.com/css?family=Lora&display=swap"
-- var types = ["black", "red", "green", "blue"]
 
 doctype html
 html
@@ -52,9 +51,7 @@ html
                         input(id=`editor-icon-select-${row}`, type="text").icon-select
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
                 #editor-page-style.editor-page(hidden)
-                    #type-select
-                        each type_ in types
-                            div(class="type-button " + type_)
+                    #type-select(data-export-clear)
                 
         #about-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)

@@ -353,6 +353,7 @@ class Domino {
             const [clientX, clientY] = getElementCenterClient(screen);
             const pixel = eventToElementPixel({ clientX, clientY }, this.scene);
             const [q, r] = this.grid.pixelToCell(pixel);
+            this.focusedCell = [q, r];
             location.hash = coordsToKey([q, r]);
             ONE('#coords').innerHTML = `#${q},${r}`;
         });
@@ -438,6 +439,12 @@ class Domino {
     
     deselect() { this.selectCardView(undefined); }
 
+    editFocusedCell() {
+        const view = this.cellToView.get(this.focusedCell);
+        if (view)
+            this.editCardView(view);
+    }
+
     editCardView(view) {
         if (!this.selectCardView) return;
         this.editorScreen.hidden = false;
@@ -466,7 +473,7 @@ class CardEditor {
         const tabs = {};
         const pages = {};
 
-        function setPage(name) {
+        this.setPage = (name) => {
             names.forEach(name => {
                 tabs[name].classList.remove('selected');
                 pages[name].hidden = true;
@@ -478,10 +485,10 @@ class CardEditor {
         for (let name of names) {
             tabs[name] = ONE(`#editor-tab-${name}`, this.root);
             pages[name] = ONE(`#editor-page-${name}`, this.root);
-            addListener(tabs[name], 'click', () => setPage(name));
+            addListener(tabs[name], 'click', () => this.setPage(name));
         }
 
-        setPage(names[0]);
+        this.setPage(names[0]);
 
         this.iconRows = [];
 
@@ -530,7 +537,8 @@ class CardEditor {
 
     setActiveView(view) {
         this.activeView = view;
-
+        this.setPage('text');
+        this.contentInput.select();
         this.refreshFromCard();
     }
 
@@ -649,7 +657,15 @@ async function loaded() {
 
     // keyboard shortcuts
     window.addEventListener('keydown', event => {
+        if (event.key === 'Escape')
+            domino.editorScreen.hidden = true;
+
         if (!domino.editorScreen.hidden) return;
+
+        if (event.key === 'e') {
+            killEvent(event);
+            domino.editFocusedCell();
+        }
 
         const [q, r] = domino.focusedCell;
         if (event.key === 'ArrowLeft')  domino.focusCell([q - 1, r + 1]);

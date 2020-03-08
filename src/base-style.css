@@ -1,19 +1,17 @@
 :root {
-    --light: rgb(255, 245, 209);
-    --dark: rgb(240, 248, 255);
-    --red: #d11305;
-    --green: #006951;
-    --blue: #162dab;
-  
-    --red-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHUlEQVQYV2O8JMKapvfm9ywGKGCEMTAEYCoxVAAAT4UIBcKIFHsAAAAASUVORK5CYII=);
-    --green-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkyOJpYJj2pYEBChhhDEwBqEoMFQD4ngYFtMbpQAAAAABJRU5ErkJggg==);
-    --blue-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkSLmZxjBHfRYDFDDCGJgCUJUYKgD+BgYFL5bp8wAAAABJRU5ErkJggg==);
-    --black-stiple: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAHElEQVQYV2NkYGBIY2BgmMUABYwwBjYBsEoMFQBSHgIFwNTCZwAAAABJRU5ErkJggg==);
-
-    --card-width: 15rem;
-    --card-height: calc(var(--card-width) * .6);
+    --editor-background: rgb(240, 248, 255);
 
     touch-action: none;
+}
+
+.card h3 {
+    display: block; 
+    font-size: 1.5em; 
+    font-weight: bold;
+    text-align: center;
+
+    margin: 0;
+    margin-bottom: .5em;
 }
 
 #coords {
@@ -25,7 +23,9 @@
     margin: .25em;
     padding: .25em .5em;
     border-radius: .75em;
-    background: var(--light);
+
+    color: var(--background-text-color);
+    background: var(--background-color);
 }
 
 #display-image {
@@ -58,27 +58,6 @@
     padding: 0;
     overflow: hidden;
 }
-
-.domino-card-black { 
-    background: var(--black-stiple) repeat; 
-
-    display: flex !important;
-    align-items: center;
-}
-
-.card h3 {
-    display: block; 
-    font-size: 1.5em; 
-    font-weight: bold;
-    text-align: center;
-
-    margin: 0;
-    margin-bottom: .5em;
-}
-
-.domino-card-red   { background: var(--red-stiple)   repeat; }
-.domino-card-green { background: var(--green-stiple) repeat; }
-.domino-card-blue  { background: var(--blue-stiple)  repeat; }
 
 /* hidden elements should be hidden regardless of their display style */
 [hidden] { 
@@ -114,7 +93,7 @@ html {
 }
 
 html {
-    background: var(--light);
+    background: var(--background-color);
 
     font-family: lora;
     font-size: 1.1em;
@@ -168,7 +147,7 @@ main {
     height: 100%;
     max-width: 100%;
 
-    background-color: var(--light);
+    background-color: var(--background-color);
 
     overflow: auto;
 }
@@ -178,7 +157,7 @@ main {
     position: absolute;
     padding: 1em;
     
-    background: var(--dark);
+    background: var(--editor-background);
     pointer-events: initial;
 
     left: 50%;
@@ -223,40 +202,24 @@ main {
 }
 
 .card {
+    box-sizing: content-box;
     position: absolute;
     cursor: pointer;
 
     transition: transform .2s ease-in-out;
 
-    padding: 1em;
-    width: calc(var(--card-width) - 2em);
-    height: calc(var(--card-height) - 2em);
+    width: var(--card-width);
+    height: var(--card-height);
 
-    display: inline-block;
+    display: flex;
     margin: 0 0 1em;
     word-wrap: break-word;
-
-    border-bottom: 2px solid black;
-
-    text-shadow: 
-        0 0 3px var(--light), 
-        0 0 3px var(--light), 
-        0 0 3px var(--light), 
-        0 0 3px var(--light),
-        0 0 3px var(--light), 
-        0 0 3px var(--light), 
-        0 0 3px var(--light), 
-        0 0 3px var(--light);
-}
-
-.card::selection {
-    background: Highlight;
-    color: HighlightText;
-    text-shadow: none;
 }
 
 .card-text {
+    box-sizing: border-box;
     width: 100%;
+    padding: 1em;
 }
 
 #version {
@@ -309,15 +272,6 @@ main {
     cursor: pointer;
     border: none;
     background: none;
-    text-shadow: 
-    0 0 3px var(--light), 
-    0 0 3px var(--light), 
-    0 0 3px var(--light), 
-    0 0 3px var(--light),
-    0 0 3px var(--light), 
-    0 0 3px var(--light), 
-    0 0 3px var(--light), 
-    0 0 3px var(--light);
 
     transition: transform .1s ease-in-out;
 }
@@ -364,7 +318,7 @@ main {
 }
 
 #editor-section {
-    background: var(--dark);
+    background: var(--editor-background);
     pointer-events: initial;
     cursor: initial;
 
@@ -387,20 +341,21 @@ main {
 #editor-tabs {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    background: var(--black-stiple);
+    color: white;
+    background:black;
 }
 
 #editor-tabs > div {
     padding: 1em;
     border: initial;
-    /*border-bottom: 2px solid black;*/
 
     text-align: center;
 }
 
 #editor-tabs > div.selected {
     border: none;
-    background: var(--dark);
+    color: black;
+    background: var(--editor-background);
 }
 
 .editor-page {

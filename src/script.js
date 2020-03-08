@@ -307,6 +307,12 @@ class Domino {
             this.focusCell(pointerEventToCell(event));
         }
 
+        const styleEditor = ONE('#style-input');
+        styleEditor.addEventListener('input', () => {
+            ONE('#user-style').innerHTML = styleEditor.value;
+            this.editorScreen.refreshAvailableStyles();
+        });
+
         // clicking listeners
         addListener(cardEditButton, 'click', () => this.editCardView(this.selectedCardView));
         addListener('#center',      'click', () => location.hash = '0,0');
@@ -315,6 +321,11 @@ class Domino {
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
+        addListener('#style',       'click', () => {
+            this.aboutScreen.hidden = true;
+            ONE('#style-screen').hidden = false;
+            ONE('#style-input').value = ONE('#user-style').innerHTML;
+        });
 
         addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
@@ -465,9 +476,10 @@ class CardEditor {
     constructor() {
         this.root = ONE('#editor-screen');
         this.contentInput = ONE('#content-input', this.root);
+        this.typeSelect = ONE('#type-select');
         this.typeButtons = {};
 
-        this.types = findCardStyleNames();
+        this.refreshAvailableStyles();
 
         const names = ['text', 'icons', 'style'];
         const tabs = {};
@@ -512,18 +524,6 @@ class CardEditor {
             addListener(command, 'input', () => refreshIcons());
         }
 
-        const typeSelect = ONE('#type-select');
-
-        for (let type of this.types) {
-            const button = document.createElement('div');
-            button.classList.add(`domino-card-${type}`, 'type-button');
-            button.setAttribute('title', `change card style to ${type}`);
-            typeSelect.appendChild(button);
-
-            button.addEventListener('click', () => this.setType(type));
-            this.typeButtons[type] = button;
-        }
-
         this.contentInput.addEventListener('input', () => {
             if (!this.activeView) return;
 
@@ -534,6 +534,21 @@ class CardEditor {
 
     get hidden() { return this.root.hidden; }
     set hidden(value) { this.root.hidden = value; }
+
+    refreshAvailableStyles() {
+        this.types = findCardStyleNames();
+        this.typeSelect.innerHTML = '';
+
+        for (let type of this.types) {
+            const button = document.createElement('div');
+            button.classList.add(`domino-card-${type}`, 'type-button');
+            button.setAttribute('title', `change card style to ${type}`);
+            this.typeSelect.appendChild(button);
+
+            button.addEventListener('click', () => this.setType(type));
+            this.typeButtons[type] = button;
+        }
+    }
 
     setActiveView(view) {
         this.activeView = view;
@@ -658,9 +673,15 @@ async function loaded() {
     // keyboard shortcuts
     window.addEventListener('keydown', event => {
         if (event.key === 'Escape')
-            domino.editorScreen.hidden = true;
+            ALL('.screen').forEach(e => e.hidden = true);
 
-        if (!domino.editorScreen.hidden) return;
+        if (event.key === 's') {
+            ONE('#style-input').value = ONE('#user-style').innerHTML;
+            ONE('#style-screen').hidden = false;
+        }
+
+        const noScreens = ALL('.screen').map(e => e.hidden).reduce((a, b) => a && b);
+        if (!noScreens) return;
 
         if (event.key === 'e') {
             killEvent(event);

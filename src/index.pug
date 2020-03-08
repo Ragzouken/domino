@@ -59,6 +59,10 @@ html
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
                 #editor-page-style.editor-page(hidden)
                     #type-select(data-export-clear)
+        #style-screen.screen(hidden, data-click-to-hide)
+            .full-panel(data-block-clicks)
+                button(data-close-parent-screen) exit window
+                textarea#style-input
         #about-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
                 button(data-close-parent-screen) exit window
@@ -67,6 +71,7 @@ html
                     include version.txt
                     |  (#{date})
                 #project-menu
+                    button#style(title="change board style") 🎨 modify style
                     button#import(title="import a domino project") 📂 import from html
                     button#export(title="export as html") 📦 export to html
                     button#reset(title="remove all cards") ❌ remove all cards

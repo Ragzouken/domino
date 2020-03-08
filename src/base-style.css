@@ -398,3 +398,16 @@ main {
     grid-column-start: 2;
     grid-column-end: 5;
 }
+
+#style-screen > .full-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+#style-input {
+    margin-top: 1em;
+    box-sizing: border-box;
+    flex: 1;
+    width: 100%;
+    font-family: monospace;
+}

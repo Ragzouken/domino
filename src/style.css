@@ -28,7 +28,7 @@
     background: var(--light);
 }
 
-#display-image-frame {
+#display-image {
     position: absolute;
     left: 50%;
     top: 50%;

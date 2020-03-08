@@ -158,6 +158,7 @@ class Domino {
         const frame = ONE('#display-frame');
         const [w, h] = size;
         ONE('#display-screen').hidden = false;
+        frame.onerror = () => window.open(url);
         frame.src = url;
         frame.style.width = w;
         frame.style.height = h;
@@ -166,6 +167,10 @@ class Domino {
     displayImage(url) {
         ONE('#display-image').src = url;
         ONE('#display-image-screen').hidden = false;
+        ONE('#display-image').onerror = () => {
+            ONE('#display-image-screen').hidden = true;
+            window.open(url);
+        };
     }
 
     runCommand(command) {
@@ -638,7 +643,7 @@ async function loaded() {
     const coords = getCoordsFromHash();
     const data = getElementJsonData('#data');
     domino.setData(data);
-    domino.setUnlocked(true);
+    domino.setUnlocked(false);
     domino.focusCellNoTransition(coords);
 
     // keyboard shortcuts

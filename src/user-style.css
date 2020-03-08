@@ -1,5 +1,5 @@
 :root {
-    --background-color: rgb(246, 226, 255);
+    --background-color: rgb(255, 245, 209);
     --background-text-color: black;
 
     --card-width: 15rem;
@@ -22,10 +22,10 @@
 
 /* custom card styles */
 .domino-card-heading { 
-    background: rgb(255, 247, 238);
+    background: #F3E9C7;
     align-items: center;
 }
 
-.domino-card-basic-red   { background: rgb(233, 186, 255); }
-.domino-card-basic-green { background: rgb(213, 255, 240); }
-.domino-card-basic-blue  { background: rgb(205, 199, 255); }
+.domino-card-basic-red   { background: #FDE9C6; }
+.domino-card-basic-green { background: #F0EDC5; }
+.domino-card-basic-blue  { background: #F2EED2; }

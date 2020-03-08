@@ -54,8 +54,9 @@ function setupClassHooks() {
     });
 
     ALL('button').forEach(element => {
-        for (let name of clicks)
-            element.addEventListener(name, event => event.stopPropagation());
+        if (!element.draggable)
+            for (let name of clicks)
+                element.addEventListener(name, event => event.stopPropagation());
     })
 }
 

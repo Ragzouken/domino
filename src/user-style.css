@@ -25,6 +25,14 @@
     align-items: center;
 }
 
-.domino-card-basic-red   { background: #FDE9C6; }
-.domino-card-basic-green { background: #F0EDC5; }
-.domino-card-basic-blue  { background: #F2EED2; }
+.domino-card-basic-red   { 
+    background: #FDE9C6; 
+}
+
+.domino-card-basic-green { 
+    background: #F0EDC5; 
+}
+
+.domino-card-basic-blue  { 
+    background: #F2EED2; 
+}

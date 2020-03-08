@@ -307,8 +307,8 @@ class Domino {
             this.focusCell(pointerEventToCell(event));
         }
 
-        const styleEditor = ONE('#style-input');
-        styleEditor.addEventListener('input', () => {
+        this.styleInput = ONE('#style-input');
+        this.styleInput.addEventListener('input', () => {
             ONE('#user-style').innerHTML = styleEditor.value;
             this.editorScreen.refreshAvailableStyles();
         });
@@ -321,11 +321,7 @@ class Domino {
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
-        addListener('#style',       'click', () => {
-            this.aboutScreen.hidden = true;
-            ONE('#style-screen').hidden = false;
-            ONE('#style-input').value = ONE('#user-style').innerHTML;
-        });
+        addListener('#style',       'click', () => this.editStyle());
 
         addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
@@ -449,6 +445,13 @@ class Domino {
     }
     
     deselect() { this.selectCardView(undefined); }
+
+    editStyle() {
+        this.aboutScreen.hidden = true;
+        ONE('#style-screen').hidden = false;
+        this.styleInput.value = ONE('#user-style').innerHTML;
+        this.styleInput.focus();
+    }
 
     editFocusedCell() {
         const view = this.cellToView.get(this.focusedCell);
@@ -675,13 +678,13 @@ async function loaded() {
         if (event.key === 'Escape')
             ALL('.screen').forEach(e => e.hidden = true);
 
-        if (event.key === 's') {
-            ONE('#style-input').value = ONE('#user-style').innerHTML;
-            ONE('#style-screen').hidden = false;
-        }
-
         const noScreens = ALL('.screen').map(e => e.hidden).reduce((a, b) => a && b);
         if (!noScreens) return;
+
+        if (event.key === 's') {
+            killEvent(event);
+            domino.editStyle();
+        }
 
         if (event.key === 'e') {
             killEvent(event);

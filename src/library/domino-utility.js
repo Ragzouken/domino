@@ -1,5 +1,5 @@
 const ONE = (query, element) => (element || document).querySelector(query);
-const ALL = (query, element) => (element || document).querySelectorAll(query);
+const ALL = (query, element) => Array.from((element || document).querySelectorAll(query));
 
 const makeCounter = (count=0) => () => count++;
 const remToPx = em => emToPx(document.documentElement, em);

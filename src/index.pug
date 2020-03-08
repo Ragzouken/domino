@@ -38,6 +38,10 @@ html
             button#fullscreen(title="toggle fullscreen", hidden) 💢
             button#unlocked(title="prevent accidental editing") 🔓
             button#locked(title="enable editing", hidden) 🔒
+        #display-screen.screen(hidden, data-click-to-hide)
+            iframe#display-frame(data-block-clicks, allow="autoplay")
+        #display-image-screen.screen(hidden, data-click-to-hide)
+            image#display-image
         #editor-screen.screen(hidden, data-click-to-hide)
             #editor-preview
             #editor-section(data-block-clicks)
@@ -53,7 +57,6 @@ html
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
                 #editor-page-style.editor-page(hidden)
                     #type-select(data-export-clear)
-                
         #about-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
                 button(data-close-parent-screen) exit window

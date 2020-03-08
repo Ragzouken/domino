@@ -36,7 +36,7 @@ function parseFakedown(text) {
     return text;
 }
 
-const clicks = ['pointerdown', 'pointerup', 'click'];
+const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart'];
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
         for (let name of clicks)
@@ -44,10 +44,13 @@ function setupClassHooks() {
     });
     ALL('[data-click-to-hide]').forEach(element => {
         element.addEventListener('pointerdown', () => element.hidden = true);
+        for (let name of clicks)
+            element.addEventListener(name, event => event.stopPropagation());
     });
     ALL('[data-close-parent-screen]').forEach(element => {
         const screen = element.closest('.screen');
         element.addEventListener('click', () => screen.hidden = true);
+        element.addEventListener('pointerdown', () => screen.hidden = true);
     });
 
     ALL('button').forEach(element => {
@@ -151,11 +154,29 @@ class Domino {
         this.selectedCardView = undefined;
     }
 
+    display(url, size=[800, 600]) {
+        const frame = ONE('#display-frame');
+        const [w, h] = size;
+        ONE('#display-screen').hidden = false;
+        frame.src = url;
+        frame.style.width = w;
+        frame.style.height = h;
+    }
+
+    displayImage(url) {
+        ONE('#display-image').src = url;
+        ONE('#display-image-screen').hidden = false;
+    }
+
     runCommand(command) {
         if (command.startsWith('#')) {
             location.href = command;
-        } else if (command.startsWith('iframe:')) {
-            // everest style iframe embed
+        } else if (command.startsWith('image:')) {
+            const src = command.slice(6);
+            this.displayImage(src);
+        } else if (command.startsWith('display:')) {
+            const src = command.slice(8);
+            this.display(src);
         } else if (command.length > 0) {
             window.open(command);
         }

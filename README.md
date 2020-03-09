@@ -5,6 +5,9 @@ tools for developing the tool "domino"
 ## how to get started
 
 ### install developer dependencies
+install [nodejs](https://nodejs.org/en/) (this gives you `npm` which is used to
+install the next stuff) 
+
 install `pug-cli` (used to bundle everything into a single page according to the
 `index.pug` template), `light-server-pug` (used to preview changes live), and 
 `jstransformer-markdown-it` (used to generate the about page from markdown) 

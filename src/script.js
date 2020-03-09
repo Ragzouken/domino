@@ -369,13 +369,13 @@ class Domino {
         window.addEventListener('pointerdown', event => {
             this.pan = {
                 scenePosition: eventToElementPixel(event, this.scene),
-                moves: 0,
+                distance: 0,
             };
             this.scene.classList.add('skiptransition');
         });
 
         window.addEventListener('pointerup', () => {
-            const click = this.pan && this.pan.moves < 5;
+            const click = this.pan && this.pan.distance < 5;
             this.pan = undefined;
             this.scene.classList.remove('skiptransition');
             if (click) 
@@ -385,8 +385,6 @@ class Domino {
         window.addEventListener('pointermove', event => {
             if (!this.pan) return;
             
-            this.pan.moves += 1;
-
             // where we clicked in the scene
             const [sx, sy] = this.pan.scenePosition;
             // where we are in the scene now
@@ -395,6 +393,7 @@ class Domino {
             const [dx, dy] = [sx - ax, sy - ay];
             const [fx, fy] = this.focus;
             this.focus = [fx + dx, fy + dy];
+            this.pan.distance += Math.sqrt(dx * dx + dy * dy);
         });
 
         // file select listener

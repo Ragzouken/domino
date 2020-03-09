@@ -832,14 +832,19 @@ class Domino {
     set focus(focus) {
         this._focus = focus;
         this.refreshTransform();
+        this.refreshHash();
     }
 
-    set scaling(scaling) {
+    get focus() {
+        return this._focus;
+    }
+
+    set scale(scaling) {
         this._scaling = scaling;
         this.refreshTransform();
     }
 
-    get scaling() {
+    get scale() {
         return this._scaling;
     }
 
@@ -849,15 +854,17 @@ class Domino {
         this.scene.style.transform = `scale(${s}) translate(${-x}px, ${-y}px)`;
     }
 
+    refreshHash() {
+        const [q, r] = this.grid.pixelToCell(this.focus);
+        this.focusedCell = [q, r];
+        location.hash = coordsToKey([q, r]);
+        ONE('#coords').innerHTML = `#${q},${r}`;
+    }
+
     focusCell(coords) {
         if (this.pan) return;
-
         // TODO: move view for mobile editing...
-        this.focusedCell = coords;
         this.focus = this.grid.cellToPixel(coords);
-        location.hash = coordsToKey(coords);
-        const [q, r] = coords;
-        ONE('#coords').innerHTML = `#${q},${r}`;
     }
 
     focusCellNoTransition(coords) {
@@ -919,6 +926,12 @@ class Domino {
         });
     }
 
+    pointerEventToCell(event) {
+        const [x, y] = eventToElementPixel(event, this.scene);
+        const pixel = [x / this.scale, y / this.scale];
+        return this.grid.pixelToCell(pixel);
+    }
+
     clear() {
         this.deselect();
         this.scene.innerHTML = "";
@@ -967,7 +980,8 @@ class Domino {
         const onClickedEmptyCell = (event) => {
             killEvent(event);
             this.deselect();
-            this.focusCell(pointerEventToCell(event));
+            this.focusCell(this.pointerEventToCell(event));
+            this.scale = 1;
         }
 
         this.styleInput = ONE('#style-input');
@@ -1011,24 +1025,13 @@ class Domino {
             this.pan.moves += 1;
 
             // where we clicked in the scene
-            const [wx, wy] = this.pan.scenePosition;
+            const [sx, sy] = this.pan.scenePosition;
             // where we are in the scene now
             const [ax, ay] = eventToElementPixel(event, this.scene);
             // the error
-            const [ex, ey] = [wx - ax, wy - ay];
-            const [px, py] = this.panning;
-
-            const s = this._scaling;
-            this.focus = [ex - px, ey - py];
-            const [clientX, clientY] = getElementCenterClient(screen);
-            const [x, y] = eventToElementPixel({ clientX, clientY }, this.scene);
-            const [q, r] = this.grid.pixelToCell([x / s, y / s]);
-            this.focusedCell = [q, r];
-            location.hash = coordsToKey([q, r]);
-            ONE('#coords').innerHTML = `#${q},${r}`;
-
-            
-            ONE('#coords').innerHTML = `#${[ex, ey]}`;
+            const [dx, dy] = [sx - ax, sy - ay];
+            const [fx, fy] = this.focus;
+            this.focus = [fx + dx, fy + dy];
         });
 
         // file select listener
@@ -1054,17 +1057,9 @@ class Domino {
             this.removeCard(view);
         }
 
-        const pointerEventToCell = (event) => {
-            const clickPixel = eventToElementPixel(event, this.scene);
-            const [x, y] = clickPixel;
-            const s = this._scaling;
-            const clickCell = this.grid.pixelToCell([x / s, y / s]);
-            return clickCell;
-        }
-
         const onDroppedOnEmptyCell = (event) => {
             killEvent(event);
-            const dropCell = pointerEventToCell(event);
+            const dropCell = this.pointerEventToCell(event);
             
             const amMovingCard = event.dataTransfer.types.includes('card/move');
             const cellIsEmpty = !this.cellToView.has(dropCell);
@@ -1365,8 +1360,8 @@ async function loaded() {
         if (event.key === 'ArrowUp')    domino.focusCell([q + 0, r - 1]);
         if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
 
-        if (event.key === '=') domino.scaling *= 2;
-        if (event.key === '-') domino.scaling *= .5;
+        if (event.key === '=') domino.scale *= 2;
+        if (event.key === '-') domino.scale *= .5;
     });
 }
 

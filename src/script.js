@@ -1,7 +1,5 @@
 'use strict';
 
-const cardSpacing = [remToPx(2), remToPx(2)];
-
 const cardStyleRegex = /\.domino-card-([a-zA-Z0-9-_]+)/;
 function findCardStyleNames() {
     const styles = new Set();
@@ -71,6 +69,11 @@ function computeCardSize(parent) {
     const size = [testCard.clientWidth, testCard.clientHeight];
     parent.removeChild(testCard);
     return size;
+}
+
+function computeCardGap() {
+    const rect = ONE('#card-gap-measure').getBoundingClientRect();
+    return [rect.width, rect.height];
 }
 
 async function extractDataFromHtmlFile(file) {
@@ -199,6 +202,10 @@ class Domino {
         this.refreshTransform();
     }
 
+    get scaling() {
+        return this._scaling;
+    }
+
     refreshTransform() {
         const [x, y] = this._panning;
         const s = this._scaling;
@@ -212,6 +219,7 @@ class Domino {
         this.focusedCell = coords;
         const [cx, cy] = getElementCenter(element);
         const [nx, ny] = this.grid.cellToPixel(coords);
+        this.scaling = 1;
         const s = this._scaling;
         this.panning = [cx - nx * s, cy - ny * s];
         location.hash = coordsToKey(coords);
@@ -267,6 +275,17 @@ class Domino {
             this.moveCardToCell(bView, a);
     }
 
+    refreshStyle() {
+        this.editorScreen.refreshAvailableStyles();
+        const [cw, ch] = computeCardSize(this.scene);
+        const [sw, sh] = computeCardGap();
+        this.grid = new HexGrid([cw + sw, ch + sh]);
+
+        this.cellToView.store.forEach(view => {
+            this.moveCardToCell(view, view.card.cell);
+        });
+    }
+
     clear() {
         this.deselect();
         this.scene.innerHTML = "";
@@ -290,9 +309,8 @@ class Domino {
         this.editorScreen = new CardEditor();
         this.editorPreview = ONE('#editor-preview');
         this.scene = ONE('#scene');
-        const [cw, ch] = computeCardSize(this.scene);
-        const [sw, sh] = cardSpacing;
-        this.grid = new HexGrid([cw + sw, ch + sh]);
+        
+        this.refreshStyle();
 
         // hide fullscreen button if fullscreen is not possible
         if (!document.fullscreenEnabled)
@@ -322,7 +340,7 @@ class Domino {
         this.styleInput = ONE('#style-input');
         this.styleInput.addEventListener('input', () => {
             ONE('#user-style').innerHTML = this.styleInput.value;
-            this.editorScreen.refreshAvailableStyles();
+            this.refreshStyle();
         });
 
         // clicking listeners
@@ -369,9 +387,10 @@ class Domino {
 
             this.panning = [px - ex, py - ey];
 
+            const s = this._scaling;
             const [clientX, clientY] = getElementCenterClient(screen);
-            const pixel = eventToElementPixel({ clientX, clientY }, this.scene);
-            const [q, r] = this.grid.pixelToCell(pixel);
+            const [x, y] = eventToElementPixel({ clientX, clientY }, this.scene);
+            const [q, r] = this.grid.pixelToCell([x / s, y / s]);
             this.focusedCell = [q, r];
             location.hash = coordsToKey([q, r]);
             ONE('#coords').innerHTML = `#${q},${r}`;
@@ -711,7 +730,7 @@ async function loaded() {
         if (event.key === 'ArrowUp')    domino.focusCell([q + 0, r - 1]);
         if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
 
-        if (event.key === '=') domino.scaling = 1;
-        if (event.key === '-') domino.scaling = .5;
+        if (event.key === '=') domino.scaling *= 2;
+        if (event.key === '-') domino.scaling *= .5;
     });
 }

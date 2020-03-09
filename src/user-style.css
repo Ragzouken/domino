@@ -4,6 +4,8 @@
 
     --card-width: 15rem;
     --card-height: calc(var(--card-width) * .6);
+    --card-gap-horizontal: 2em;
+    --card-gap-vertical: 2em;
 }
 
 /* base style for cards */

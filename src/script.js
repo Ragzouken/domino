@@ -154,7 +154,7 @@ class Domino {
     constructor() {
         this.cellToView = new CoordStore();
         this.focusedCell = [0, 0];
-        this._panning = [0, 0];
+        this._focus = [0, 0];
         this._scaling = 1;
         this.selectedCardView = undefined;
     }
@@ -192,8 +192,8 @@ class Domino {
         }
     }
 
-    set panning(position) {
-        this._panning = position;
+    set focus(focus) {
+        this._focus = focus;
         this.refreshTransform();
     }
 
@@ -207,21 +207,17 @@ class Domino {
     }
 
     refreshTransform() {
-        const [x, y] = this._panning;
+        const [x, y] = this._focus;
         const s = this._scaling;
-        this.scene.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+        this.scene.style.transform = `scale(${s}) translate(${-x}px, ${-y}px)`;
     }
 
     focusCell(coords) {
         if (this.pan) return;
 
-        const element = this.editorScreen.hidden ? document.documentElement : this.editorPreview;
+        // TODO: move view for mobile editing...
         this.focusedCell = coords;
-        const [cx, cy] = getElementCenter(element);
-        const [nx, ny] = this.grid.cellToPixel(coords);
-        this.scaling = 1;
-        const s = this._scaling;
-        this.panning = [cx - nx * s, cy - ny * s];
+        this.focus = this.grid.cellToPixel(coords);
         location.hash = coordsToKey(coords);
         const [q, r] = coords;
         ONE('#coords').innerHTML = `#${q},${r}`;
@@ -383,17 +379,19 @@ class Domino {
             const [ax, ay] = eventToElementPixel(event, this.scene);
             // the error
             const [ex, ey] = [wx - ax, wy - ay];
-            const [px, py] = this._panning;
-
-            this.panning = [px - ex, py - ey];
+            const [px, py] = this.panning;
 
             const s = this._scaling;
+            this.focus = [ex - px, ey - py];
             const [clientX, clientY] = getElementCenterClient(screen);
             const [x, y] = eventToElementPixel({ clientX, clientY }, this.scene);
             const [q, r] = this.grid.pixelToCell([x / s, y / s]);
             this.focusedCell = [q, r];
             location.hash = coordsToKey([q, r]);
             ONE('#coords').innerHTML = `#${q},${r}`;
+
+            
+            ONE('#coords').innerHTML = `#${[ex, ey]}`;
         });
 
         // file select listener

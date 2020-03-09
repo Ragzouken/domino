@@ -116,6 +116,10 @@ button, textarea {
 }
 
 main {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
     transition: transform .2s ease-in-out;
     width: 0;
     height: 0;

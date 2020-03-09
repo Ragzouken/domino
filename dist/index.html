@@ -1362,6 +1362,11 @@ async function loaded() {
         if (event.key === '=') domino.scale *= 2;
         if (event.key === '-') domino.scale *= .5;
     });
+
+    window.addEventListener('wheel', event => {
+        if (event.deltaY > 0) domino.scale = .5;
+        if (event.deltaY < 0) domino.scale = 1;
+    });
 }
 
     </script>

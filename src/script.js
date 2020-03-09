@@ -152,6 +152,7 @@ class Domino {
         this.cellToView = new CoordStore();
         this.focusedCell = [0, 0];
         this._panning = [0, 0];
+        this._scaling = 1;
         this.selectedCardView = undefined;
     }
 
@@ -189,9 +190,19 @@ class Domino {
     }
 
     set panning(position) {
-        const [x, y] = position;
         this._panning = position;
-        this.scene.style.transform = `translate(${x}px, ${y}px)`;
+        this.refreshTransform();
+    }
+
+    set scaling(scaling) {
+        this._scaling = scaling;
+        this.refreshTransform();
+    }
+
+    refreshTransform() {
+        const [x, y] = this._panning;
+        const s = this._scaling;
+        this.scene.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
     }
 
     focusCell(coords) {
@@ -201,7 +212,8 @@ class Domino {
         this.focusedCell = coords;
         const [cx, cy] = getElementCenter(element);
         const [nx, ny] = this.grid.cellToPixel(coords);
-        this.panning = [cx - nx, cy - ny];
+        const s = this._scaling;
+        this.panning = [cx - nx * s, cy - ny * s];
         location.hash = coordsToKey(coords);
         const [q, r] = coords;
         ONE('#coords').innerHTML = `#${q},${r}`;
@@ -309,7 +321,7 @@ class Domino {
 
         this.styleInput = ONE('#style-input');
         this.styleInput.addEventListener('input', () => {
-            ONE('#user-style').innerHTML = styleEditor.value;
+            ONE('#user-style').innerHTML = this.styleInput.value;
             this.editorScreen.refreshAvailableStyles();
         });
 
@@ -390,7 +402,9 @@ class Domino {
 
         const pointerEventToCell = (event) => {
             const clickPixel = eventToElementPixel(event, this.scene);
-            const clickCell = this.grid.pixelToCell(clickPixel);
+            const [x, y] = clickPixel;
+            const s = this._scaling;
+            const clickCell = this.grid.pixelToCell([x / s, y / s]);
             return clickCell;
         }
 
@@ -696,5 +710,8 @@ async function loaded() {
         if (event.key === 'ArrowRight') domino.focusCell([q + 1, r - 1]);
         if (event.key === 'ArrowUp')    domino.focusCell([q + 0, r - 1]);
         if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
+
+        if (event.key === '=') domino.scaling = 1;
+        if (event.key === '-') domino.scaling = .5;
     });
 }

@@ -346,7 +346,7 @@ main {
     position: absolute;
     width: calc(var(--card-width) + 4em);
     max-width: 100%;
-    height: calc(100% - var(--card-height) * 2);
+    height: calc(100% - var(--card-height));
     max-height: calc(var(--card-height) * 2);
 
     left: 50%;

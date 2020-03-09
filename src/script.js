@@ -226,7 +226,6 @@ class Domino {
 
     focusCell(coords) {
         if (this.pan) return;
-        // TODO: move view for mobile editing...
         this.focus = this.grid.cellToPixel(coords);
     }
 

@@ -373,6 +373,8 @@ class Domino {
 
         addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
+        const panBlocker = ONE('#pan-blocker');
+
         this.pan = undefined;
         window.addEventListener('pointerdown', event => {
             this.pan = {
@@ -380,19 +382,20 @@ class Domino {
                 distance: 0,
             };
             this.scene.classList.add('skiptransition');
+            panBlocker.hidden = false;
         });
-
-        window.addEventListener('pointerup', () => {
+        
+        panBlocker.addEventListener('pointerup', event => {
+            panBlocker.hidden = true;
             const click = this.pan && this.pan.distance < 5;
             this.pan = undefined;
             this.scene.classList.remove('skiptransition');
             if (click) 
                 onClickedEmptyCell(event);
+            killEvent(event);
         });
 
-        window.addEventListener('pointermove', event => {
-            if (!this.pan) return;
-            
+        panBlocker.addEventListener('pointermove', event => {
             // where we clicked in the scene
             const [sx, sy] = this.pan.scenePosition;
             // where we are in the scene now
@@ -402,6 +405,8 @@ class Domino {
             const [fx, fy] = this.focus;
             this.focus = [fx + dx, fy + dy];
             this.pan.distance += Math.sqrt(dx * dx + dy * dy);
+
+            killEvent(event);
         });
 
         // file select listener

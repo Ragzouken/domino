@@ -146,6 +146,7 @@ main {
     left: 50%;
     top: 50%;
 
+    will-change: transform;
     transition: transform .2s ease-in-out;
     width: 0;
     height: 0;
@@ -155,6 +156,18 @@ main {
     box-sizing: border-box;
     width: var(--card-gap-horizontal);
     height: var(--card-gap-vertical);
+}
+
+#pan-blocker {
+    pointer-events: auto;
+    cursor: grabbing;
+    
+    position: absolute;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 .screen {
@@ -1025,6 +1038,8 @@ class Domino {
 
         addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
+        const panBlocker = ONE('#pan-blocker');
+
         this.pan = undefined;
         window.addEventListener('pointerdown', event => {
             this.pan = {
@@ -1032,19 +1047,20 @@ class Domino {
                 distance: 0,
             };
             this.scene.classList.add('skiptransition');
+            panBlocker.hidden = false;
         });
-
-        window.addEventListener('pointerup', () => {
+        
+        panBlocker.addEventListener('pointerup', event => {
+            panBlocker.hidden = true;
             const click = this.pan && this.pan.distance < 5;
             this.pan = undefined;
             this.scene.classList.remove('skiptransition');
             if (click) 
                 onClickedEmptyCell(event);
+            killEvent(event);
         });
 
-        window.addEventListener('pointermove', event => {
-            if (!this.pan) return;
-            
+        panBlocker.addEventListener('pointermove', event => {
             // where we clicked in the scene
             const [sx, sy] = this.pan.scenePosition;
             // where we are in the scene now
@@ -1054,6 +1070,8 @@ class Domino {
             const [fx, fy] = this.focus;
             this.focus = [fx + dx, fy + dy];
             this.pan.distance += Math.sqrt(dx * dx + dy * dy);
+
+            killEvent(event);
         });
 
         // file select listener
@@ -1434,6 +1452,7 @@ async function loaded() {
       <button id="unlocked" title="prevent accidental editing">🔓</button>
       <button id="locked" title="enable editing" hidden>🔒</button>
     </div>
+    <div id="pan-blocker" hidden></div>
     <div class="screen" id="display-screen" hidden data-click-to-hide>
       <iframe id="display-frame" data-block-clicks allow="autoplay"></iframe>
     </div>

@@ -794,8 +794,7 @@ async function loaded() {
         if (event.key === 'ArrowUp')    domino.focusCell([q + 0, r - 1]);
         if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
 
-        if (event.key === '=') domino.scale *= 2;
-        if (event.key === '-') domino.scale *= .5;
+        if (event.key === ' ') domino.scale = 1.5 - domino.scale;
     });
 
     window.addEventListener('wheel', event => {

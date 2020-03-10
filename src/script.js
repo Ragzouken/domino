@@ -117,8 +117,8 @@ function addCardViewListeners(domino, view) {
         if (!domino.unlocked) return;
 
         killEvent(event);
-        const newCard = event.dataTransfer.types.includes('card/new');
-        event.dataTransfer.dropEffect = newCard ? 'none' : 'move'; 
+        const move = event.dataTransfer.types.includes('card/move');
+        event.dataTransfer.dropEffect = move ? 'move' : 'none'; 
     });
     view.root.addEventListener('drop', event => {
         if (!domino.unlocked) return;
@@ -142,13 +142,7 @@ function getCoordsFromHash() {
     return [0, 0];
 }
 
-const dropContentTransformers = [
-    ['card/new',      c => 'new card'],
-    ['text/html',     c => c],
-    ['text/uri-list', c => c.split('\n').filter(uri => !uri.startsWith('#')).map(uri => `<a href="${uri}">link</a>`)],
-    ['text/plain',    c => c],
-    ['text',          c => c],
-];
+const dropContentPriority = ['text/html', 'text/plain', 'text'];
 
 class Domino {
     constructor() {
@@ -181,6 +175,10 @@ class Domino {
     runCommand(command) {
         if (command.startsWith('#')) {
             location.href = command;
+        } else if (command.startsWith('jump:')) {
+            location.href = '#' + command.slice(5);
+        } else if (command.startsWith('open:')) {
+            window.open(command.slice(5));
         } else if (command.startsWith('image:')) {
             const src = command.slice(6);
             this.displayImage(src);
@@ -234,6 +232,12 @@ class Domino {
         this.focusCell(coords);
         reflow(this.scene);
         this.scene.classList.remove('skiptransition');
+    }
+
+    spawnCard(card) {
+        const view = this.addCard(card);
+        view.triggerSpawnAnimation();
+        return view;
     }
 
     addCard(card) {
@@ -407,7 +411,7 @@ class Domino {
         setElementDragoverDropEffect(this.addDeleteCardIcon, 'move');
 
         const onDragFromNewCard = (event) => {
-            event.dataTransfer.setData('card/new', '');
+            event.dataTransfer.setData('text/plain', 'new card');
         }
 
         const onDroppedOnDelete = (event) => {
@@ -431,22 +435,33 @@ class Domino {
     
                 this.swapCells(originCell, dropCell);
             } else if (cellIsEmpty) {
-                let content = undefined;
+                let card = {
+                    text: '',
+                    type: this.editorScreen.types[0],
+                    icons: [],
+                    cell: dropCell,
+                };
     
-                for (let [field, transformer] of dropContentTransformers) {
-                    if (event.dataTransfer.types.includes(field)) {
-                        const data = event.dataTransfer.getData(field);
-                        content = transformer(data);
+                if (event.dataTransfer.types.includes('text/uri-list')) {
+                    const icon = '🔗';
+                    const text = event.dataTransfer.getData('text/uri-list');
+                    const uris = text.split('\n').filter(uri => !uri.startsWith('#'));
+                    const commands = uris.map(uri => uri.startsWith('jump:') ? uri : 'open:' + uri);
+                    card.icons = commands.map(command => { return { icon, command }; });
+                    for (let i = card.icons.length; i < 4; ++i)
+                        card.icons.push({ icon: '', command: '' });
+                } else {
+                    const types = event.dataTransfer.types;
+                    const supported = dropContentPriority.filter(type => types.includes(type));
+
+                    for (let type of supported) {
+                        card.text = event.dataTransfer.getData(type);
                         break;
                     }
                 }
-    
-                if (content) {
-                    const card = { text: content, type: this.editorScreen.types[0], cell: dropCell };
-                    const view = this.addCard(card);
-                    view.triggerSpawnAnimation();
-                    this.editorScreen.setActiveView(view);
-                }
+
+                const view = this.spawnCard(card);
+                this.editorScreen.setActiveView(view);
             }
         }
 
@@ -454,6 +469,13 @@ class Domino {
         addListener(this.editorScreen.root, 'drop', killEvent);
         addListener(this.addDeleteCardIcon, 'drop', onDroppedOnDelete);
         addListener(screen,                 'drop', onDroppedOnEmptyCell);
+
+        addListener('#coords', 'pointerdown', e => e.stopPropagation());
+        addListener('#coords', 'dragstart', event => {
+            console.log(location.fragment);
+            event.dataTransfer.setData('text/uri-list', 'jump:' + location.hash.slice(1));
+            event.stopPropagation();
+        });
     }
 
     setUnlocked(unlocked) {

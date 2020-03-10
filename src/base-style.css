@@ -26,6 +26,8 @@
 
     color: var(--background-text-color);
     background: var(--background-color);
+
+    cursor: copy;
 }
 
 #display-image {
@@ -33,6 +35,10 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+}
+
+#add-delete-icon {
+    cursor: copy;
 }
 
 #display-frame {
@@ -112,7 +118,7 @@ button, textarea {
     margin: 0;
     padding: 0;
 
-    cursor: pointer;
+    cursor: grab;
 }
 
 main {
@@ -319,6 +325,10 @@ main {
 
 #project-menu > button {
     grid-row: 1;
+}
+
+pre {
+    margin: 0;
 }
 
 #editor-preview {

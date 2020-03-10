@@ -1,3 +1,5 @@
+'use strict'
+
 const ONE = (query, element) => (element || document).querySelector(query);
 const ALL = (query, element) => Array.from((element || document).querySelectorAll(query));
 

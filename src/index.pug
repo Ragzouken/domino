@@ -11,16 +11,19 @@ html
         script#data(type="text/json")
             include default-board.json
         link(href!=font, rel="stylesheet")
-        style
-            include base-style.css
-        style#user-style
-            include user-style.css
-        script
-            include library/domino-utility.js
+        // third party libraries
         script
             include library/DragDropTouch.min.js
         script
             include library/FileSaver.min.js
+        // styles
+        style
+            include base-style.css
+        style#user-style
+            include user-style.css
+        // scripts
+        script
+            include library/domino-utility.js
         script
             include script.js
     body(onload="loaded()").no-select
@@ -33,7 +36,7 @@ html
         #screen
             #card-gap-measure
             main#scene(data-export-clear)
-        #coords #0,0
+        #coords(draggable="true") #0,0
         #toolbar.icon-bar
             button#open-about(title="information about this tool") ❔
             button#center(title="jump to center") 🏠

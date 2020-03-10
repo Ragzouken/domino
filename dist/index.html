@@ -235,19 +235,12 @@ main {
     column-gap: .5em;
 }
 
-#type-select > * {
-    height: 100%;
-    grid-row: 1;
-    border-bottom: 1px solid black;
+#type-select > button {
     cursor: pointer;
 }
 
-#type-select > *:hover {
-    height: calc(100% + .5em);
-}
-
-#type-select > *.selected {
-    height: calc(100% + .5em);
+#type-select > button.selected {
+    filter: invert();
 }
 
 .card {
@@ -1208,7 +1201,7 @@ class Domino {
         this.lockedButton.hidden = unlocked;
         this.unlockedButton.hidden = !unlocked;
 
-        ALL('.card').forEach(element => {
+        ALL('[data-card]').forEach(element => {
             element.setAttribute('draggable', unlocked ? 'true' : 'false');
         });
     }
@@ -1312,8 +1305,9 @@ class CardEditor {
         this.typeSelect.innerHTML = '';
 
         for (let type of this.types) {
-            const button = document.createElement('div');
-            button.classList.add(`domino-card-${type}`, 'type-button');
+            const button = document.createElement('button');
+            button.classList.add('type-button');
+            button.innerHTML = type;
             button.setAttribute('title', `change card style to ${type}`);
             this.typeSelect.appendChild(button);
 
@@ -1481,7 +1475,7 @@ async function loaded() {
   </head>
   <body class="no-select" onload="loaded()">
     <div id="templates" hidden>
-      <div class="card" id="card-template" draggable="true">
+      <div class="card" id="card-template" draggable="true" data-card>
         <div class="card-text"></div>
         <div class="card-icon-bar icon-bar"></div>
       </div>

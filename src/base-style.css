@@ -215,19 +215,12 @@ main {
     column-gap: .5em;
 }
 
-#type-select > * {
-    height: 100%;
-    grid-row: 1;
-    border-bottom: 1px solid black;
+#type-select > button {
     cursor: pointer;
 }
 
-#type-select > *:hover {
-    height: calc(100% + .5em);
-}
-
-#type-select > *.selected {
-    height: calc(100% + .5em);
+#type-select > button.selected {
+    filter: invert();
 }
 
 .card {

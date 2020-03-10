@@ -28,7 +28,7 @@ html
             include script.js
     body(onload="loaded()").no-select
         #templates(hidden)
-            #card-template.card(draggable="true")
+            #card-template.card(draggable="true", data-card)
                 .card-text
                 .card-icon-bar.icon-bar
             #cardbar-template.card-edit-bar.icon-bar(hidden)

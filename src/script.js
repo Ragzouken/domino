@@ -534,7 +534,7 @@ class Domino {
         this.lockedButton.hidden = unlocked;
         this.unlockedButton.hidden = !unlocked;
 
-        ALL('.card').forEach(element => {
+        ALL('[data-card]').forEach(element => {
             element.setAttribute('draggable', unlocked ? 'true' : 'false');
         });
     }
@@ -638,8 +638,9 @@ class CardEditor {
         this.typeSelect.innerHTML = '';
 
         for (let type of this.types) {
-            const button = document.createElement('div');
-            button.classList.add(`domino-card-${type}`, 'type-button');
+            const button = document.createElement('button');
+            button.classList.add('type-button');
+            button.innerHTML = type;
             button.setAttribute('title', `change card style to ${type}`);
             this.typeSelect.appendChild(button);
 

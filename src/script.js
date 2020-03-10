@@ -472,7 +472,6 @@ class Domino {
 
         addListener('#coords', 'pointerdown', e => e.stopPropagation());
         addListener('#coords', 'dragstart', event => {
-            console.log(location.fragment);
             event.dataTransfer.setData('text/uri-list', 'jump:' + location.hash.slice(1));
             event.stopPropagation();
         });

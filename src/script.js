@@ -292,9 +292,14 @@ class Domino {
         });
     }
 
-    pointerEventToCell(event) {
+    pointerEventToGridPixel(event) {
         const [x, y] = eventToElementPixel(event, this.scene);
         const pixel = [x / this.scale, y / this.scale];
+        return pixel;
+    }
+
+    pointerEventToCell(event) {
+        const pixel = this.pointerEventToGridPixel(event);
         return this.grid.pixelToCell(pixel);
     }
 
@@ -371,7 +376,7 @@ class Domino {
         this.pan = undefined;
         window.addEventListener('pointerdown', event => {
             this.pan = {
-                scenePosition: eventToElementPixel(event, this.scene),
+                scenePosition: this.pointerEventToGridPixel(event),
                 distance: 0,
             };
             this.scene.classList.add('skiptransition');
@@ -391,7 +396,7 @@ class Domino {
             // where we clicked in the scene
             const [sx, sy] = this.pan.scenePosition;
             // where we are in the scene now
-            const [ax, ay] = eventToElementPixel(event, this.scene);
+            const [ax, ay] = this.pointerEventToGridPixel(event);
             // the error
             const [dx, dy] = [sx - ax, sy - ay];
             const [fx, fy] = this.focus;

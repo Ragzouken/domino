@@ -38,7 +38,7 @@ html
             main#scene(data-export-clear)
         #coords(draggable="true") #0,0
         #toolbar.icon-bar(data-block-clicks)
-            div#open-about(title="information about this tool") ❔
+            div#open-about(title="information about this tool") ❓
             div#zoom(title="switch zoom level") 🔎
             div#center(title="jump to center") 🏠
             div#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
@@ -53,32 +53,38 @@ html
         #editor-screen.screen(hidden, data-click-to-hide)
             #editor-preview
             #editor-section(data-block-clicks)
-                #editor-tabs
-                    #editor-tab-text TEXT
-                    #editor-tab-icons ICONS
-                    #editor-tab-style STYLE
-                #editor-page-text.editor-page(hidden)
+                .tab-bar
+                    div(data-tab="text", data-tab-set="card").selected TEXT
+                    div(data-tab="icons", data-tab-set="card") ICONS
+                    div(data-tab="style", data-tab-set="card") STYLE
+                .editor-page(data-page="text", data-tab-set="card")
                     textarea#content-input
-                #editor-page-icons.editor-page(hidden)
+                #editor-page-icons.editor-page(hidden, data-page="icons", data-tab-set="card")
                     each row in [1, 2, 3, 4]
                         input(id=`editor-icon-select-${row}`, type="text").icon-select
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
-                #editor-page-style.editor-page(hidden)
-                    #type-select(data-export-clear)
-        #style-screen.screen(hidden, data-click-to-hide)
-            #style-section(data-block-clicks)
-                textarea#style-input
+                .editor-page(hidden, data-page="style", data-tab-set="card")
+                    #type-select.button-list(data-export-clear)
         #about-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
-                button(data-close-parent-screen) exit window
-                #version
-                    | version—
-                    include version.txt
-                    |  (#{date})
-                #project-menu
-                    button#style(title="change board style") 🎨 modify style
-                    button#import(title="import a domino project") 📂 import from html
-                    button#export(title="export as html") 📦 export to html
-                    button#reset(title="remove all cards") ❌ remove all cards
-                input#import-file(type="file", accept=".html", hidden)
-                include:markdown-it(html) about.md
+                .tab-bar
+                    div(data-close-parent-screen) ⬅ BACK
+                    div(data-tab="board", data-tab-set="menu").selected BOARD
+                    div(data-tab="about", data-tab-set="menu") ABOUT
+                .tab-page(data-page="board", data-tab-set="menu")
+                    h3 board title
+                    input#board-title
+                    h3 actions
+                    .button-list
+                        button#import(title="import a domino project") 📂 import from html
+                        button#export(title="export as html") 📦 export to html
+                        button#reset(title="remove all cards") ❌ remove all cards
+                    input#import-file(type="file", accept=".html", hidden)
+                    h3 style
+                    textarea#style-input
+                .tab-page(data-page="about", data-tab-set="menu")
+                    #version
+                        | version—
+                        include version.txt
+                        |  (#{date})
+                    include:markdown-it(html) about.md

@@ -1,5 +1,6 @@
 :root {
     --editor-background: rgb(240, 248, 255);
+    --panel-width: 420px;
 
     touch-action: none;
 }
@@ -166,39 +167,30 @@ main {
 
 .full-panel {
     cursor: auto;
+
     box-sizing: border-box;
+    padding: 0;
 
-    margin: auto;
-
-    padding: 2em;
-
-    width: 40em;
+    width: var(--panel-width);
     height: 100%;
     max-width: 100%;
 
-    background-color: var(--background-color);
-
-    overflow: auto;
-}
-
-#editor-panel {
-    width: calc(var(--card-width));
-    position: absolute;
-    padding: 1em;
+    background-color: var(--editor-background);
+    overflow: hidden;
     
-    background: var(--editor-background);
-    pointer-events: initial;
-
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 0;
-    margin: 0;
-
-    max-width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-#editor-panel > h3 {
-    margin-top: 0;
+.tab-page {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 2em;
+    overflow: auto;
+
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 #content-input {
@@ -209,10 +201,7 @@ main {
 }
 
 #type-select {
-    height: 2em;
     margin-bottom: 1em;
-    display: grid;
-    column-gap: .5em;
 }
 
 #type-select > button {
@@ -332,16 +321,6 @@ main {
     cursor: pointer;
 }
 
-#project-menu {
-    margin-top: 1em;
-    display: grid;
-    column-gap: 1em;
-}
-
-#project-menu > button {
-    grid-row: 1;
-}
-
 pre {
     margin: 0;
 }
@@ -358,7 +337,7 @@ pre {
     cursor: initial;
 
     position: absolute;
-    width: calc(var(--card-width) + 4em);
+    width: 400px;
     max-width: 100%;
     height: calc(100% - var(--card-height) * 2);
     max-height: calc(var(--card-height) * 2);
@@ -373,44 +352,21 @@ pre {
     flex-direction: column;
 }
 
-#style-section {
-    background: var(--editor-background);
-    pointer-events: initial;
-    cursor: initial;
-
-    position: absolute;
-    width: calc(var(--card-width) + 4em);
-    max-width: 100%;
-    height: calc(100% - var(--card-height));
-    max-height: calc(var(--card-height) * 2);
-
-    left: 50%;
-    bottom: 0;
-    transform: translateX(-50%);
-
-    box-sizing: border-box;
-    
-    display: flex;
-    flex-direction: column;
-
-    padding: 1em;
-}
-
-#editor-tabs {
+.tab-bar {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-auto-flow: column;
     color: white;
     background:black;
 }
 
-#editor-tabs > div {
+.tab-bar > div {
+    cursor: pointer;
     padding: 1em;
     border: initial;
-
     text-align: center;
 }
 
-#editor-tabs > div.selected {
+.tab-bar > div.selected {
     border: none;
     color: black;
     background: var(--editor-background);
@@ -457,15 +413,16 @@ pre {
     grid-column-end: 5;
 }
 
-#style-screen > .full-panel {
-    display: flex;
-    flex-direction: column;
-}
-
 #style-input {
     box-sizing: border-box;
     flex: 1;
     width: 100%;
+    min-height: 20em;
     font-family: monospace;
     resize: none;
+}
+
+.button-list {
+    display: grid;
+    row-gap: .5em;
 }

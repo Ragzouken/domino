@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="twitter:card" value="summary">
-    <meta name="twitter:title" value="domino: a tool for collaging thoughts">
+    <meta name="twitter:title" value="domino: a tool for collaging thoughts" id="twitter-title">
     <meta name="twitter:image" value="https://kool.tools/domino/twitter-card.png">
     <meta name="twitter:image:alt" value="low fidelity image of many dominoes connected">
     <title>domino</title>
@@ -20,6 +20,7 @@ var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof na
     <!-- styles-->
     <style>:root {
     --editor-background: rgb(240, 248, 255);
+    --panel-width: 420px;
 
     touch-action: none;
 }
@@ -186,39 +187,30 @@ main {
 
 .full-panel {
     cursor: auto;
+
     box-sizing: border-box;
+    padding: 0;
 
-    margin: auto;
-
-    padding: 2em;
-
-    width: 40em;
+    width: var(--panel-width);
     height: 100%;
     max-width: 100%;
 
-    background-color: var(--background-color);
-
-    overflow: auto;
-}
-
-#editor-panel {
-    width: calc(var(--card-width));
-    position: absolute;
-    padding: 1em;
+    background-color: var(--editor-background);
+    overflow: hidden;
     
-    background: var(--editor-background);
-    pointer-events: initial;
-
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 0;
-    margin: 0;
-
-    max-width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-#editor-panel > h3 {
-    margin-top: 0;
+.tab-page {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 2em;
+    overflow: auto;
+
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 #content-input {
@@ -229,10 +221,7 @@ main {
 }
 
 #type-select {
-    height: 2em;
     margin-bottom: 1em;
-    display: grid;
-    column-gap: .5em;
 }
 
 #type-select > button {
@@ -352,16 +341,6 @@ main {
     cursor: pointer;
 }
 
-#project-menu {
-    margin-top: 1em;
-    display: grid;
-    column-gap: 1em;
-}
-
-#project-menu > button {
-    grid-row: 1;
-}
-
 pre {
     margin: 0;
 }
@@ -378,7 +357,7 @@ pre {
     cursor: initial;
 
     position: absolute;
-    width: calc(var(--card-width) + 4em);
+    width: 400px;
     max-width: 100%;
     height: calc(100% - var(--card-height) * 2);
     max-height: calc(var(--card-height) * 2);
@@ -393,44 +372,21 @@ pre {
     flex-direction: column;
 }
 
-#style-section {
-    background: var(--editor-background);
-    pointer-events: initial;
-    cursor: initial;
-
-    position: absolute;
-    width: calc(var(--card-width) + 4em);
-    max-width: 100%;
-    height: calc(100% - var(--card-height));
-    max-height: calc(var(--card-height) * 2);
-
-    left: 50%;
-    bottom: 0;
-    transform: translateX(-50%);
-
-    box-sizing: border-box;
-    
-    display: flex;
-    flex-direction: column;
-
-    padding: 1em;
-}
-
-#editor-tabs {
+.tab-bar {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-auto-flow: column;
     color: white;
     background:black;
 }
 
-#editor-tabs > div {
+.tab-bar > div {
+    cursor: pointer;
     padding: 1em;
     border: initial;
-
     text-align: center;
 }
 
-#editor-tabs > div.selected {
+.tab-bar > div.selected {
     border: none;
     color: black;
     background: var(--editor-background);
@@ -477,17 +433,18 @@ pre {
     grid-column-end: 5;
 }
 
-#style-screen > .full-panel {
-    display: flex;
-    flex-direction: column;
-}
-
 #style-input {
     box-sizing: border-box;
     flex: 1;
     width: 100%;
+    min-height: 20em;
     font-family: monospace;
     resize: none;
+}
+
+.button-list {
+    display: grid;
+    row-gap: .5em;
 }
 
     </style>
@@ -701,6 +658,7 @@ function parseFakedown(text) {
     return text;
 }
 
+let pageSetters = new Map();
 const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart', 'wheel'];
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
@@ -723,6 +681,39 @@ function setupClassHooks() {
             for (let name of clicks)
                 element.addEventListener(name, event => event.stopPropagation());
     })
+
+    const tabsets = new Set(
+        ALL('[data-tab-set]')
+        .map(element => element.getAttribute('data-tab-set'))
+    );
+
+    tabsets.forEach(tabset => {
+        const pages = new Map();
+        const tabs = new Map();
+
+        const setPage = pageName => {
+            for (let tab of tabs.values())
+                tab.classList.remove('selected');
+            for (let page of pages.values())
+                page.hidden = true;
+
+            tabs.get(pageName).classList.add('selected');
+            pages.get(pageName).hidden = false;
+        };
+
+        pageSetters.set(tabset, setPage);
+
+        ALL(`[data-tab][data-tab-set="${tabset}"]`).forEach(element => {
+            const pageName = element.getAttribute('data-tab');
+            tabs.set(pageName, element);
+            element.addEventListener('click', () => setPage(pageName));
+        });
+
+        ALL(`[data-page][data-tab-set="${tabset}"]`).forEach(element => {
+            const pageName = element.getAttribute('data-page');
+            pages.set(pageName, element);
+        });
+    });
 }
 
 function updateDocumentVariables() {
@@ -1043,6 +1034,15 @@ class Domino {
             this.scale = 1;
         }
 
+        const title = ONE('title');
+        const boardTitle = ONE('#board-title');
+        const twitterTitle = ONE('#twitter-title');
+        boardTitle.addEventListener('input', () => {
+            title.innerHTML = boardTitle.value;
+            twitterTitle.value = boardTitle.value;
+        });
+        boardTitle.value = title.innerHTML;
+
         this.styleInput.addEventListener('input', () => {
             ONE('#user-style').innerHTML = this.styleInput.value;
             this.refreshStyle();
@@ -1056,7 +1056,6 @@ class Domino {
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
-        addListener('#style',       'click', () => this.editStyle());
 
         addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
@@ -1210,7 +1209,7 @@ class Domino {
 
     editStyle() {
         this.aboutScreen.hidden = true;
-        ONE('#style-screen').hidden = false;
+        ONE('#about-screen').hidden = false;
         this.styleInput.value = ONE('#user-style').innerHTML;
         this.styleInput.focus();
     }
@@ -1245,27 +1244,6 @@ class CardEditor {
         this.typeButtons = {};
 
         this.refreshAvailableStyles();
-
-        const names = ['text', 'icons', 'style'];
-        const tabs = {};
-        const pages = {};
-
-        this.setPage = (name) => {
-            names.forEach(name => {
-                tabs[name].classList.remove('selected');
-                pages[name].hidden = true;
-            });
-            tabs[name].classList.add('selected');
-            pages[name].hidden = false;
-        }
-
-        for (let name of names) {
-            tabs[name] = ONE(`#editor-tab-${name}`, this.root);
-            pages[name] = ONE(`#editor-page-${name}`, this.root);
-            addListener(tabs[name], 'click', () => this.setPage(name));
-        }
-
-        this.setPage(names[0]);
 
         this.iconRows = [];
 
@@ -1318,8 +1296,8 @@ class CardEditor {
 
     setActiveView(view) {
         this.activeView = view;
-        this.setPage('text');
         this.contentInput.select();
+        pageSetters.get('card')('text');
         this.refreshFromCard();
     }
 
@@ -1488,7 +1466,7 @@ async function loaded() {
     </div>
     <div id="coords" draggable="true">#0,0</div>
     <div class="icon-bar" id="toolbar" data-block-clicks>
-      <div id="open-about" title="information about this tool">❔</div>
+      <div id="open-about" title="information about this tool">❓</div>
       <div id="zoom" title="switch zoom level">🔎</div>
       <div id="center" title="jump to center">🏠</div>
       <div id="add-delete-icon" hidden draggable="true" title="drag a new card from here or a drop an unwanted card">🗃️</div>
@@ -1506,15 +1484,15 @@ async function loaded() {
     <div class="screen" id="editor-screen" hidden data-click-to-hide>
       <div id="editor-preview"></div>
       <div id="editor-section" data-block-clicks>
-        <div id="editor-tabs">
-          <div id="editor-tab-text">TEXT</div>
-          <div id="editor-tab-icons">ICONS</div>
-          <div id="editor-tab-style">STYLE</div>
+        <div class="tab-bar">
+          <div class="selected" data-tab="text" data-tab-set="card">TEXT</div>
+          <div data-tab="icons" data-tab-set="card">ICONS</div>
+          <div data-tab="style" data-tab-set="card">STYLE</div>
         </div>
-        <div class="editor-page" id="editor-page-text" hidden>
+        <div class="editor-page" data-page="text" data-tab-set="card">
           <textarea id="content-input"></textarea>
         </div>
-        <div class="editor-page" id="editor-page-icons" hidden>
+        <div class="editor-page" id="editor-page-icons" hidden data-page="icons" data-tab-set="card">
           <input class="icon-select" id="editor-icon-select-1" type="text">
           <input class="icon-command" id="editor-icon-command-1" type="text">
           <input class="icon-select" id="editor-icon-select-2" type="text">
@@ -1524,28 +1502,34 @@ async function loaded() {
           <input class="icon-select" id="editor-icon-select-4" type="text">
           <input class="icon-command" id="editor-icon-command-4" type="text">
         </div>
-        <div class="editor-page" id="editor-page-style" hidden>
-          <div id="type-select" data-export-clear></div>
+        <div class="editor-page" hidden data-page="style" data-tab-set="card">
+          <div class="button-list" id="type-select" data-export-clear></div>
         </div>
-      </div>
-    </div>
-    <div class="screen" id="style-screen" hidden data-click-to-hide>
-      <div id="style-section" data-block-clicks>
-        <textarea id="style-input"></textarea>
       </div>
     </div>
     <div class="screen" id="about-screen" hidden data-click-to-hide data-export-hide>
       <div class="full-panel" data-block-clicks>
-        <button data-close-parent-screen>exit window</button>
-        <div id="version">
-          version—beta-3 (2020-3-10)</div>
-        <div id="project-menu">
-          <button id="style" title="change board style">🎨 modify style</button>
-          <button id="import" title="import a domino project">📂 import from html</button>
-          <button id="export" title="export as html">📦 export to html</button>
-          <button id="reset" title="remove all cards">❌ remove all cards</button>
+        <div class="tab-bar">
+          <div data-close-parent-screen>⬅ BACK</div>
+          <div class="selected" data-tab="board" data-tab-set="menu">BOARD</div>
+          <div data-tab="about" data-tab-set="menu">ABOUT</div>
         </div>
-        <input id="import-file" type="file" accept=".html" hidden><h1>domino</h1>
+        <div class="tab-page" data-page="board" data-tab-set="menu">
+          <h3>board title</h3>
+          <input id="board-title">
+          <h3>actions</h3>
+          <div class="button-list">
+            <button id="import" title="import a domino project">📂 import from html</button>
+            <button id="export" title="export as html">📦 export to html</button>
+            <button id="reset" title="remove all cards">❌ remove all cards</button>
+          </div>
+          <input id="import-file" type="file" accept=".html" hidden>
+          <h3>style</h3>
+          <textarea id="style-input"></textarea>
+        </div>
+        <div class="tab-page" data-page="about" data-tab-set="menu">
+          <div id="version">
+            version—beta-3 (2020-3-10)</div><h1>domino</h1>
 <h2>about</h2>
 <p>domino is a tool for collaging fragmented thoughts into a larger idea.
 it's essentially a tool for making a particular kind of mindmap and sharing it
@@ -1577,6 +1561,7 @@ customisation is an inspiration to domino.</p>
 <li>Wouter de Bruijn—<a href="https://creativecommons.org/licenses/by-nc-sa/2.0/">twitter card image</a> (cropped and recolored under <a href="https://creativecommons.org/licenses/by-nc-sa/2.0/">CC BY-NC-SA</a>)</li>
 </ul>
 
+        </div>
       </div>
     </div>
   </body>

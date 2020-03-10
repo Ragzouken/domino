@@ -34,6 +34,7 @@ function parseFakedown(text) {
     return text;
 }
 
+let pageSetters = new Map();
 const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart', 'wheel'];
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
@@ -56,6 +57,39 @@ function setupClassHooks() {
             for (let name of clicks)
                 element.addEventListener(name, event => event.stopPropagation());
     })
+
+    const tabsets = new Set(
+        ALL('[data-tab-set]')
+        .map(element => element.getAttribute('data-tab-set'))
+    );
+
+    tabsets.forEach(tabset => {
+        const pages = new Map();
+        const tabs = new Map();
+
+        const setPage = pageName => {
+            for (let tab of tabs.values())
+                tab.classList.remove('selected');
+            for (let page of pages.values())
+                page.hidden = true;
+
+            tabs.get(pageName).classList.add('selected');
+            pages.get(pageName).hidden = false;
+        };
+
+        pageSetters.set(tabset, setPage);
+
+        ALL(`[data-tab][data-tab-set="${tabset}"]`).forEach(element => {
+            const pageName = element.getAttribute('data-tab');
+            tabs.set(pageName, element);
+            element.addEventListener('click', () => setPage(pageName));
+        });
+
+        ALL(`[data-page][data-tab-set="${tabset}"]`).forEach(element => {
+            const pageName = element.getAttribute('data-page');
+            pages.set(pageName, element);
+        });
+    });
 }
 
 function updateDocumentVariables() {
@@ -376,6 +410,15 @@ class Domino {
             this.scale = 1;
         }
 
+        const title = ONE('title');
+        const boardTitle = ONE('#board-title');
+        const twitterTitle = ONE('#twitter-title');
+        boardTitle.addEventListener('input', () => {
+            title.innerHTML = boardTitle.value;
+            twitterTitle.value = boardTitle.value;
+        });
+        boardTitle.value = title.innerHTML;
+
         this.styleInput.addEventListener('input', () => {
             ONE('#user-style').innerHTML = this.styleInput.value;
             this.refreshStyle();
@@ -389,7 +432,6 @@ class Domino {
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
-        addListener('#style',       'click', () => this.editStyle());
 
         addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
@@ -543,7 +585,7 @@ class Domino {
 
     editStyle() {
         this.aboutScreen.hidden = true;
-        ONE('#style-screen').hidden = false;
+        ONE('#about-screen').hidden = false;
         this.styleInput.value = ONE('#user-style').innerHTML;
         this.styleInput.focus();
     }
@@ -578,27 +620,6 @@ class CardEditor {
         this.typeButtons = {};
 
         this.refreshAvailableStyles();
-
-        const names = ['text', 'icons', 'style'];
-        const tabs = {};
-        const pages = {};
-
-        this.setPage = (name) => {
-            names.forEach(name => {
-                tabs[name].classList.remove('selected');
-                pages[name].hidden = true;
-            });
-            tabs[name].classList.add('selected');
-            pages[name].hidden = false;
-        }
-
-        for (let name of names) {
-            tabs[name] = ONE(`#editor-tab-${name}`, this.root);
-            pages[name] = ONE(`#editor-page-${name}`, this.root);
-            addListener(tabs[name], 'click', () => this.setPage(name));
-        }
-
-        this.setPage(names[0]);
 
         this.iconRows = [];
 
@@ -651,8 +672,8 @@ class CardEditor {
 
     setActiveView(view) {
         this.activeView = view;
-        this.setPage('text');
         this.contentInput.select();
+        pageSetters.get('card')('text');
         this.refreshFromCard();
     }
 

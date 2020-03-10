@@ -4,14 +4,12 @@ domino is a tool for collaging fragmented thoughts into a larger idea.
 it's essentially a tool for making a particular kind of mindmap and sharing it
 as a page on your website or itch.io.
 
-you can find out more about domino on [the release page][domino].
+you can find out more about domino on [the release page][domino]. the source
+code for original releases can be found [on github][source].
 
 i'm [mark wonnacott a.k.a candle][me] and i created domino as a 
 [response to my frustration][0] trying to express myself in Emilie Reed's
 writing jams.
-
-## info
-the original source code for domino is available on [github][source].
 
 ## thanks
 **Em Reed** for [Manifesto Jam][3] and [Speculation Jam][4] which have

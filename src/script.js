@@ -110,6 +110,12 @@ function computeCardGap() {
     return [rect.width, rect.height];
 }
 
+async function htmlFromUrl(url) {
+    const html = document.createElement('html');
+    html.innerHTML = await (await fetch(url)).text();
+    return html;
+}
+
 async function htmlFromFile(file) {
     const html = document.createElement('html');
     html.innerHTML = await textFromFile(file);
@@ -212,7 +218,7 @@ class Domino {
         };
     }
 
-    runCommand(command) {
+    async runCommand(command) {
         if (command.startsWith('#')) {
             location.href = command;
         } else if (command.startsWith('jump:')) {
@@ -225,6 +231,10 @@ class Domino {
         } else if (command.startsWith('display:')) {
             const src = command.slice(8);
             this.display(src);
+        } else if (command.startsWith('import:')) {
+            const src = command.slice(7);
+            const html = await htmlFromUrl(src);
+            this.setFromHtml(html);
         } else if (command.length > 0) {
             window.open(command);
         }
@@ -391,8 +401,7 @@ class Domino {
         this.cardbar = cloneTemplateElement('#cardbar-template');
         this.cardbar.id = 'cardbar';
         this.addDeleteCardIcon = ONE('#add-delete-icon');
-        this.aboutScreen = ONE('#about-screen');
-
+        this.aboutScreen = ONE('#menu-screen');
         this.lockedButton = ONE('#locked');
         this.unlockedButton = ONE('#unlocked');
 

@@ -59,13 +59,13 @@ html
                     div(data-tab="style", data-tab-set="card") STYLE
                 .editor-page(data-page="text", data-tab-set="card")
                     textarea#content-input
-                #editor-page-icons.editor-page(hidden, data-page="icons", data-tab-set="card")
+                .editor-page(hidden, data-page="icons", data-tab-set="card")
                     each row in [1, 2, 3, 4]
                         input(id=`editor-icon-select-${row}`, type="text").icon-select
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
                 .editor-page(hidden, data-page="style", data-tab-set="card")
                     #type-select.button-list(data-export-clear)
-        #about-screen.screen(hidden, data-click-to-hide, data-export-hide)
+        #menu-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
                 .tab-bar
                     div(data-close-parent-screen) ⬅ BACK
@@ -82,7 +82,7 @@ html
                     input#import-file(type="file", accept=".html", hidden)
                     h3 style
                     textarea#style-input
-                .tab-page(data-page="about", data-tab-set="menu")
+                .tab-page(hidden, data-page="about", data-tab-set="menu")
                     #version
                         | version—
                         include version.txt

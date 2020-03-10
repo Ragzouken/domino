@@ -380,7 +380,7 @@ pre {
     padding: 1em;
 }
 
-#editor-page-icons {
+.editor-page[data-page="icons"] {
     display: grid;
 
     grid-template-columns: repeat(4, 1fr);
@@ -390,7 +390,7 @@ pre {
     row-gap: 1em;
 }
 
-#editor-page-icons > input {
+.editor-page[data-page="icons"] > input {
     border: none;
     border-left: 2px solid black;
     padding: .5em;

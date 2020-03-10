@@ -34,7 +34,7 @@ function parseFakedown(text) {
     return text;
 }
 
-const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart'];
+const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart', 'wheel'];
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
         for (let name of clicks)
@@ -74,6 +74,12 @@ function computeCardSize(parent) {
 function computeCardGap() {
     const rect = ONE('#card-gap-measure').getBoundingClientRect();
     return [rect.width, rect.height];
+}
+
+async function htmlFromFile(file) {
+    const html = document.createElement('html');
+    html.innerHTML = await textFromFile(file);
+    return html;
 }
 
 async function extractDataFromHtmlFile(file) {
@@ -210,7 +216,9 @@ class Domino {
     }
 
     refreshTransform() {
-        const [x, y] = this._focus;
+        let [x, y] = this._focus;
+        x = Math.round(x);
+        y = Math.round(y);
         const s = this._scaling;
         this.scene.style.transform = `scale(${s}) translate(${-x}px, ${-y}px)`;
     }
@@ -219,7 +227,7 @@ class Domino {
         const [q, r] = this.grid.pixelToCell(this.focus);
         this.focusedCell = [q, r];
         location.hash = coordsToKey([q, r]);
-        ONE('#coords').innerHTML = `#${q},${r}`;
+        this.coords.innerHTML = `#${q},${r}`;
     }
 
     focusCell(coords) {
@@ -285,11 +293,14 @@ class Domino {
         this.editorScreen.refreshAvailableStyles();
         const [cw, ch] = computeCardSize(this.scene);
         const [sw, sh] = computeCardGap();
+        this.cardSize = [cw, ch];
         this.grid = new HexGrid([cw + sw, ch + sh]);
 
         this.cellToView.store.forEach(view => {
             this.moveCardToCell(view, view.card.cell);
         });
+
+        this.styleInput.value = ONE('#user-style').innerHTML;
     }
 
     pointerEventToGridPixel(event) {
@@ -310,6 +321,14 @@ class Domino {
         this.focusCell([0, 0]);
     }
 
+    setFromHtml(html) {
+        const style = ONE('#user-style', html).innerHTML;
+        const data = JSON.parse(ONE('#data', html).innerHTML);
+        ONE('#user-style').innerHTML = style;
+        this.refreshStyle();
+        this.setData(data);
+    }
+
     setData(data) {
         this.clear();
         for (let card of data.cards)
@@ -326,7 +345,9 @@ class Domino {
         this.editorScreen = new CardEditor();
         this.editorPreview = ONE('#editor-preview');
         this.scene = ONE('#scene');
+        this.coords = ONE('#coords');
         
+        this.styleInput = ONE('#style-input');
         this.refreshStyle();
 
         // hide fullscreen button if fullscreen is not possible
@@ -355,7 +376,6 @@ class Domino {
             this.scale = 1;
         }
 
-        this.styleInput = ONE('#style-input');
         this.styleInput.addEventListener('input', () => {
             ONE('#user-style').innerHTML = this.styleInput.value;
             this.refreshStyle();
@@ -376,26 +396,42 @@ class Domino {
         const panBlocker = ONE('#pan-blocker');
 
         this.pan = undefined;
-        window.addEventListener('pointerdown', event => {
+        this.touches = new Map();
+        
+        addListener('#zoom', 'click', event => {
+            this.scale = 1.5 - this.scale;
+            killEvent(event);
+        });
+
+        const onDown = event => {
             this.pan = {
                 scenePosition: this.pointerEventToGridPixel(event),
                 distance: 0,
             };
             this.scene.classList.add('skiptransition');
             panBlocker.hidden = false;
-        });
+            killEvent(event);
+        };
+
+        panBlocker.addEventListener('pointerdown', onDown);
+        window.addEventListener('pointerdown', onDown);
         
-        panBlocker.addEventListener('pointerup', event => {
+        const onDone = event => {
             panBlocker.hidden = true;
-            const click = this.pan && this.pan.distance < 5;
+            const click = this.pan && this.pan.distance < 3;
             this.pan = undefined;
             this.scene.classList.remove('skiptransition');
             if (click) 
                 onClickedEmptyCell(event);
             killEvent(event);
-        });
+        };
 
-        panBlocker.addEventListener('pointermove', event => {
+        panBlocker.addEventListener('pointerup', onDone);
+        window.addEventListener('pointerup', onDone);
+        
+        const onMove = event => {
+            if (!this.pan) return;
+
             // where we clicked in the scene
             const [sx, sy] = this.pan.scenePosition;
             // where we are in the scene now
@@ -407,11 +443,15 @@ class Domino {
             this.pan.distance += Math.sqrt(dx * dx + dy * dy);
 
             killEvent(event);
-        });
+        };
+
+        panBlocker.addEventListener('pointermove', onMove);
+        window.addEventListener('pointermove', onMove);
 
         // file select listener
         addListener(importFile, 'change', async event => {
-            this.setData(await extractDataFromHtmlFile(event.target.files[0]));
+            const html = await htmlFromFile(event.target.files[0]);
+            this.setFromHtml(html);
             importFile.value = null;
         });
 
@@ -677,8 +717,9 @@ class CardView {
     }
 
     updateTransform() {
-        const [x, y] = this._position;
-        const position = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
+        let [x, y] = this._position;
+        let [w, h] = domino.cardSize;
+        const position = `translate(${x - w/2}px, ${y - h/2}px)`;
         const scaling = `scale(${this._scale}, ${this._scale})`;
         this.root.style.transform = `${position} ${scaling}`;
     }

@@ -266,7 +266,7 @@ main {
     margin: 0;
 }
 
-.icon-bar > button, .icon-bar > a {
+.icon-bar > button, .icon-bar > a, .icon-bar > div {
     width: 2em;
     height: 2em;
     grid-row: 1;
@@ -323,11 +323,20 @@ main {
 }
 
 #toolbar {
+    background: none;
+
     left: 50%;
     transform: translate(-50%, 0);
     bottom: 0;
     
-    margin-bottom: .5em;
+    padding: .5em;
+}
+
+#toolbar > div {
+    background: rgb(240, 240, 240);
+    border: 1px solid black;
+    border-radius: 100%;
+    cursor: pointer;
 }
 
 #project-menu {

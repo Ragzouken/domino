@@ -37,13 +37,14 @@ html
             #card-gap-measure
             main#scene(data-export-clear)
         #coords(draggable="true") #0,0
-        #toolbar.icon-bar
-            button#open-about(title="information about this tool") ❔
-            button#center(title="jump to center") 🏠
-            button#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
-            button#fullscreen(title="toggle fullscreen", hidden) 💢
-            button#unlocked(title="prevent accidental editing") 🔓
-            button#locked(title="enable editing", hidden) 🔒
+        #toolbar.icon-bar(data-block-clicks)
+            div#open-about(title="information about this tool") ❔
+            div#zoom(title="switch zoom level") 🔎
+            div#center(title="jump to center") 🏠
+            div#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
+            div#fullscreen(title="toggle fullscreen", hidden) 💢
+            div#unlocked(title="prevent accidental editing") 🔓
+            div#locked(title="enable editing", hidden) 🔒
         #pan-blocker(hidden)
         #display-screen.screen(hidden, data-click-to-hide)
             iframe#display-frame(data-block-clicks, allow="autoplay")

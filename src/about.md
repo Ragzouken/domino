@@ -4,6 +4,8 @@ domino is a tool for collaging fragmented thoughts into a larger idea.
 it's essentially a tool for making a particular kind of mindmap and sharing it
 as a page on your website or itch.io.
 
+you can find out more about domino on [the release page][domino].
+
 i'm [mark wonnacott a.k.a candle][me] and i created domino as a 
 [response to my frustration][0] trying to express myself in Emilie Reed's
 writing jams.
@@ -36,6 +38,7 @@ customisation is an inspiration to domino.
  * Wouter de Bruijn—[twitter card image][11] (cropped and recolored under [CC BY-NC-SA][11])
 
 [me]: https://twitter.com/ragzouken
+[domino]: https://kool.tools/domino/
 [source]: https://github.com/Ragzouken/domino
 [0]: https://kool.tools/2020/02/26/speculations.html
 [1]: https://github.com/Bernardo-Castilho/dragdroptouch

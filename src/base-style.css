@@ -242,8 +242,8 @@ textarea, input[type="text"] {
 
     transition: transform .2s ease-in-out;
 
-    width: var(--card-width);
-    height: var(--card-height);
+    width: var(--card-width, 15em);
+    height: var(--card-height, 9em);
 
     display: flex;
     margin: 0 0 1em;

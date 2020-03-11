@@ -3,7 +3,7 @@
     --background-text-color: black;
 
     --card-width: 15rem;
-    --card-height: calc(var(--card-width) * .6);
+    --card-height: 9rem;
     --card-gap-horizontal: 2em;
     --card-gap-vertical: 2em;
 }

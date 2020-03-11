@@ -107,7 +107,7 @@ function computeCardSize(parent) {
 
 function computeCardGap() {
     const measure = document.createElement('div');
-    measure.style = 'width: var(--card-gap-horizontal); height: var(--card-gap-vertical);';
+    measure.style = 'width: var(--card-gap-horizontal, 0); height: var(--card-gap-vertical, 0);';
     document.documentElement.appendChild(measure);
     const rect = measure.getBoundingClientRect();
     document.documentElement.removeChild(measure);
@@ -138,7 +138,9 @@ function exportProject() {
     ALL('[data-export-clear]', clone).forEach(element => element.innerHTML = '');
     ALL('[data-export-hide]', clone).forEach(element => element.hidden = true);
     const blob = new Blob([clone.outerHTML], {type: "text/html"});
-    saveAs(blob, `domino-test.html`);
+    const title = ONE('title').innerHTML;
+    const name = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    saveAs(blob, `${name}.html`);
 }
 
 function addCardViewListeners(domino, view) {
@@ -225,8 +227,10 @@ class Domino {
     async runCommand(command) {
         if (command.startsWith('#')) {
             location.href = command;
+            domino.focusCell(getCoordsFromHash());
         } else if (command.startsWith('jump:')) {
             location.href = '#' + command.slice(5);
+            domino.focusCell(getCoordsFromHash());
         } else if (command.startsWith('open:')) {
             window.open(command.slice(5));
         } else if (command.startsWith('image:')) {

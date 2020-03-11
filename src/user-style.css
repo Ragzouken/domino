@@ -38,3 +38,24 @@
 .domino-card-basic-blue  { 
     background: #F2EED2; 
 }
+
+/* border from http://todrobbins.com/broider-gallery/ */
+.domino-card-broider-example {
+    background: transparent;
+    border-style: solid;
+    border-width: .5em;
+    align-items: center;
+    text-align: center;
+    font-family: monospace;
+box-sizing: content-box;
+    border-image:  url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFQAAABUCAYAAAAcaxDBAAABaElEQVR4nO2WQQ7DMAzD+v9Pbz9oQVhRs4wEclMci4ei13Vdn/JpU++nUIUiFBpmO6HpAmkBq/fB8xTKUOjwPp6nUAYWSgdO81QgFVTvp9BwXqHhvELD+XRhuuB03ur38XyFKlShCr0hnaeF0kLjeYWG8woN5xUaztMF6QPTBVfPozzOUyhDocP7eJ5CGWOh6dOm3k+hCkUoNMzp/URE/orTP8r1fgpVKEKhYZb3O/1Ht95PoQpFKDTMdkKn+bep91PoLP/+g2UUGmY7ofTsRr2fQhWKUGiY1/v9usAn6v0UqlCEQsOc3k9E5KdI/+ju9lGv91OoQhEKDbOd0HSBtIDV++B5CmUodHgfz1MoAwulA6d5KpAKqvdTaDiv0HBeoeF8ujBdcDpv9ft4vkIVqlCF3pDO00JpofG8QsN5hYbzCg3n6YL0gemCq+dRHucplKHQ4X08T6GMsdD0aVPvp1CFIhQaptrvC1EVM4TVl2v7AAAAAElFTkSuQmCC") 28 /  1em / 0 round;
+}
+
+/* adding halo around icons */
+.domino-card-broider-example > .card-icon-bar > *:not(.blank) {
+    text-shadow: 
+0 0 5px var(--background-color),
+0 0 5px var(--background-color),
+0 0 5px var(--background-color),
+0 0 5px var(--background-color);
+}

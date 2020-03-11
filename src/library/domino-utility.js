@@ -10,6 +10,11 @@ const setElementJsonData = (element, data) => queryToElement(element).innerHTML 
 const getElementJsonData = (element) => JSON.parse(queryToElement(element).innerHTML);
 const reflow = element => void(element.offsetHeight);
 
+function say(text) {
+    const utter = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utter);
+}
+
 function toggleFullscreen() {
     if (document.fullscreenElement) {
         return document.exitFullscreen();
@@ -24,6 +29,38 @@ async function textFromFile(file) {
         reader.onerror = reject;
         reader.onload = () => resolve(reader.result);
         reader.readAsText(file); 
+    });
+}
+
+async function urlFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file); 
+    });
+}
+
+async function compressDataURL(url, quality, size) {
+    const image = document.createElement("img");
+    const canvas = document.createElement("canvas");
+
+    const [tw, th] = size;
+    canvas.width = tw;
+    canvas.height = th;
+
+    return new Promise((resolve, reject) => {
+        image.onload = () => {
+            const scale = Math.max(tw / image.width, th / image.height);
+            const [fw, fh] = [image.width * scale, image.height * scale];
+            const [ox, oy] = [(tw - fw)/2, (th - fh)/2];
+
+            const context = canvas.getContext('2d');
+            context.drawImage(image, ox, oy, fw, fh);
+            
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        image.src = url;
     });
 }
 

@@ -30,10 +30,16 @@ the aesthetic inspiration for the default style in domino.
 customisation is an inspiration to domino.
 
 ## attribution
- * Bernardo Castilho—[DragDropTouch][1]
- * Eli Grey—[FileSaver.js][2]
- * Cyreal—[Lora font][8]
- * Wouter de Bruijn—[twitter card image][11] (cropped and recolored under [CC BY-NC-SA][11])
+**Bernardo Castilho** created [DragDropTouch][1] which domino uses to make card 
+dragging work correctly in mobile browsers. 
+
+**Eli Grey** created [FileSaver.js][2] which domino uses to launch the save
+dialogue when exporting.
+
+**Cyreal** created [Lora][8] which is the font domino uses.
+
+**Wouter de Bruijn** created [an image of dominoes][10] which is cropped and 
+recolored under [CC BY-NC-SA][11] to make domino's twitter card image.
 
 [me]: https://twitter.com/ragzouken
 [domino]: https://kool.tools/domino/

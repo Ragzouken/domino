@@ -308,6 +308,9 @@ class Domino {
 
     spawnCard(card) {
         const view = this.addCard(card);
+        view.transition = false;
+        reflow(view.root);
+        view.transition = true;
         view.triggerSpawnAnimation();
         return view;
     }
@@ -544,7 +547,7 @@ class Domino {
             this.removeCard(view);
         }
 
-        const onDroppedOnEmptyCell = (event) => {
+        const onDroppedOnEmptyCell = async (event) => {
             killEvent(event);
             const dropCell = this.pointerEventToCell(event);
             
@@ -554,8 +557,12 @@ class Domino {
             if (amMovingCard) {
                 const originJson = event.dataTransfer.getData('card-origin-cell');
                 const originCell = JSON.parse(originJson);
-    
                 this.swapCells(originCell, dropCell);
+            } else if (!cellIsEmpty && event.dataTransfer.types.includes('Files')) {
+                const view = this.cellToView.get(dropCell);
+                const url = await urlFromFile(event.dataTransfer.files[0]);
+                view.card.image = await compressDataURL(url, 0.2, this.cardSize);
+                view.refresh();
             } else if (cellIsEmpty) {
                 let card = {
                     text: '',
@@ -564,7 +571,10 @@ class Domino {
                     cell: dropCell,
                 };
     
-                if (event.dataTransfer.types.includes('text/uri-list')) {
+                if (event.dataTransfer.types.includes('Files')) {
+                    const url = await urlFromFile(event.dataTransfer.files[0]);
+                    card.image = await compressDataURL(url, 0.2, this.cardSize);
+                } else if (event.dataTransfer.types.includes('text/uri-list')) {
                     const icon = '🔗';
                     const text = event.dataTransfer.getData('text/uri-list');
                     const uris = text.split('\n').filter(uri => !uri.startsWith('#'));
@@ -741,6 +751,7 @@ class CardView {
     constructor(card) {
         this._position = [0, 0];
         this._scale = 1;
+        this._size = domino.cardSize;
         this.card = card;
 
         this.root = cloneTemplateElement('#card-template');
@@ -762,15 +773,22 @@ class CardView {
         this.updateTransform();
     }
 
+    set transition(value) {
+        this.root.classList.toggle('skip-transition', !value);
+    }
+
     triggerSpawnAnimation() {
+        this.transition = false;
         this.scale = 0;
         reflow(this.root);
+        this.transition = true;
         this.scale = 1;
     }
 
     updateTransform() {
-        let [x, y] = this._position;
-        let [w, h] = domino.cardSize;
+        const [x, y] = this._position;
+        let [w, h] = this._size;
+
         const position = `translate(${x - w/2}px, ${y - h/2}px)`;
         const scaling = `scale(${this._scale}, ${this._scale})`;
         this.root.style.transform = `${position} ${scaling}`;
@@ -781,6 +799,8 @@ class CardView {
         this.root.classList.remove(...types.map(t => `domino-card-${t}`));
         this.root.classList.add(`domino-card-${this.card.type}`);
         this.text.innerHTML = parseFakedown(this.card.text);
+
+        this.root.style.background = this.card.image ? `url(${this.card.image})` : '';
 
         this.icons.innerHTML = "";
         (this.card.icons || []).forEach(row => {
@@ -841,6 +861,12 @@ async function loaded() {
         if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
 
         if (event.key === ' ') domino.scale = 1.5 - domino.scale;
+
+        if (event.key === 's') {
+            const view = domino.cellToView.get(domino.focusedCell);
+            if (view)
+                say(view.text.innerText);
+        }
     });
 
     window.addEventListener('wheel', event => {

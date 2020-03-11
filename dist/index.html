@@ -53,7 +53,7 @@ var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof na
 .skip-transition { transition: none !important; }
 
 /* clickable things should use this cursor imo */
-button, a { cursor: pointer; }
+button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor: pointer; }
 
 /* draggable things get their own cursor */
 [draggable="true"] { cursor: copy !important; }
@@ -76,6 +76,9 @@ button, a { cursor: pointer; }
     height: calc(var(--vh, 1vh) * 100);
 }
 
+/* default to no margin for card content */
+.card * { margin: 0; }
+
 .button-list {
     display: grid;
     row-gap: .5em;
@@ -94,10 +97,6 @@ button, a { cursor: pointer; }
     transition: transform .2s ease-in-out;
 }
 
-#pan-blocker {
-    pointer-events: auto; 
-}
-
 /* generic tabbed pages styles */
 .tab-bar {
     display: grid;
@@ -107,14 +106,11 @@ button, a { cursor: pointer; }
 }
 
 .tab-bar > div {
-    cursor: pointer;
     padding: 1em;
-    border: initial;
     text-align: center;
 }
 
 .tab-bar > div.selected {
-    border: none;
     color: black;
     background: var(--editor-background);
 }
@@ -135,6 +131,9 @@ textarea, input[type="text"] {
     border: 1px solid black;
     padding: .5em;
     flex: 1;
+
+    font-family: monospace;
+    font-size: 1em;
 }
 
 .editor-page {
@@ -174,7 +173,6 @@ textarea, input[type="text"] {
     font-weight: bold;
     text-align: center;
 
-    margin: 0;
     margin-bottom: .5em;
 }
 
@@ -216,16 +214,13 @@ textarea, input[type="text"] {
     transform: translate(-50%, -50%);
 }
 
-button, textarea {
+button {
     font-family: lora;
     font-size: 1em;
 }
 
 .screen {
     background-color: rgb(0, 0, 0, .25);
-    
-    pointer-events: auto;
-    cursor: pointer;
 }
 
 .full-panel {
@@ -259,7 +254,6 @@ button, textarea {
 .card {
     box-sizing: content-box;
     position: absolute;
-    cursor: pointer;
 
     transition: transform .2s ease-in-out;
 
@@ -274,10 +268,6 @@ button, textarea {
 .card-text {
     width: 100%;
     padding: 1em;
-}
-
-#version {
-    float: right;
 }
 
 .icon-bar {
@@ -347,11 +337,8 @@ button, textarea {
 }
 
 #toolbar {
-    background: none;
-
-    left: 50%;
+    left: 50%; bottom: 0;
     transform: translate(-50%, 0);
-    bottom: 0;
     
     padding: .5em;
 }
@@ -361,10 +348,6 @@ button, textarea {
     border: 1px solid black;
     border-radius: 100%;
     cursor: pointer;
-}
-
-pre {
-    margin: 0;
 }
 
 #editor-preview {
@@ -393,11 +376,7 @@ pre {
 }
 
 #style-input {
-    flex: 1;
-    width: 100%;
     min-height: 20em;
-    font-family: monospace;
-    resize: none;
 }
 
     </style>

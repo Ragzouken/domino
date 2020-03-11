@@ -259,6 +259,17 @@ class Domino {
         return this._scaling;
     }
 
+    haltPanningTransition() {
+        if (this.scene.classList.contains('skiptransition')) 
+            return;
+
+        this.scene.style.transform = window.getComputedStyle(this.scene).transform;
+        this.scene.classList.add('skiptransition');
+        reflow(this.scene);
+        this.scene.classList.remove('skiptransition');
+        reflow(this.scene);
+    }
+
     refreshTransform() {
         let [x, y] = this._focus;
         x = Math.round(x);
@@ -276,6 +287,7 @@ class Domino {
 
     focusCell(coords) {
         if (this.pan) return;
+        this.haltPanningTransition();
         this.focus = this.grid.cellToPixel(coords);
     }
 
@@ -368,6 +380,7 @@ class Domino {
     setFromHtml(html) {
         const style = ONE('#user-style', html).innerHTML;
         const data = JSON.parse(ONE('#data', html).innerHTML);
+        ONE('title').innerHTML = ONE('title', html).innerHTML;
         ONE('#user-style').innerHTML = style;
         this.refreshStyle();
         this.setData(data);
@@ -435,7 +448,7 @@ class Domino {
 
         // clicking listeners
         addListener(cardEditButton, 'click', () => this.editCardView(this.selectedCardView));
-        addListener('#center',      'click', () => location.hash = '0,0');
+        addListener('#center',      'click', () => this.focusCell([0, 0]));
         addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
         addListener('#reset',       'click', () => this.clear());
         addListener('#import',      'click', () => importFile.click());
@@ -790,7 +803,7 @@ async function loaded() {
 
     // center the currently selected cell
     const jumpFromHash = () => domino.focusCell(getCoordsFromHash());
-    window.addEventListener('hashchange', jumpFromHash);
+    //window.addEventListener('hashchange', jumpFromHash);
     window.addEventListener('resize', jumpFromHash);
     
     // load data from embeded #data script tag
@@ -807,11 +820,6 @@ async function loaded() {
 
         const noScreens = ALL('.screen').map(e => e.hidden).reduce((a, b) => a && b);
         if (!noScreens) return;
-
-        if (event.key === 's') {
-            killEvent(event);
-            domino.editStyle();
-        }
 
         if (event.key === 'e') {
             killEvent(event);

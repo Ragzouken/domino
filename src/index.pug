@@ -54,6 +54,7 @@ html
             #editor-preview
             #editor-section(data-block-clicks)
                 .tab-bar
+                    div(data-close-parent-screen) ◀ BACK
                     div(data-tab="text", data-tab-set="card").selected TEXT
                     div(data-tab="icons", data-tab-set="card") ICONS
                     div(data-tab="style", data-tab-set="card") STYLE
@@ -68,7 +69,7 @@ html
         #menu-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
                 .tab-bar
-                    div(data-close-parent-screen) ⬅ BACK
+                    div(data-close-parent-screen) ◀ BACK
                     div(data-tab="board", data-tab-set="menu").selected BOARD
                     div(data-tab="about", data-tab-set="menu") ABOUT
                 .tab-page(data-page="board", data-tab-set="menu")

@@ -175,6 +175,7 @@ main {
     height: 100%;
     max-width: 100%;
 
+    color: black;
     background-color: var(--editor-background);
     overflow: hidden;
     

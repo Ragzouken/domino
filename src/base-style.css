@@ -32,6 +32,9 @@
 /* used dynamically to prevent or cancel smooth transitions */
 .skip-transition { transition: none !important; }
 
+/* make buttons use donthe page font */ 
+button { font-family: inherit; font-size: inherit; }
+
 /* clickable things should use this cursor imo */
 button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor: pointer; }
 
@@ -106,6 +109,7 @@ button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor
 }
 /* end of tabbed pages styles */
 
+/* standard style for text inputs */
 textarea, input[type="text"] {
     resize: none;
     border: 1px solid black;
@@ -113,13 +117,23 @@ textarea, input[type="text"] {
     flex: 1;
 
     font-family: monospace;
-    font-size: 1em;
+    font-size: inherit;
+}
+
+#board-title {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+#style-input {
+    min-height: 20em;
 }
 
 .editor-page {
     padding: 1em;
 }
 
+/* editor icons page styles */
 .editor-page[data-page="icons"] {
     display: grid;
 
@@ -146,6 +160,7 @@ textarea, input[type="text"] {
     grid-column-start: 2;
     grid-column-end: 5;
 }
+/* end of editor icons page styles */
 
 .card h3 {
     display: block; 
@@ -156,8 +171,8 @@ textarea, input[type="text"] {
     margin-bottom: .5em;
 }
 
+/* tile coordinates display */
 #coords {
-    /* put in the top left */
     position: absolute; left: 0; top: 0;
 
     font-family: monospace;
@@ -168,35 +183,25 @@ textarea, input[type="text"] {
     background: var(--background-color);
 }
 
+/* image display popout */
 #display-image {
-    position: absolute;
-    left: 50%;
-    top: 50%;
+    position: absolute; left: 50%; top: 50%;
     transform: translate(-50%, -50%);
 }
 
+/* iframe display popout */
 #display-frame {
-    background: white;
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
 
+    background: white;
     margin: 0;
     padding: 0;
-    border: none;
-
-    max-width: 100%;
-    max-height: 100%;
 
     width: 800px;
     height: 600px;
-
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-}
-
-button {
-    font-family: lora;
-    font-size: 1em;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 .screen {
@@ -350,8 +355,4 @@ button {
 
     display: flex;
     flex-direction: column;
-}
-
-#style-input {
-    min-height: 20em;
 }

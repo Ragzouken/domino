@@ -85,12 +85,12 @@ button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor
     background:black;
 }
 
-.tab-bar > div {
+.tab-bar > * {
     padding: 1em;
     text-align: center;
 }
 
-.tab-bar > div.selected {
+.tab-bar > *.selected {
     color: black;
     background: var(--editor-background);
 }
@@ -227,7 +227,7 @@ button {
     margin-bottom: 1em;
 }
 
-#type-select > button.selected {
+#type-select > *.selected {
     filter: invert();
 }
 
@@ -251,17 +251,14 @@ button {
 }
 
 .icon-bar {
-    cursor: unset;
     position: absolute;
-
-    font-size: 1.5rem;
-
+    
     display: grid;
     column-gap: .5em;
     margin: 0;
 }
 
-.icon-bar > button, .icon-bar > a, .icon-bar > div {
+.icon-bar > * {
     width: 2em;
     height: 2em;
     grid-row: 1;
@@ -275,55 +272,57 @@ button {
 }
 
 .card-icon-bar {
-    font-size: 1rem;
-
-    left: 50%;
+    left: 50%; bottom: 0;
     transform: translate(-50%, 50%);
-    bottom: 0;
 
+    font-size: 1rem;
     column-gap: .75em;
 }
 
 .card-edit-bar {
-    font-size: 1.25em;
-
-    top: 50%;
+    right: 0; top: 50%;
     transform: translate(50%, -50%);
-    right: 0;
+
+    font-size: 1.25em;
 }
 
-.card-icon-bar > a {
-    border: none;
-    background: none;
+.card-icon-bar > * {
+    min-width: 2em;
+    min-height: 2em;
 
     transition: transform .1s ease-in-out;
 }
 
-.card-icon-bar > a:hover {
+.card-icon-bar > *:hover {
     transform: scale(1.5);
 }
-.card-icon-bar > a:active {
+.card-icon-bar > *:active {
     transform: scale(2);
 }
 
-.card-icon-bar > a.cosmetic {
+/* don't animate cosmetic card icons */
+.card-icon-bar > *.cosmetic {
     cursor: initial;
     transform: unset;
 }
 
-.card-icon-bar > a.blank {
+/* don't respond to blank card icons */
+.card-icon-bar > *.blank {
     pointer-events: none;
     transform: unset;
 }
 
+/* main toolbar */
 #toolbar {
     left: 50%; bottom: 0;
     transform: translate(-50%, 0);
     
+    font-size: 1.5em;
     padding: .5em;
 }
 
-#toolbar > div {
+/* main toolbar buttons */
+#toolbar > * {
     background: rgb(240, 240, 240);
     border: 1px solid black;
     border-radius: 100%;
@@ -337,20 +336,18 @@ button {
 }
 
 #editor-section {
+    position: absolute; left: 50%; bottom: 0;
+    transform: translateX(-50%);
+
     background: var(--editor-background);
     pointer-events: initial;
     cursor: initial;
 
-    position: absolute;
     width: 400px;
     max-width: 100%;
     height: calc(100% - var(--card-height) * 2);
     max-height: calc(var(--card-height) * 2);
 
-    left: 50%;
-    bottom: 0;
-    transform: translateX(-50%);
-    
     display: flex;
     flex-direction: column;
 }

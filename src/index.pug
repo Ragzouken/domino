@@ -17,7 +17,7 @@ html
         script
             include library/FileSaver.min.js
         // styles
-        style
+        style#base-style
             include base-style.css
         style#user-style
             include user-style.css
@@ -57,9 +57,9 @@ html
                     div(data-tab="text", data-tab-set="card").selected TEXT
                     div(data-tab="icons", data-tab-set="card") ICONS
                     div(data-tab="style", data-tab-set="card") STYLE
-                .editor-page(data-page="text", data-tab-set="card")
+                .editor-page.tab-page(data-page="text", data-tab-set="card")
                     textarea#content-input
-                .editor-page(hidden, data-page="icons", data-tab-set="card")
+                .editor-page.tab-page(hidden, data-page="icons", data-tab-set="card")
                     each row in [1, 2, 3, 4]
                         input(id=`editor-icon-select-${row}`, type="text").icon-select
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
@@ -67,7 +67,7 @@ html
                     #type-select.button-list(data-export-clear)
         #menu-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
-                .tab-bar
+                .tab-bar(data-tab)
                     div(data-close-parent-screen) ◀ BACK
                     div(data-tab="board", data-tab-set="menu").selected BOARD
                     div(data-tab="about", data-tab-set="menu") ABOUT

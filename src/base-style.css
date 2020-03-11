@@ -1,8 +1,15 @@
 :root {
+    --font-family: lora;
+    --font-size: 1.1em;
     --editor-background: rgb(240, 248, 255);
     --panel-width: 420px;
 
     touch-action: none;
+
+    color: var(--background-text-color, black);
+    background: var(--background-color, white);
+    font-family: var(--font-family, serif);
+    font-size: var(--font-size, 1.1em);
 }
 
 /* prevent weird highlights https://stackoverflow.com/questions/21003535/ */
@@ -39,12 +46,13 @@ button, a { cursor: pointer; }
 /* match viewport size, hide anything outside of bounds */
 .full-viewport, html, body, .screen, #pan-screen, #pan-blocker {
     position: absolute;
-    overflow: hidden;
     margin: 0;
     padding: 0;
+    overflow: hidden;
 
     width: 100vw;
-    /* https://stackoverflow.com/questions/37112218/css3-100vh-not-constant-in-mobile-browser */
+    /* there are caveats to viewport height on mobile
+       https://stackoverflow.com/questions/37112218/css3-100vh-not-constant-in-mobile-browser */
     height: calc(var(--vh, 1vh) * 100);
 }
 
@@ -53,8 +61,91 @@ button, a { cursor: pointer; }
     row-gap: .5em;
 }
 
+/* point centered on the middle of the screen. this is the parent of all the 
+   cards and the element that changes when navigating */
+#scene {
+    position: absolute; left: 50%; top: 50%;
+    width: 0; height: 0;
+
+    /* i think this helps streamline the panning by telling the browser that it
+       will be constantly moving
+       https://stackoverflow.com/questions/26907265/css-will-change-how-to-use-it-how-it-works */
+    will-change: transform;
+    transition: transform .2s ease-in-out;
+}
+
 #pan-blocker {
     pointer-events: auto; 
+}
+
+/* generic tabbed pages styles */
+.tab-bar {
+    display: grid;
+    grid-auto-flow: column;
+    color: white;
+    background:black;
+}
+
+.tab-bar > div {
+    cursor: pointer;
+    padding: 1em;
+    border: initial;
+    text-align: center;
+}
+
+.tab-bar > div.selected {
+    border: none;
+    color: black;
+    background: var(--editor-background);
+}
+
+.tab-page {
+    margin: 0;
+    padding: 2em;
+    overflow: auto;
+
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+/* end of tabbed pages styles */
+
+textarea, input[type="text"] {
+    resize: none;
+    border: 1px solid black;
+    padding: .5em;
+    flex: 1;
+}
+
+.editor-page {
+    padding: 1em;
+}
+
+.editor-page[data-page="icons"] {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+
+    column-gap: 1em;
+    row-gap: 1em;
+}
+
+.icon-select {
+    min-width: 3em;
+    text-align: center;
+    font-size: 1em;
+
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.icon-command {
+    font-size: 1em;
+    font-family: monospace;
+
+    grid-column-start: 2;
+    grid-column-end: 5;
 }
 
 .card h3 {
@@ -68,16 +159,14 @@ button, a { cursor: pointer; }
 }
 
 #coords {
-    position: absolute;
-    left: 0;
-    top: 0;
+    /* put in the top left */
+    position: absolute; left: 0; top: 0;
 
     font-family: monospace;
     margin: .25em;
     padding: .25em .5em;
     border-radius: .75em;
 
-    color: var(--background-text-color);
     background: var(--background-color);
 }
 
@@ -107,27 +196,9 @@ button, a { cursor: pointer; }
     transform: translate(-50%, -50%);
 }
 
-html {
-    background: var(--background-color);
-
-    font-family: lora;
-    font-size: 1.1em;
-}
-
 button, textarea {
     font-family: lora;
     font-size: 1em;
-}
-
-main {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 0;
-    height: 0;
-
-    will-change: transform;
-    transition: transform .2s ease-in-out;
 }
 
 .screen {
@@ -153,21 +224,8 @@ main {
     flex-direction: column;
 }
 
-.tab-page {
-    margin: 0;
-    padding: 2em;
-    overflow: auto;
-
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
 #content-input {
     padding: 1em;
-    flex: 1;
-    border: none;
-    border-bottom: 2px solid black;
 }
 
 #type-select {
@@ -312,67 +370,6 @@ pre {
     
     display: flex;
     flex-direction: column;
-}
-
-.tab-bar {
-    display: grid;
-    grid-auto-flow: column;
-    color: white;
-    background:black;
-}
-
-.tab-bar > div {
-    cursor: pointer;
-    padding: 1em;
-    border: initial;
-    text-align: center;
-}
-
-.tab-bar > div.selected {
-    border: none;
-    color: black;
-    background: var(--editor-background);
-}
-
-.editor-page {
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-    padding: 1em;
-}
-
-.editor-page[data-page="icons"] {
-    display: grid;
-
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-
-    column-gap: 1em;
-    row-gap: 1em;
-}
-
-.editor-page[data-page="icons"] > input {
-    border: none;
-    border-left: 2px solid black;
-    padding: .5em;
-}
-
-.icon-select {
-    min-width: 0;
-    text-align: center;
-    font-size: 1em;
-
-    grid-column-start: 1;
-    grid-column-end: 2;
-}
-
-.icon-command {
-    font-size: 1em;
-    font-family: monospace;
-
-    grid-column-start: 2;
-    grid-column-end: 5;
 }
 
 #style-input {

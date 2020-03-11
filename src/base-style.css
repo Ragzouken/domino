@@ -292,30 +292,18 @@ textarea, input[type="text"] {
 }
 
 .card-icon-bar > * {
-    min-width: 2em;
-    min-height: 2em;
+    width: 2em;
+    height: 2em;
 
     transition: transform .1s ease-in-out;
 }
 
-.card-icon-bar > *:hover {
-    transform: scale(1.5);
-}
-.card-icon-bar > *:active {
-    transform: scale(2);
-}
-
+.card-icon-bar > *:hover  { transform: scale(1.5); }
+.card-icon-bar > *:active { transform: scale(2);   }
 /* don't animate cosmetic card icons */
-.card-icon-bar > *.cosmetic {
-    cursor: initial;
-    transform: unset;
-}
-
+.card-icon-bar > *.cosmetic { cursor: initial; transform: unset; }
 /* don't respond to blank card icons */
-.card-icon-bar > *.blank {
-    pointer-events: none;
-    transform: unset;
-}
+.card-icon-bar > *.blank { pointer-events: none; transform: unset; }
 
 /* main toolbar */
 #toolbar {

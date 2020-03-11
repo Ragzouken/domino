@@ -239,7 +239,7 @@ textarea, input[type="text"] {
 .card {
     position: absolute;
 
-    transition: transform .2s ease-in-out;
+    transition: transform .2s ease-in-out, opacity .2s ease-in-out;
 
     width: var(--card-width, 15em);
     height: var(--card-height, 9em);

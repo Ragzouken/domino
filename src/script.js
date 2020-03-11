@@ -758,6 +758,8 @@ class CardView {
         this.text = ONE('.card-text', this.root);
         this.icons = ONE('.icon-bar', this.root);
         
+        reflow(this.root);
+        this.refreshSize();
         this.refresh();
     }
 
@@ -779,22 +781,29 @@ class CardView {
 
     triggerSpawnAnimation() {
         this.transition = false;
-        this.scale = 0;
+        this.root.style.opacity = 0;
         reflow(this.root);
         this.transition = true;
-        this.scale = 1;
+        this.root.style.opacity = 1;
     }
 
     updateTransform() {
+        this.refreshSize();
         const [x, y] = this._position;
-        let [w, h] = this._size;
+        const [w, h] = this._size;
 
         const position = `translate(${x - w/2}px, ${y - h/2}px)`;
         const scaling = `scale(${this._scale}, ${this._scale})`;
         this.root.style.transform = `${position} ${scaling}`;
     }
 
+    refreshSize() {
+        const rect = this.root.getBoundingClientRect();
+        this._size = [rect.width, rect.height];
+    }
+
     refresh() {
+        this.refreshSize();
         const types = domino.editorScreen.types;
         this.root.classList.remove(...types.map(t => `domino-card-${t}`));
         this.root.classList.add(`domino-card-${this.card.type}`);

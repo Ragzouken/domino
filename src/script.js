@@ -260,13 +260,13 @@ class Domino {
     }
 
     haltPanningTransition() {
-        if (this.scene.classList.contains('skiptransition')) 
+        if (this.scene.classList.contains('skip-transition')) 
             return;
 
         this.scene.style.transform = window.getComputedStyle(this.scene).transform;
-        this.scene.classList.add('skiptransition');
+        this.scene.classList.add('skip-transition');
         reflow(this.scene);
-        this.scene.classList.remove('skiptransition');
+        this.scene.classList.remove('skip-transition');
         reflow(this.scene);
     }
 
@@ -292,10 +292,10 @@ class Domino {
     }
 
     focusCellNoTransition(coords) {
-        this.scene.classList.add('skiptransition');
+        this.scene.classList.add('skip-transition');
         this.focusCell(coords);
         reflow(this.scene);
-        this.scene.classList.remove('skiptransition');
+        this.scene.classList.remove('skip-transition');
     }
 
     spawnCard(card) {
@@ -423,7 +423,7 @@ class Domino {
 
         const cardEditButton = ONE('#edit-card', this.cardbar);
         const importFile = ONE('#import-file');
-        const screen = ONE('#screen');
+        const screen = ONE('#pan-screen');
 
         const onClickedEmptyCell = (event) => {
             killEvent(event);
@@ -472,7 +472,7 @@ class Domino {
                 scenePosition: this.pointerEventToGridPixel(event),
                 distance: 0,
             };
-            this.scene.classList.add('skiptransition');
+            this.scene.classList.add('skip-transition');
             panBlocker.hidden = false;
             killEvent(event);
         };
@@ -484,7 +484,7 @@ class Domino {
             panBlocker.hidden = true;
             const click = this.pan && this.pan.distance < 3;
             this.pan = undefined;
-            this.scene.classList.remove('skiptransition');
+            this.scene.classList.remove('skip-transition');
             if (click) 
                 onClickedEmptyCell(event);
             killEvent(event);

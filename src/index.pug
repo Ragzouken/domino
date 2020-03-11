@@ -7,7 +7,7 @@ html
         meta(charset="utf-8")
         meta(name="viewport", content="width=device-width, initial-scale=1")
         include twitter.pug
-        title domino
+        title domino: a tool for collaging thoughts
         script#data(type="text/json")
             include default-board.json
         link(href!=font, rel="stylesheet")
@@ -33,7 +33,7 @@ html
                 .card-icon-bar.icon-bar
             #cardbar-template.card-edit-bar.icon-bar(hidden)
                 button#edit-card(title="edit this card") 📝
-        #screen
+        #pan-screen
             #card-gap-measure
             main#scene(data-export-clear)
         #coords(draggable="true") #0,0

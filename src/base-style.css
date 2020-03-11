@@ -5,6 +5,46 @@
     touch-action: none;
 }
 
+/* some mobile browsers do weird highlights when pressing large buttons */
+.no-select {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* hidden elements should be hidden regardless of their display style */
+[hidden] { display: none !important; }
+
+/* default to width/height including padding and border */
+* { box-sizing: border-box; }
+
+/* used dynamically to prevent or cancel smooth transitions */
+.skip-transition { transition: none !important; }
+
+/* clickable things should use this cursor imo */
+button, a { cursor: pointer; }
+
+/* draggable things get their own cursor */
+[draggable="true"] { cursor: copy !important; }
+
+/* before grab-panning, screen has a grab cursor */
+#pan-screen { cursor: grab; }
+/* while grab-panning, blocker has a grabbing cursor */
+#pan-blocker { cursor: grabbing; }
+
+.button-list {
+    display: grid;
+    row-gap: .5em;
+}
+
+#pan-blocker {
+    pointer-events: auto; 
+}
+
 .card h3 {
     display: block; 
     font-size: 1.5em; 
@@ -27,8 +67,6 @@
 
     color: var(--background-text-color);
     background: var(--background-color);
-
-    cursor: copy;
 }
 
 #display-image {
@@ -36,10 +74,6 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-}
-
-#add-delete-icon {
-    cursor: copy;
 }
 
 #display-frame {
@@ -61,40 +95,12 @@
     transform: translate(-50%, -50%);
 }
 
-#display-screen > .full-panel {
-    padding: 0;
-    overflow: hidden;
-}
-
-/* hidden elements should be hidden regardless of their display style */
-[hidden] { 
-    display: none !important; 
-}
-
-.skiptransition {
-    transition: none !important;
-}
-
-.no-select {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-html, body {
+.full-viewport, html, body, .screen, #pan-screen, #pan-blocker {
     position: absolute;
     overflow: hidden;
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
-}
 
-html {
     width: 100vw;
     height: calc(var(--vh, 1vh) * 100);
 }
@@ -111,44 +117,20 @@ button, textarea {
     font-size: 1em;
 }
 
-#screen {
-    width: 100%;
-    height: 100%;
-
-    position: absolute;
-    margin: 0;
-    padding: 0;
-
-    cursor: grab;
-}
-
 main {
     position: absolute;
     left: 50%;
     top: 50%;
+    width: 0;
+    height: 0;
 
     will-change: transform;
     transition: transform .2s ease-in-out;
-    width: 0;
-    height: 0;
 }
 
 #card-gap-measure {
-    box-sizing: border-box;
     width: var(--card-gap-horizontal);
     height: var(--card-gap-vertical);
-}
-
-#pan-blocker {
-    pointer-events: auto;
-    cursor: grabbing;
-    
-    position: absolute;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
 }
 
 .screen {
@@ -156,19 +138,10 @@ main {
     
     pointer-events: auto;
     cursor: pointer;
-    
-    position: absolute;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
 }
 
 .full-panel {
     cursor: auto;
-
-    box-sizing: border-box;
     padding: 0;
 
     width: var(--panel-width);
@@ -184,7 +157,6 @@ main {
 }
 
 .tab-page {
-    box-sizing: border-box;
     margin: 0;
     padding: 2em;
     overflow: auto;
@@ -203,10 +175,6 @@ main {
 
 #type-select {
     margin-bottom: 1em;
-}
-
-#type-select > button {
-    cursor: pointer;
 }
 
 #type-select > button.selected {
@@ -229,7 +197,6 @@ main {
 }
 
 .card-text {
-    box-sizing: border-box;
     width: 100%;
     padding: 1em;
 }
@@ -281,7 +248,6 @@ main {
 }
 
 .card-icon-bar > a {
-    cursor: pointer;
     border: none;
     background: none;
 
@@ -346,8 +312,6 @@ pre {
     left: 50%;
     bottom: 0;
     transform: translateX(-50%);
-
-    box-sizing: border-box;
     
     display: flex;
     flex-direction: column;
@@ -415,15 +379,9 @@ pre {
 }
 
 #style-input {
-    box-sizing: border-box;
     flex: 1;
     width: 100%;
     min-height: 20em;
     font-family: monospace;
     resize: none;
-}
-
-.button-list {
-    display: grid;
-    row-gap: .5em;
 }

@@ -25,7 +25,7 @@ var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof na
     touch-action: none;
 }
 
-/* some mobile browsers do weird highlights when pressing large buttons */
+/* prevent weird highlights https://stackoverflow.com/questions/21003535/ */
 .no-select {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -55,6 +55,18 @@ button, a { cursor: pointer; }
 #pan-screen { cursor: grab; }
 /* while grab-panning, blocker has a grabbing cursor */
 #pan-blocker { cursor: grabbing; }
+
+/* match viewport size, hide anything outside of bounds */
+.full-viewport, html, body, .screen, #pan-screen, #pan-blocker {
+    position: absolute;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+
+    width: 100vw;
+    /* https://stackoverflow.com/questions/37112218/css3-100vh-not-constant-in-mobile-browser */
+    height: calc(var(--vh, 1vh) * 100);
+}
 
 .button-list {
     display: grid;
@@ -115,16 +127,6 @@ button, a { cursor: pointer; }
     transform: translate(-50%, -50%);
 }
 
-.full-viewport, html, body, .screen, #pan-screen, #pan-blocker {
-    position: absolute;
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
-
-    width: 100vw;
-    height: calc(var(--vh, 1vh) * 100);
-}
-
 html {
     background: var(--background-color);
 
@@ -146,11 +148,6 @@ main {
 
     will-change: transform;
     transition: transform .2s ease-in-out;
-}
-
-#card-gap-measure {
-    width: var(--card-gap-horizontal);
-    height: var(--card-gap-vertical);
 }
 
 .screen {
@@ -689,7 +686,11 @@ function computeCardSize(parent) {
 }
 
 function computeCardGap() {
-    const rect = ONE('#card-gap-measure').getBoundingClientRect();
+    const measure = document.createElement('div');
+    measure.style = 'width: var(--card-gap-horizontal); height: var(--card-gap-vertical);';
+    document.documentElement.appendChild(measure);
+    const rect = measure.getBoundingClientRect();
+    document.documentElement.removeChild(measure);
     return [rect.width, rect.height];
 }
 
@@ -1437,7 +1438,6 @@ async function loaded() {
       </div>
     </div>
     <div id="pan-screen">
-      <div id="card-gap-measure"></div>
       <main id="scene" data-export-clear></main>
     </div>
     <div id="coords" draggable="true">#0,0</div>

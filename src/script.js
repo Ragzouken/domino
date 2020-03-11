@@ -106,7 +106,11 @@ function computeCardSize(parent) {
 }
 
 function computeCardGap() {
-    const rect = ONE('#card-gap-measure').getBoundingClientRect();
+    const measure = document.createElement('div');
+    measure.style = 'width: var(--card-gap-horizontal); height: var(--card-gap-vertical);';
+    document.documentElement.appendChild(measure);
+    const rect = measure.getBoundingClientRect();
+    document.documentElement.removeChild(measure);
     return [rect.width, rect.height];
 }
 

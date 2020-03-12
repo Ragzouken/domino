@@ -302,6 +302,7 @@ class Domino {
         const view = new CardView(card);
 
         view.root.addEventListener('pointerdown', e => this.onCardPointerDown(view, e));
+        view.root.addEventListener('click', e => this.onCardClick(view, e));
         view.root.addEventListener('dragstart', e => this.onCardDragStart(view, e));
 
         this.scene.appendChild(view.root);
@@ -417,7 +418,7 @@ class Domino {
         const importFile = ONE('#import-file');
         const screen = ONE('#pan-screen');
 
-        const onClickedEmptyCell = (event) => {
+        const onClickedCell = (event) => {
             killEvent(event);
             this.deselect();
             this.focusCell(this.pointerEventToCell(event));
@@ -478,7 +479,7 @@ class Domino {
             this.pan = undefined;
             this.scene.classList.remove('skip-transition');
             if (click) 
-                onClickedEmptyCell(event);
+                onClickedCell(event);
             killEvent(event);
         };
 
@@ -638,6 +639,13 @@ class Domino {
     onCardPointerDown(view, event) {
         if (!this.unlocked) return;
         event.stopPropagation();
+    }
+
+    onCardClick(view, event) {
+        if (!this.unlocked) return;
+        killEvent(event);
+        domino.selectCardView(view);
+        domino.focusCell(view.cell);
     }
 
     onCardDragStart(view, event) {

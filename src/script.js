@@ -114,21 +114,25 @@ function computeCardGap() {
     return [rect.width, rect.height];
 }
 
+function stringToElement(string) {
+    const template = document.createElement('template');
+    template.innerHTML = string;
+    return template.content.children[0];
+}
+
 async function htmlFromUrl(url) {
-    const html = document.createElement('html');
-    html.innerHTML = await (await fetch(url)).text();
-    return html;
+    const source = await (await fetch(url)).text();
+    return stringToElement(source);
 }
 
 async function htmlFromFile(file) {
-    const html = document.createElement('html');
-    html.innerHTML = await textFromFile(file);
-    return html;
+    const source = await textFromFile(file);
+    return stringToElement(source);
 }
 
 async function extractDataFromHtmlFile(file) {
-    const html = document.createElement('html');
-    html.innerHTML = await textFromFile(file);
+    const source = await textFromFile(file);
+    const html = stringToElement(source);
     return getElementJsonData(ONE('#data', html));
 }
 
@@ -141,48 +145,6 @@ function exportProject() {
     const title = ONE('title').innerHTML;
     const name = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     saveAs(blob, `${name}.html`);
-}
-
-function addCardViewListeners(domino, view) {
-    view.root.addEventListener('click', event => {
-        if (!domino.unlocked) return;
-
-        killEvent(event);
-        domino.selectCardView(view);
-        domino.focusCell(view.cell);
-    });
-    view.root.addEventListener('pointerdown', event => {
-        if (!domino.unlocked) return;
-        event.stopPropagation();
-    });
-    view.root.addEventListener('dragstart', event => {
-        if (!domino.unlocked) return;
-
-        event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
-        event.dataTransfer.setData('text/plain', view.card.text);
-        event.dataTransfer.setData('card/move', '');
-
-        const [x, y] = getElementCenter(view.root);
-        event.dataTransfer.setDragImage(view.root, x, y);
-    });
-    view.root.addEventListener('dragover', event => {
-        if (!domino.unlocked) return;
-
-        killEvent(event);
-        const move = event.dataTransfer.types.includes('card/move');
-        event.dataTransfer.dropEffect = move ? 'move' : 'none'; 
-    });
-    view.root.addEventListener('drop', event => {
-        if (!domino.unlocked) return;
-
-        killEvent(event);
-        if (!event.dataTransfer.types.includes('card/move'))
-            return;
-
-        const originJson = event.dataTransfer.getData('card-origin-cell');
-        const cell = JSON.parse(originJson);
-        domino.swapCells(cell, view.cell);
-    });
 }
 
 function getCoordsFromHash() {
@@ -317,8 +279,10 @@ class Domino {
 
     addCard(card) {
         const view = new CardView(card);
-    
-        addCardViewListeners(this, view);
+
+        view.root.addEventListener('pointerdown', e => this.onCardPointerDown(view, e));
+        view.root.addEventListener('dragstart', e => this.onCardDragStart(view, e));
+
         this.scene.appendChild(view.root);
         this.moveCardToCell(view, card.cell);
     
@@ -543,47 +507,65 @@ class Domino {
             this.removeCard(view);
         }
 
-        const onDroppedOnEmptyCell = async (event) => {
+        const dataTransferToImage = async (dt) => {
+            if (dt.types.includes('text/html')) {
+                const img = stringToElement(dt.getData('text/html'));
+                if (img.nodeName === 'IMG') {
+                    const dataURL = await compressImageURL(img.src, .2, this.cardSize);
+                    const originURL = img.src;
+                    return { dataURL, originURL };
+                }
+            } else if (dt.types.includes('Files')) {
+                const url = await dataURLFromFile(dt.files[0]);
+                const dataURL = await compressImageURL(url, 0.2, this.cardSize);
+                return { dataURL };
+            }
+        }
+
+        const onDroppedOnCell = async (event) => {
             killEvent(event);
             const dropCell = this.pointerEventToCell(event);
-            
-            const amMovingCard = event.dataTransfer.types.includes('card/move');
-            const cellIsEmpty = !this.cellToView.has(dropCell);
-    
+            const dt = event.dataTransfer;
+
+            const amMovingCard = dt.types.includes('card/move');
+            const targetView = this.cellToView.get(dropCell);
+            const image = await dataTransferToImage(event.dataTransfer);
+
             if (amMovingCard) {
-                const originJson = event.dataTransfer.getData('card-origin-cell');
+                const originJson = dt.getData('card-origin-cell');
                 const originCell = JSON.parse(originJson);
                 this.swapCells(originCell, dropCell);
-            } else if (!cellIsEmpty && event.dataTransfer.types.includes('Files')) {
-                const view = this.cellToView.get(dropCell);
-                const url = await dataURLFromFile(event.dataTransfer.files[0]);
-                view.card.image = await compressDataURL(url, 0.2, this.cardSize);
-                view.refresh();
-            } else if (cellIsEmpty) {
+            } else if (targetView && image) {
+                targetView.card.image = image.dataURL;
+                targetView.refresh();
+            } else if (!targetView) {
                 let card = {
                     text: '',
                     type: this.editorScreen.types[0],
                     icons: [],
                     cell: dropCell,
                 };
-    
-                if (event.dataTransfer.types.includes('Files')) {
-                    const url = await dataURLFromFile(event.dataTransfer.files[0]);
-                    card.image = await compressDataURL(url, 0.2, this.cardSize);
-                } else if (event.dataTransfer.types.includes('text/uri-list')) {
+
+                if (image) {
+                    card.image = image.dataURL;
+                    if (image.originURL)
+                        card.icons.push({ icon: '🔗', 'command': `open:${image.originURL}`});
+                    for (let i = card.icons.length; i < 4; ++i)
+                        card.icons.push({ icon: '', command: '' });
+                } else if (dt.types.includes('text/uri-list')) {
                     const icon = '🔗';
-                    const text = event.dataTransfer.getData('text/uri-list');
+                    const text = dt.getData('text/uri-list');
                     const uris = text.split('\n').filter(uri => !uri.startsWith('#'));
                     const commands = uris.map(uri => uri.startsWith('jump:') ? uri : 'open:' + uri);
                     card.icons = commands.map(command => { return { icon, command }; });
                     for (let i = card.icons.length; i < 4; ++i)
                         card.icons.push({ icon: '', command: '' });
                 } else {
-                    const types = event.dataTransfer.types;
+                    const types = dt.types;
                     const supported = dropContentPriority.filter(type => types.includes(type));
 
                     for (let type of supported) {
-                        card.text = event.dataTransfer.getData(type);
+                        card.text = dt.getData(type);
                         break;
                     }
                 }
@@ -596,7 +578,7 @@ class Domino {
         addListener(this.addDeleteCardIcon, 'dragstart', onDragFromNewCard);
         addListener(this.editorScreen.root, 'drop', killEvent);
         addListener(this.addDeleteCardIcon, 'drop', onDroppedOnDelete);
-        addListener(screen,                 'drop', onDroppedOnEmptyCell);
+        addListener(screen,                 'drop', onDroppedOnCell);
 
         addListener('#coords', 'pointerdown', e => e.stopPropagation());
         addListener('#coords', 'dragstart', event => {
@@ -645,6 +627,23 @@ class Domino {
 
         if (view)
             view.root.appendChild(this.cardbar);
+    }
+
+    onCardPointerDown(view, event) {
+        if (!this.unlocked) return;
+        event.stopPropagation();
+    }
+
+    onCardDragStart(view, event) {
+        if (!this.unlocked) return;
+
+        event.stopPropagation();
+        event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
+        event.dataTransfer.setData('text/plain', view.card.text);
+        event.dataTransfer.setData('card/move', '');
+
+        const [x, y] = getElementCenter(view.root);
+        event.dataTransfer.setDragImage(view.root, x, y);
     }
 }
 
@@ -799,6 +798,8 @@ class CardView {
         this.root.style.setProperty('background-image', this.card.image ? `url(${this.card.image})` : '');
         this.root.style.setProperty('background-repeat', 'no-repeat');
 
+        this.root.classList.toggle('has-image', !!this.card.image);
+
         this.icons.innerHTML = "";
         (this.card.icons || []).forEach(row => {
             const button = document.createElement('a');
@@ -830,7 +831,7 @@ async function loaded() {
 
     // center the currently selected cell
     const jumpFromHash = () => domino.focusCell(getCoordsFromHash());
-    //window.addEventListener('hashchange', jumpFromHash);
+    window.addEventListener('hashchange', jumpFromHash);
     window.addEventListener('resize', jumpFromHash);
     
     // load data from embeded #data script tag

@@ -41,8 +41,9 @@ async function dataURLFromFile(file) {
     });
 }
 
-async function compressDataURL(url, quality, size) {
+async function compressImageURL(url, quality, size) {
     const image = document.createElement("img");
+    image.crossOrigin = true;
     const canvas = document.createElement("canvas");
 
     const [tw, th] = size;

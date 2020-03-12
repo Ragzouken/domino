@@ -15,7 +15,7 @@ tweet me at [@ragzouken](https://twitter.com/ragzouken)
  * is a domino board readable on mobile?
 
 ### usability
- * is it easy enough to read a domino board without the tutorial cards
+ * is it easy enough to read a domino board without the tutorial cards?
  * how is the editing experience in general, could it be more self-explanatory?
 
 ### expressivity

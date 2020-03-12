@@ -339,10 +339,6 @@ class Domino {
         this.cellToView.set(cell, view);
     }
 
-    refreshCard(card) {
-        this.cellToView.get(card.cell).refresh();
-    }
-
     swapCells(a, b) {
         const aView = this.cellToView.get(a);
         const bView = this.cellToView.get(b);
@@ -672,7 +668,7 @@ class CardEditor {
                 });
             });
             this.activeView.card.icons = icons;
-            domino.refreshCard(this.activeView.card);
+            this.activeView.refresh();
         }
 
         for (let row of [1, 2, 3, 4]) {
@@ -687,7 +683,7 @@ class CardEditor {
             if (!this.activeView) return;
 
             this.activeView.card.text = this.contentInput.value;
-            domino.refreshCard(this.activeView.card);
+            this.activeView.refresh();
         });
     }
 
@@ -743,7 +739,7 @@ class CardEditor {
 
         this.activeView.card.type = type;
         this.refreshFromCard();
-        domino.refreshCard(this.activeView.card);
+        this.activeView.refresh();
     }
 }
 
@@ -758,8 +754,6 @@ class CardView {
         this.text = ONE('.card-text', this.root);
         this.icons = ONE('.icon-bar', this.root);
         
-        reflow(this.root);
-        this.refreshSize();
         this.refresh();
     }
 
@@ -788,28 +782,22 @@ class CardView {
     }
 
     updateTransform() {
-        this.refreshSize();
         const [x, y] = this._position;
-        const [w, h] = this._size;
+        const [w, h] = [this.root.offsetWidth, this.root.offsetHeight];
 
         const position = `translate(${x - w/2}px, ${y - h/2}px)`;
         const scaling = `scale(${this._scale}, ${this._scale})`;
         this.root.style.transform = `${position} ${scaling}`;
     }
 
-    refreshSize() {
-        const rect = this.root.getBoundingClientRect();
-        this._size = [rect.width, rect.height];
-    }
-
     refresh() {
-        this.refreshSize();
         const types = domino.editorScreen.types;
         this.root.classList.remove(...types.map(t => `domino-card-${t}`));
         this.root.classList.add(`domino-card-${this.card.type}`);
         this.text.innerHTML = parseFakedown(this.card.text);
 
-        this.root.style.background = this.card.image ? `url(${this.card.image})` : '';
+        this.root.style.setProperty('background-image', this.card.image ? `url(${this.card.image})` : '');
+        this.root.style.setProperty('background-repeat', 'no-repeat');
 
         this.icons.innerHTML = "";
         (this.card.icons || []).forEach(row => {
@@ -825,6 +813,8 @@ class CardView {
             if (row.command.length === 0)
                 button.classList.add('cosmetic');
         });
+
+        this.updateTransform();
     }
 }
 

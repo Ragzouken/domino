@@ -10,7 +10,7 @@
 
 /* base style for cards */
 .card {
-    background: white;
+    background-color: white;
     color: black;
 
     border-radius: .5em;
@@ -23,25 +23,25 @@
 
 /* custom card styles */
 .domino-card-heading { 
-    background: #F3E9C7;
+    background-color: #F3E9C7;
     align-items: center;
 }
 
 .domino-card-basic-red   { 
-    background: #FDE9C6; 
+    background-color: #FDE9C6; 
 }
 
 .domino-card-basic-green { 
-    background: #F0EDC5; 
+    background-color: #F0EDC5; 
 }
 
 .domino-card-basic-blue  { 
-    background: #F2EED2; 
+    background-color: #F2EED2; 
 }
 
 /* border from http://todrobbins.com/broider-gallery/ */
 .domino-card-broider-example {
-    background: transparent;
+    background-color: transparent;
     border-style: solid;
     border-width: .5em;
     align-items: center;

@@ -32,7 +32,7 @@ async function textFromFile(file) {
     });
 }
 
-async function urlFromFile(file) {
+async function dataURLFromFile(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = reject;
@@ -57,8 +57,10 @@ async function compressDataURL(url, quality, size) {
 
             const context = canvas.getContext('2d');
             context.drawImage(image, ox, oy, fw, fh);
-            
-            resolve(canvas.toDataURL('image/jpeg', quality));
+            const url = canvas.toDataURL('image/jpeg', quality);
+
+            console.log(`${url.length}B`);
+            resolve(url);
         };
         image.src = url;
     });

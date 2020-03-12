@@ -245,10 +245,10 @@ textarea, input[type="text"] {
     height: var(--card-height, 9em);
 
     display: flex;
-    margin: 0 0 1em;
+    margin: 0;
     word-wrap: break-word;
 
-    background-size: 100%;
+    background-size: cover;
 }
 
 .card-text {

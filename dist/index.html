@@ -265,10 +265,10 @@ textarea, input[type="text"] {
     height: var(--card-height, 9em);
 
     display: flex;
-    margin: 0 0 1em;
+    margin: 0;
     word-wrap: break-word;
 
-    background-size: 100%;
+    background-size: cover;
 }
 
 .card-text {
@@ -379,7 +379,7 @@ textarea, input[type="text"] {
 
 /* base style for cards */
 .card {
-    background: white;
+    background-color: white;
     color: black;
 
     border-radius: .5em;
@@ -392,25 +392,25 @@ textarea, input[type="text"] {
 
 /* custom card styles */
 .domino-card-heading { 
-    background: #F3E9C7;
+    background-color: #F3E9C7;
     align-items: center;
 }
 
 .domino-card-basic-red   { 
-    background: #FDE9C6; 
+    background-color: #FDE9C6; 
 }
 
 .domino-card-basic-green { 
-    background: #F0EDC5; 
+    background-color: #F0EDC5; 
 }
 
 .domino-card-basic-blue  { 
-    background: #F2EED2; 
+    background-color: #F2EED2; 
 }
 
 /* border from http://todrobbins.com/broider-gallery/ */
 .domino-card-broider-example {
-    background: transparent;
+    background-color: transparent;
     border-style: solid;
     border-width: .5em;
     align-items: center;
@@ -472,7 +472,7 @@ async function textFromFile(file) {
     });
 }
 
-async function urlFromFile(file) {
+async function dataURLFromFile(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = reject;
@@ -497,8 +497,10 @@ async function compressDataURL(url, quality, size) {
 
             const context = canvas.getContext('2d');
             context.drawImage(image, ox, oy, fw, fh);
-            
-            resolve(canvas.toDataURL('image/jpeg', quality));
+            const url = canvas.toDataURL('image/jpeg', quality);
+
+            console.log(`${url.length}B`);
+            resolve(url);
         };
         image.src = url;
     });
@@ -1164,7 +1166,7 @@ class Domino {
                 this.swapCells(originCell, dropCell);
             } else if (!cellIsEmpty && event.dataTransfer.types.includes('Files')) {
                 const view = this.cellToView.get(dropCell);
-                const url = await urlFromFile(event.dataTransfer.files[0]);
+                const url = await dataURLFromFile(event.dataTransfer.files[0]);
                 view.card.image = await compressDataURL(url, 0.2, this.cardSize);
                 view.refresh();
             } else if (cellIsEmpty) {
@@ -1176,7 +1178,7 @@ class Domino {
                 };
     
                 if (event.dataTransfer.types.includes('Files')) {
-                    const url = await urlFromFile(event.dataTransfer.files[0]);
+                    const url = await dataURLFromFile(event.dataTransfer.files[0]);
                     card.image = await compressDataURL(url, 0.2, this.cardSize);
                 } else if (event.dataTransfer.types.includes('text/uri-list')) {
                     const icon = '🔗';

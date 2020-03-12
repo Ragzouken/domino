@@ -556,7 +556,7 @@ class Domino {
                 this.swapCells(originCell, dropCell);
             } else if (!cellIsEmpty && event.dataTransfer.types.includes('Files')) {
                 const view = this.cellToView.get(dropCell);
-                const url = await urlFromFile(event.dataTransfer.files[0]);
+                const url = await dataURLFromFile(event.dataTransfer.files[0]);
                 view.card.image = await compressDataURL(url, 0.2, this.cardSize);
                 view.refresh();
             } else if (cellIsEmpty) {
@@ -568,7 +568,7 @@ class Domino {
                 };
     
                 if (event.dataTransfer.types.includes('Files')) {
-                    const url = await urlFromFile(event.dataTransfer.files[0]);
+                    const url = await dataURLFromFile(event.dataTransfer.files[0]);
                     card.image = await compressDataURL(url, 0.2, this.cardSize);
                 } else if (event.dataTransfer.types.includes('text/uri-list')) {
                     const icon = '🔗';

@@ -53,7 +53,7 @@ html
             #editor-preview
             #editor-section(data-block-clicks)
                 .tab-bar
-                    div(data-close-parent-screen) ◀ BACK
+                    div(data-close-parent-screen) ◀ 
                     div(data-tab="text", data-tab-set="card").selected TEXT
                     div(data-tab="icons", data-tab-set="card") ICONS
                     div(data-tab="style", data-tab-set="card") STYLE
@@ -65,10 +65,14 @@ html
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
                 .editor-page(hidden, data-page="style", data-tab-set="card")
                     #type-select.button-list(data-export-clear)
+                    .button-list    
+                        button#remove-image remove image
+                        button#upload-image upload image
+                        input#upload-image-input(type="file", accept="image/*", hidden)
         #menu-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
                 .tab-bar(data-tab)
-                    div(data-close-parent-screen) ◀ BACK
+                    div(data-close-parent-screen) ◀ 
                     div(data-tab="board", data-tab-set="menu").selected BOARD
                     div(data-tab="about", data-tab-set="menu") ABOUT
                 .tab-page(data-page="board", data-tab-set="menu")

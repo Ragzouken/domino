@@ -83,8 +83,15 @@ button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor
 .card * { margin: 0; }
 
 .button-list {
-    display: grid;
-    row-gap: .5em;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+}
+
+.button-list > * {
+    margin: .25em;
+    flex: 1 1 auto;
 }
 
 /* point centered on the middle of the screen. this is the parent of all the 
@@ -151,6 +158,10 @@ textarea, input[type="text"] {
 
 .editor-page {
     padding: 1em;
+    height: 100%;
+    display: flex;
+
+    flex-direction: column;
 }
 
 /* editor icons page styles */
@@ -250,6 +261,7 @@ textarea, input[type="text"] {
 
 #type-select {
     margin-bottom: 1em;
+    flex: 1;
 }
 
 #type-select > *.selected {
@@ -760,6 +772,27 @@ async function extractDataFromHtmlFile(file) {
     return getElementJsonData(ONE('#data', html));
 }
 
+async function fileToImage(file) {
+    const url = await dataURLFromFile(file);
+    const dataURL = await compressImageURL(url, 0.2, domino.cardSize);
+    return dataURL;
+}
+
+async function dataTransferToImage(dt) {
+    if (dt.types.includes('text/html')) {
+        const img = stringToElement(dt.getData('text/html'));
+        if (img.nodeName === 'IMG') {
+            const dataURL = await compressImageURL(img.src, .2, domino.cardSize);
+            const originURL = img.src;
+            return { dataURL, originURL };
+        }
+    } else if (dt.types.includes('Files')) {
+        return {
+            dataURL: await fileToImage(dt.files[0]),
+        };
+    }
+}
+
 function exportProject() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
@@ -1131,21 +1164,6 @@ class Domino {
             this.removeCard(view);
         }
 
-        const dataTransferToImage = async (dt) => {
-            if (dt.types.includes('text/html')) {
-                const img = stringToElement(dt.getData('text/html'));
-                if (img.nodeName === 'IMG') {
-                    const dataURL = await compressImageURL(img.src, .2, this.cardSize);
-                    const originURL = img.src;
-                    return { dataURL, originURL };
-                }
-            } else if (dt.types.includes('Files')) {
-                const url = await dataURLFromFile(dt.files[0]);
-                const dataURL = await compressImageURL(url, 0.2, this.cardSize);
-                return { dataURL };
-            }
-        }
-
         const onDroppedOnCell = async (event) => {
             killEvent(event);
             const dropCell = this.pointerEventToCell(event);
@@ -1308,6 +1326,20 @@ class CardEditor {
             this.activeView.card.text = this.contentInput.value;
             this.activeView.refresh();
         });
+
+        addListener('#remove-image', 'click', () => {
+            this.activeView.card.image = undefined;
+            this.activeView.refresh();
+            this.refreshFromCard();
+        });
+
+        addListener('#upload-image', 'click', () => ONE('#upload-image-input').click());
+        addListener('#upload-image-input', 'input', async event => {
+            this.activeView.card.image = await fileToImage(event.target.files[0]);
+            event.target.value = "";
+            this.activeView.refresh();
+            this.refreshFromCard();
+        });
     }
 
     get hidden() { return this.root.hidden; }
@@ -1355,6 +1387,8 @@ class CardEditor {
             select.value = row.icon
             command.value = row.command;
         });
+
+        ONE('#remove-image').disabled = !this.activeView.card.image;
     }
 
     setType(type) {
@@ -1535,7 +1569,7 @@ async function loaded() {
       <div id="editor-preview"></div>
       <div id="editor-section" data-block-clicks>
         <div class="tab-bar">
-          <div data-close-parent-screen>◀ BACK</div>
+          <div data-close-parent-screen>◀ </div>
           <div class="selected" data-tab="text" data-tab-set="card">TEXT</div>
           <div data-tab="icons" data-tab-set="card">ICONS</div>
           <div data-tab="style" data-tab-set="card">STYLE</div>
@@ -1555,13 +1589,18 @@ async function loaded() {
         </div>
         <div class="editor-page" hidden data-page="style" data-tab-set="card">
           <div class="button-list" id="type-select" data-export-clear></div>
+          <div class="button-list">   
+            <button id="remove-image">remove image</button>
+            <button id="upload-image">upload image</button>
+            <input id="upload-image-input" type="file" accept="image/*" hidden>
+          </div>
         </div>
       </div>
     </div>
     <div class="screen" id="menu-screen" hidden data-click-to-hide data-export-hide>
       <div class="full-panel" data-block-clicks>
         <div class="tab-bar" data-tab>
-          <div data-close-parent-screen>◀ BACK</div>
+          <div data-close-parent-screen>◀ </div>
           <div class="selected" data-tab="board" data-tab-set="menu">BOARD</div>
           <div data-tab="about" data-tab-set="menu">ABOUT</div>
         </div>

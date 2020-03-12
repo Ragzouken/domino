@@ -63,8 +63,15 @@ button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor
 .card * { margin: 0; }
 
 .button-list {
-    display: grid;
-    row-gap: .5em;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+}
+
+.button-list > * {
+    margin: .25em;
+    flex: 1 1 auto;
 }
 
 /* point centered on the middle of the screen. this is the parent of all the 
@@ -131,6 +138,10 @@ textarea, input[type="text"] {
 
 .editor-page {
     padding: 1em;
+    height: 100%;
+    display: flex;
+
+    flex-direction: column;
 }
 
 /* editor icons page styles */
@@ -230,6 +241,7 @@ textarea, input[type="text"] {
 
 #type-select {
     margin-bottom: 1em;
+    flex: 1;
 }
 
 #type-select > *.selected {

@@ -136,6 +136,27 @@ async function extractDataFromHtmlFile(file) {
     return getElementJsonData(ONE('#data', html));
 }
 
+async function fileToImage(file) {
+    const url = await dataURLFromFile(file);
+    const dataURL = await compressImageURL(url, 0.2, domino.cardSize);
+    return dataURL;
+}
+
+async function dataTransferToImage(dt) {
+    if (dt.types.includes('text/html')) {
+        const img = stringToElement(dt.getData('text/html'));
+        if (img.nodeName === 'IMG') {
+            const dataURL = await compressImageURL(img.src, .2, domino.cardSize);
+            const originURL = img.src;
+            return { dataURL, originURL };
+        }
+    } else if (dt.types.includes('Files')) {
+        return {
+            dataURL: await fileToImage(dt.files[0]),
+        };
+    }
+}
+
 function exportProject() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
@@ -507,21 +528,6 @@ class Domino {
             this.removeCard(view);
         }
 
-        const dataTransferToImage = async (dt) => {
-            if (dt.types.includes('text/html')) {
-                const img = stringToElement(dt.getData('text/html'));
-                if (img.nodeName === 'IMG') {
-                    const dataURL = await compressImageURL(img.src, .2, this.cardSize);
-                    const originURL = img.src;
-                    return { dataURL, originURL };
-                }
-            } else if (dt.types.includes('Files')) {
-                const url = await dataURLFromFile(dt.files[0]);
-                const dataURL = await compressImageURL(url, 0.2, this.cardSize);
-                return { dataURL };
-            }
-        }
-
         const onDroppedOnCell = async (event) => {
             killEvent(event);
             const dropCell = this.pointerEventToCell(event);
@@ -684,6 +690,20 @@ class CardEditor {
             this.activeView.card.text = this.contentInput.value;
             this.activeView.refresh();
         });
+
+        addListener('#remove-image', 'click', () => {
+            this.activeView.card.image = undefined;
+            this.activeView.refresh();
+            this.refreshFromCard();
+        });
+
+        addListener('#upload-image', 'click', () => ONE('#upload-image-input').click());
+        addListener('#upload-image-input', 'input', async event => {
+            this.activeView.card.image = await fileToImage(event.target.files[0]);
+            event.target.value = "";
+            this.activeView.refresh();
+            this.refreshFromCard();
+        });
     }
 
     get hidden() { return this.root.hidden; }
@@ -731,6 +751,8 @@ class CardEditor {
             select.value = row.icon
             command.value = row.command;
         });
+
+        ONE('#remove-image').disabled = !this.activeView.card.image;
     }
 
     setType(type) {

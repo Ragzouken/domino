@@ -180,8 +180,6 @@ function getCoordsFromHash() {
     return [0, 0];
 }
 
-const dropContentPriority = ['text/html', 'text/plain', 'text'];
-
 class Domino {
     constructor() {
         this.cellToView = new CoordStore();
@@ -554,6 +552,7 @@ class Domino {
             const amMovingCard = dt.types.includes('card/move');
             const targetView = this.cellToView.get(dropCell);
             const image = await dataTransferToImage(event.dataTransfer);
+            const urilist = dt.getData('text/uri-list');
 
             if (image) {
                 this.putImageInCell(dropCell, image);
@@ -561,34 +560,15 @@ class Domino {
                 const originJson = dt.getData('card-origin-cell');
                 const originCell = JSON.parse(originJson);
                 this.swapCells(originCell, dropCell);
-            } else if (!targetView) {
-                let card = {
-                    text: '',
-                    type: this.editorScreen.types[0],
-                    icons: [],
-                    cell: dropCell,
-                };
-
-                if (dt.types.includes('text/uri-list')) {
-                    const icon = '🔗';
-                    const text = dt.getData('text/uri-list');
-                    const uris = text.split('\n').filter(uri => !uri.startsWith('#'));
-                    const commands = uris.map(uri => uri.startsWith('jump:') ? uri : 'open:' + uri);
-                    card.icons = commands.map(command => { return { icon, command }; });
-                    for (let i = card.icons.length; i < 4; ++i)
-                        card.icons.push({ icon: '', command: '' });
-                } else {
-                    const types = dt.types;
-                    const supported = dropContentPriority.filter(type => types.includes(type));
-
-                    for (let type of supported) {
-                        card.text = dt.getData(type);
-                        break;
-                    }
-                }
-
-                const view = this.spawnCard(card);
-                this.editorScreen.setActiveView(view);
+            } else if (urilist) {
+                const uris = urilist.split('\n').filter(uri => !uri.startsWith('#'));
+                const commands = uris.map(uri => uri.startsWith('jump:') ? uri : 'open:' + uri);
+                const icons = commands.map(command => { return {icon: '🔗', command}; });
+                this.putIconsInCell(dropCell, ...icons);
+            } else {
+                const text = dt.getData('text') || dt.getData('text/plain');
+                if (text)
+                    this.putTextInCell(dropCell, text);
             }
         }
 
@@ -678,6 +658,28 @@ class Domino {
         const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
 
         view.card.image = image.dataURL;
+        view.refresh();
+    }
+
+    putIconsInCell(cell, ...rows) {
+        const blankCard = { text: '', type: domino.editorScreen.types[0], icons: [], cell };
+        const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
+
+        view.card.icons = view.card.icons || [];
+        for (let i = 0; i < 4; ++i) {
+            if (view.card.icons.length === i)
+                view.card.icons.push({icon: '', command: ''});
+            if (view.card.icons[i].icon === '' && rows.length > 0)
+                view.card.icons[i] = rows.shift();
+        }
+
+        view.refresh();
+    }
+
+    putTextInCell(cell, text) {
+        const blankCard = { text: '', type: domino.editorScreen.types[0], icons: [], cell };
+        const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
+        view.card.text += text;
         view.refresh();
     }
 }

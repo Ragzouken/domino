@@ -506,6 +506,19 @@ async function dataURLFromFile(file) {
     });
 }
 
+function filesFromDataTransfer(dataTransfer) {
+    const clipboardFiles = 
+        Array.from(dataTransfer.items)
+        .filter(item => item.kind === 'file')
+        .map(item => item.getAsFile());
+    return clipboardFiles.concat(...dataTransfer.files);
+}
+
+function elementFromDataTransfer(dataTransfer) {
+    const html = dataTransfer.getData('text/html');
+    return html && stringToElement(html);
+}
+
 async function compressImageURL(url, quality, size) {
     const image = document.createElement("img");
     image.crossOrigin = true;
@@ -528,6 +541,7 @@ async function compressImageURL(url, quality, size) {
             console.log(`${url.length}B`);
             resolve(url);
         };
+        image.onerror = () => resolve(undefined);
         image.src = url;
     });
 }
@@ -777,17 +791,15 @@ async function fileToImage(file) {
 }
 
 async function dataTransferToImage(dt) {
-    if (dt.types.includes('text/html')) {
-        const img = stringToElement(dt.getData('text/html'));
-        if (img.nodeName === 'IMG') {
-            const dataURL = await compressImageURL(img.src, .2, domino.cardSize);
-            const originURL = img.src;
-            return { dataURL, originURL };
-        }
-    } else if (dt.types.includes('Files')) {
-        return {
-            dataURL: await fileToImage(dt.files[0]),
-        };
+    const files = filesFromDataTransfer(dt);
+    const element = elementFromDataTransfer(dt);
+    const originURL = element && element.src;
+    if (files.length > 0) {
+        const dataURL = await fileToImage(files[0]);
+        return { dataURL, originURL };
+    } else if (element && element.nodeName === 'IMG') {
+        const dataURL = await compressImageURL(element.src, .2, domino.cardSize);
+        return { dataURL, originURL };
     }
 }
 
@@ -1155,9 +1167,8 @@ class Domino {
 
         const setElementDragoverDropEffect = (query, effect) => {
             addListener(query, 'dragover', event => {
-                if (!this.unlocked) return;
                 killEvent(event);
-                event.dataTransfer.dropEffect = effect;
+                event.dataTransfer.dropEffect = this.unlocked ? effect : 'none';
             });
         }
 
@@ -1187,13 +1198,12 @@ class Domino {
             const targetView = this.cellToView.get(dropCell);
             const image = await dataTransferToImage(event.dataTransfer);
 
-            if (amMovingCard) {
+            if (image) {
+                this.putImageInCell(dropCell, image);
+            } else if (amMovingCard) {
                 const originJson = dt.getData('card-origin-cell');
                 const originCell = JSON.parse(originJson);
                 this.swapCells(originCell, dropCell);
-            } else if (targetView && image) {
-                targetView.card.image = image.dataURL;
-                targetView.refresh();
             } else if (!targetView) {
                 let card = {
                     text: '',
@@ -1202,13 +1212,7 @@ class Domino {
                     cell: dropCell,
                 };
 
-                if (image) {
-                    card.image = image.dataURL;
-                    if (image.originURL)
-                        card.icons.push({ icon: '🔗', 'command': `open:${image.originURL}`});
-                    for (let i = card.icons.length; i < 4; ++i)
-                        card.icons.push({ icon: '', command: '' });
-                } else if (dt.types.includes('text/uri-list')) {
+                if (dt.types.includes('text/uri-list')) {
                     const icon = '🔗';
                     const text = dt.getData('text/uri-list');
                     const uris = text.split('\n').filter(uri => !uri.startsWith('#'));
@@ -1310,6 +1314,14 @@ class Domino {
 
         const [x, y] = getElementCenter(view.root);
         event.dataTransfer.setDragImage(view.root, x, y);
+    }
+
+    putImageInCell(cell, image) {
+        const blankCard = { text: '', type: domino.editorScreen.types[0], icons: [], cell };
+        const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
+
+        view.card.image = image.dataURL;
+        view.refresh();
     }
 }
 
@@ -1527,17 +1539,12 @@ async function loaded() {
     window.addEventListener('paste', async event => {
         if (!domino.unlocked) return;
 
-        for (let item of event.clipboardData.items) {
-            if (item.kind === 'file') {
-                const view = domino.cellToView.get(domino.focusedCell)
-                          || domino.spawnCard({ text: '', type: domino.editorScreen.types[0], icons: [], cell: domino.focusedCell });
+        const image = await dataTransferToImage(event.clipboardData);
 
-                view.card.image = await fileToImage(item.getAsFile());
-                view.refresh();
-
-                killEvent(event);
-                return;
-            }
+        if (image) {
+            domino.putImageInCell(domino.focusCell, image);
+            killEvent(event);
+            return;
         }
     });
 

@@ -41,6 +41,19 @@ async function dataURLFromFile(file) {
     });
 }
 
+function filesFromDataTransfer(dataTransfer) {
+    const clipboardFiles = 
+        Array.from(dataTransfer.items)
+        .filter(item => item.kind === 'file')
+        .map(item => item.getAsFile());
+    return clipboardFiles.concat(...dataTransfer.files);
+}
+
+function elementFromDataTransfer(dataTransfer) {
+    const html = dataTransfer.getData('text/html');
+    return html && stringToElement(html);
+}
+
 async function compressImageURL(url, quality, size) {
     const image = document.createElement("img");
     image.crossOrigin = true;
@@ -63,6 +76,7 @@ async function compressImageURL(url, quality, size) {
             console.log(`${url.length}B`);
             resolve(url);
         };
+        image.onerror = () => resolve(undefined);
         image.src = url;
     });
 }

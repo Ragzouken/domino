@@ -3,12 +3,14 @@
 const ONE = (query, element) => (element || document).querySelector(query);
 const ALL = (query, element) => Array.from((element || document).querySelectorAll(query));
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const makeCounter = (count=0) => () => count++;
 const remToPx = em => emToPx(document.documentElement, em);
 const emToPx = (element, em) => Math.round(em * parseFloat(getComputedStyle(element).fontSize));
 const setElementJsonData = (element, data) => queryToElement(element).innerHTML = JSON.stringify(data);
 const getElementJsonData = (element) => JSON.parse(queryToElement(element).innerHTML);
 const reflow = element => void(element.offsetHeight);
+const coordsToKey = (coords) => coords.join(',');
 
 function say(text) {
     const utter = new SpeechSynthesisUtterance(text);
@@ -81,10 +83,6 @@ async function compressImageURL(url, quality, size) {
     });
 }
 
-async function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -121,10 +119,6 @@ function cloneTemplateElement(query) {
 
 function addListener(query, type, listener) {
     queryToElement(query).addEventListener(type, listener);
-}
-
-function coordsToKey(coords) {
-    return coords.join(',');
 }
 
 class CoordStore {

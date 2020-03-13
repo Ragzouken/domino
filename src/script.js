@@ -468,7 +468,7 @@ class Domino {
         this.touches = new Map();
         
         addListener('#zoom', 'click', event => {
-            this.scale = 1.5 - this.scale;
+            this.toggleZoom();
             killEvent(event);
         });
 
@@ -486,15 +486,15 @@ class Domino {
         
         window.addEventListener('dblclick', () => onClickedCell(event));
 
-        const onDone = event => {
+        const onDonePanning = event => {
             panBlocker.hidden = true;
             this.pan = undefined;
             this.scene.classList.remove('skip-transition');
             event.stopPropagation();
         };
 
-        panBlocker.addEventListener('pointerup', onDone);
-        window.addEventListener('pointerup', onDone);
+        panBlocker.addEventListener('pointerup', onDonePanning);
+        window.addEventListener('pointerup', onDonePanning);
         
         const onMove = event => {
             if (!this.pan) return;
@@ -518,7 +518,7 @@ class Domino {
         addListener(importFile, 'change', async event => {
             const html = await htmlFromFile(event.target.files[0]);
             this.setFromHtml(html);
-            importFile.value = null;
+            importFile.value = "";
         });
 
         const setElementDragoverDropEffect = (query, effect) => {
@@ -551,7 +551,6 @@ class Domino {
             const dt = event.dataTransfer;
 
             const amMovingCard = dt.types.includes('card/move');
-            const targetView = this.cellToView.get(dropCell);
             const image = await dataTransferToImage(event.dataTransfer);
             const urilist = dt.getData('text/uri-list');
 
@@ -677,6 +676,10 @@ class Domino {
         const view = this.getOrSpawnCard(cell);
         view.card.text += text;
         view.refresh();
+    }
+
+    toggleZoom() {
+        this.scale = 1.5 - this.scale;
     }
 }
 
@@ -921,7 +924,7 @@ async function loaded() {
         if (event.key === 'ArrowUp')    domino.focusCell([q + 0, r - 1]);
         if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
 
-        if (event.key === ' ') domino.scale = 1.5 - domino.scale;
+        if (event.key === ' ') domino.toggleZoom();
 
         if (event.key === 's') {
             const view = domino.cellToView.get(domino.focusedCell);

@@ -893,8 +893,9 @@ async function loaded() {
 
         const image = await dataTransferToImage(event.clipboardData);
 
-        if (image) {
-            domino.putImageInCell(domino.focusedCell, image);
+        if (image && domino.selectedCardView) {
+            const cell = domino.selectedCardView.card.cell;
+            domino.putImageInCell(cell, image);
             killEvent(event);
             return;
         }

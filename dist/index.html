@@ -952,6 +952,7 @@ class Domino {
         const view = new CardView(card);
 
         view.root.addEventListener('pointerdown', e => this.onCardPointerDown(view, e));
+        view.root.addEventListener('click', e => this.selectCardView(view));
         view.root.addEventListener('dblclick', e => this.onCardClick(view, e));
         view.root.addEventListener('dragstart', e => this.onCardDragStart(view, e));
 

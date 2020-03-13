@@ -784,7 +784,7 @@ async function extractDataFromHtmlFile(file) {
     return getElementJsonData(ONE('#data', html));
 }
 
-async function fileToImage(file) {
+async function fileToCompressedImage(file) {
     const url = await dataURLFromFile(file);
     const dataURL = await compressImageURL(url, 0.2, domino.cardSize);
     return dataURL;
@@ -793,9 +793,9 @@ async function fileToImage(file) {
 async function dataTransferToImage(dt) {
     const files = filesFromDataTransfer(dt);
     const element = elementFromDataTransfer(dt);
-    const originURL = element && element.src;
+    const originURL = element && element.src; 
     if (files.length > 0) {
-        const dataURL = await fileToImage(files[0]);
+        const dataURL = await fileToCompressedImage(files[0]);
         return { dataURL, originURL };
     } else if (element && element.nodeName === 'IMG') {
         const dataURL = await compressImageURL(element.src, .2, domino.cardSize);
@@ -1301,6 +1301,8 @@ class Domino {
         const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
 
         view.card.image = image.dataURL;
+        if (image.originURL)
+            this.putIconsInCell(cell, {icon: '🔗', command: 'open:' + image.originURL});
         view.refresh();
     }
 
@@ -1373,7 +1375,7 @@ class CardEditor {
 
         addListener('#upload-image', 'click', () => ONE('#upload-image-input').click());
         addListener('#upload-image-input', 'input', async event => {
-            this.activeView.card.image = await fileToImage(event.target.files[0]);
+            this.activeView.card.image = await fileToCompressedImage(event.target.files[0]);
             event.target.value = "";
             this.activeView.refresh();
             this.refreshFromCard();
@@ -1544,7 +1546,7 @@ async function loaded() {
         const image = await dataTransferToImage(event.clipboardData);
 
         if (image) {
-            domino.putImageInCell(domino.focusCell, image);
+            domino.putImageInCell(domino.focusedCell, image);
             killEvent(event);
             return;
         }

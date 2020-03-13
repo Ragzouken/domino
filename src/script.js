@@ -290,6 +290,11 @@ class Domino {
         this.scene.classList.remove('skip-transition');
     }
 
+    getOrSpawnCard(cell) {
+        const blankCard = { cell, text: '', type: domino.editorScreen.types[0], icons: [] };
+        return domino.cellToView.get(cell) || domino.spawnCard(blankCard);
+    }
+
     spawnCard(card) {
         const view = this.addCard(card);
         view.transition = false;
@@ -468,7 +473,6 @@ class Domino {
         const onDown = event => {
             this.pan = {
                 scenePosition: this.pointerEventToGridPixel(event),
-                distance: 0,
             };
             this.scene.classList.add('skip-transition');
             panBlocker.hidden = false;
@@ -482,12 +486,8 @@ class Domino {
 
         const onDone = event => {
             panBlocker.hidden = true;
-            const click = this.pan && this.pan.distance < 3;
             this.pan = undefined;
             this.scene.classList.remove('skip-transition');
-            //if (click) 
-            //    onClickedCell(event);
-            //killEvent(event);
             event.stopPropagation();
         };
 
@@ -505,7 +505,6 @@ class Domino {
             const [dx, dy] = [sx - ax, sy - ay];
             const [fx, fy] = this.focus;
             this.focus = [fx + dx, fy + dy];
-            this.pan.distance += Math.sqrt(dx * dx + dy * dy);
 
             killEvent(event);
         };
@@ -606,10 +605,8 @@ class Domino {
     }
 
     editFocusedCell() {
-        const view = this.cellToView.get(this.focusedCell)
-                  || this.spawnCard({cell: this.focusedCell, text:'', type:this.editorScreen.types[0]});
-        if (view)
-            this.editCardView(view);
+        const view = this.getOrSpawnCard(this.focusedCell);
+        this.editCardView(view);
     }
 
     editCardView(view) {
@@ -654,9 +651,7 @@ class Domino {
     }
 
     putImageInCell(cell, image) {
-        const blankCard = { text: '', type: domino.editorScreen.types[0], icons: [], cell };
-        const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
-
+        const view = this.getOrSpawnCard(cell);
         view.card.image = image.dataURL;
         if (image.originURL)
             this.putIconsInCell(cell, {icon: '🔗', command: 'open:' + image.originURL});
@@ -664,9 +659,7 @@ class Domino {
     }
 
     putIconsInCell(cell, ...rows) {
-        const blankCard = { text: '', type: domino.editorScreen.types[0], icons: [], cell };
-        const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
-
+        const view = this.getOrSpawnCard(cell);
         view.card.icons = view.card.icons || [];
         for (let i = 0; i < 4; ++i) {
             if (view.card.icons.length === i)
@@ -679,8 +672,7 @@ class Domino {
     }
 
     putTextInCell(cell, text) {
-        const blankCard = { text: '', type: domino.editorScreen.types[0], icons: [], cell };
-        const view = domino.cellToView.get(cell) || domino.spawnCard(blankCard);
+        const view = this.getOrSpawnCard(cell);
         view.card.text += text;
         view.refresh();
     }

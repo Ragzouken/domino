@@ -94,13 +94,6 @@ function getElementCenterClient(element) {
     return [rect.x + rect.width / 2, rect.y + rect.height / 2];
 }
 
-function setElementDragoverDropEffect(query, effect) {
-    addListener(query, 'dragover', event => {
-        killEvent(event);
-        event.dataTransfer.dropEffect = effect;
-    });
-}
-
 function queryToElement(query) {
     return (query instanceof Element) ? query : ONE(query);
 }

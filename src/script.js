@@ -114,20 +114,25 @@ function computeCardGap() {
     return [rect.width, rect.height];
 }
 
-function stringToElement(string) {
+function stringToDocument(string) {
     const template = document.createElement('template');
     template.innerHTML = string;
-    return template.content.children[0];
+    return template.content;
+}
+
+function stringToElement(string) {
+    return stringToDocument(string).children[0];
 }
 
 async function htmlFromUrl(url) {
     const source = await (await fetch(url)).text();
-    return stringToElement(source);
+    return stringToDocument(source);
 }
 
 async function htmlFromFile(file) {
     const source = await textFromFile(file);
-    return stringToElement(source);
+    const html = stringToDocument(source);
+    return html;
 }
 
 async function extractDataFromHtmlFile(file) {
@@ -302,7 +307,7 @@ class Domino {
         const view = new CardView(card);
 
         view.root.addEventListener('pointerdown', e => this.onCardPointerDown(view, e));
-        view.root.addEventListener('click', e => this.onCardClick(view, e));
+        view.root.addEventListener('dblclick', e => this.onCardClick(view, e));
         view.root.addEventListener('dragstart', e => this.onCardDragStart(view, e));
 
         this.scene.appendChild(view.root);
@@ -419,9 +424,13 @@ class Domino {
         const screen = ONE('#pan-screen');
 
         const onClickedCell = (event) => {
+            if (event.button && event.button === 2) 
+                return;
             killEvent(event);
             this.deselect();
             this.focusCell(this.pointerEventToCell(event));
+            if (this.unlocked)
+                this.editFocusedCell();
             this.scale = 1;
         }
 
@@ -467,20 +476,23 @@ class Domino {
             };
             this.scene.classList.add('skip-transition');
             panBlocker.hidden = false;
-            killEvent(event);
+            event.stopPropagation();
         };
 
         panBlocker.addEventListener('pointerdown', onDown);
         window.addEventListener('pointerdown', onDown);
         
+        window.addEventListener('dblclick', () => onClickedCell(event));
+
         const onDone = event => {
             panBlocker.hidden = true;
             const click = this.pan && this.pan.distance < 3;
             this.pan = undefined;
             this.scene.classList.remove('skip-transition');
-            if (click) 
-                onClickedCell(event);
-            killEvent(event);
+            //if (click) 
+            //    onClickedCell(event);
+            //killEvent(event);
+            event.stopPropagation();
         };
 
         panBlocker.addEventListener('pointerup', onDone);
@@ -511,6 +523,14 @@ class Domino {
             this.setFromHtml(html);
             importFile.value = null;
         });
+
+        const setElementDragoverDropEffect = (query, effect) => {
+            addListener(query, 'dragover', event => {
+                if (!this.unlocked) return;
+                killEvent(event);
+                event.dataTransfer.dropEffect = effect;
+            });
+        }
 
         // dragging and dropping listeners
         setElementDragoverDropEffect(screen, 'copy');
@@ -616,7 +636,8 @@ class Domino {
     }
 
     editFocusedCell() {
-        const view = this.cellToView.get(this.focusedCell);
+        const view = this.cellToView.get(this.focusedCell)
+                  || this.spawnCard({cell: this.focusedCell, text:'', type:this.editorScreen.types[0]});
         if (view)
             this.editCardView(view);
     }
@@ -637,15 +658,17 @@ class Domino {
     }
 
     onCardPointerDown(view, event) {
-        if (!this.unlocked) return;
+        if (!this.unlocked || event.button === 1) return;
         event.stopPropagation();
     }
 
     onCardClick(view, event) {
         if (!this.unlocked) return;
         killEvent(event);
-        domino.selectCardView(view);
-        domino.focusCell(view.cell);
+        this.selectCardView(view);
+        this.focusCell(view.cell);
+        this.scale = 1;
+        this.editFocusedCell();
     }
 
     onCardDragStart(view, event) {
@@ -870,6 +893,24 @@ async function loaded() {
     domino.setData(data);
     domino.setUnlocked(false);
     domino.focusCellNoTransition(coords);
+
+    // image pasting
+    window.addEventListener('paste', async event => {
+        if (!domino.unlocked) return;
+
+        for (let item of event.clipboardData.items) {
+            if (item.kind === 'file') {
+                const view = domino.cellToView.get(domino.focusedCell)
+                          || domino.spawnCard({ text: '', type: domino.editorScreen.types[0], icons: [], cell: domino.focusedCell });
+
+                view.card.image = await fileToImage(item.getAsFile());
+                view.refresh();
+
+                killEvent(event);
+                return;
+            }
+        }
+    });
 
     // keyboard shortcuts
     window.addEventListener('keydown', event => {

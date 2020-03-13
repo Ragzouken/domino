@@ -799,7 +799,15 @@ class CardView {
         this.root = cloneTemplateElement('#card-template');
         this.text = ONE('.card-text', this.root);
         this.icons = ONE('.icon-bar', this.root);
-        
+
+        Array.from(this.icons.children).forEach((icon, i) => {
+            addListener(icon, 'pointerdown', e => e.stopPropagation());
+            addListener(icon, 'click', e => { 
+                killEvent(e); 
+                domino.runCommand(this.card.icons[i].command)
+            });
+        });
+
         this.refresh();
     }
 
@@ -837,29 +845,19 @@ class CardView {
     }
 
     refresh() {
-        const types = domino.editorScreen.types;
-        this.root.classList.remove(...types.map(t => `domino-card-${t}`));
-        this.root.classList.add(`domino-card-${this.card.type}`);
+        for (let type of domino.editorScreen.types)
+            this.root.classList.toggle(`domino-card-${type}`, this.card.type === type);
+
         this.text.innerHTML = parseFakedown(this.card.text);
-
         this.root.style.setProperty('background-image', this.card.image ? `url(${this.card.image})` : '');
-        this.root.style.setProperty('background-repeat', 'no-repeat');
-
         this.root.classList.toggle('has-image', !!this.card.image);
 
-        this.icons.innerHTML = "";
-        (this.card.icons || []).forEach(row => {
-            const button = document.createElement('a');
+        (this.card.icons || []).forEach((row, i) => {
+            const button = this.icons.children[i];
             button.innerHTML = row.icon;
-            addListener(button, 'pointerdown', e => e.stopPropagation());
-            addListener(button, 'click', e => { killEvent(e); domino.runCommand(row.command)});
-            this.icons.appendChild(button);
             button.href = row.command;
-
-            if (row.icon.length === 0)
-                button.classList.add('blank');
-            if (row.command.length === 0)
-                button.classList.add('cosmetic');
+            button.classList.toggle('blank', row.icon === '');
+            button.classList.toggle('cosmetic', row.command === '');
         });
 
         this.updateTransform();

@@ -921,10 +921,11 @@ class Domino {
         this.coords.innerHTML = `#${q},${r}`;
     }
 
-    focusCell(coords) {
+    focusCell(cell) {
         if (this.pan) return;
         this.haltPanningTransition();
-        this.focus = this.grid.cellToPixel(coords);
+        this.focus = this.grid.cellToPixel(cell);
+        this.selectCardView(this.cellToView.get(cell));
     }
 
     focusCellNoTransition(coords) {

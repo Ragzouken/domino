@@ -62,6 +62,8 @@ button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor
 /* default to no margin for card content */
 .card * { margin: 0; }
 
+td { padding: .5em; }
+
 .button-list {
     display: flex;
     flex-flow: row wrap;

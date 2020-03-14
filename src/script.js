@@ -35,7 +35,7 @@ function parseFakedown(text) {
 }
 
 let pageSetters = new Map();
-const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart', 'wheel', 'dblclick'];
+const clicks = ['pointerdown', 'pointerup', 'click', 'wheel', 'dblclick'];
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
         for (let name of clicks)
@@ -442,13 +442,13 @@ class Domino {
         });
 
         // clicking listeners
-        addListener(cardEditButton, 'click', () => this.editCardView(this.selectedCardView));
-        addListener('#center',      'click', () => this.focusCell([0, 0]));
-        addListener('#open-about',  'click', () => this.aboutScreen.hidden = false);
-        addListener('#reset',       'click', () => this.clear());
-        addListener('#import',      'click', () => importFile.click());
-        addListener('#export',      'click', () => exportProject());
-        addListener('#fullscreen',  'click', () => toggleFullscreen());
+        addListener(cardEditButton, 'click', e => { killEvent(e); this.editCardView(this.selectedCardView); });
+        addListener('#center',      'click', e => { killEvent(e);  this.focusCell([0, 0]); });
+        addListener('#open-about',  'click', e => { killEvent(e);  this.aboutScreen.hidden = false; });
+        addListener('#reset',       'click', e => this.clear());
+        addListener('#import',      'click', e => importFile.click());
+        addListener('#export',      'click', e => exportProject());
+        addListener('#fullscreen',  'click', e => toggleFullscreen());
 
         const panBlocker = ONE('#pan-blocker');
 
@@ -591,10 +591,11 @@ class Domino {
 
     setUnlocked(unlocked) {
         this.unlocked = unlocked;
-        this.addDeleteCardIcon.hidden = !unlocked;
 
-        this.lockedButton.hidden = unlocked;
-        this.unlockedButton.hidden = !unlocked;
+        ALL('[data-locked-visibility]').forEach(element => {
+            const hidden = element.getAttribute('data-locked-visibility') === 'hidden';
+            element.hidden = (hidden === !unlocked);
+        });
 
         ALL('[data-card]').forEach(element => {
             element.setAttribute('draggable', unlocked ? 'true' : 'false');
@@ -624,10 +625,11 @@ class Domino {
 
     selectCardView(view) {
         this.selectedCardView = view;
-        this.cardbar.hidden = (view === undefined) || !this.unlocked;
 
         if (view)
             view.root.appendChild(this.cardbar);
+        else if (this.cardbar.parentElement)
+            this.cardbar.parentElement.removeChild(this.cardbar);
     }
 
     onCardPointerDown(view, event) {
@@ -728,6 +730,12 @@ class CardEditor {
             this.activeView.refresh();
         });
 
+        this.altTextInput = ONE('#alt-text');
+        this.altTextInput.addEventListener('input', () => {
+            this.activeView.card.alt = this.altTextInput.value;
+            this.refreshFromCard();
+        });
+
         addListener('#remove-image', 'click', () => {
             this.activeView.card.image = undefined;
             this.activeView.refresh();
@@ -790,6 +798,7 @@ class CardEditor {
         });
 
         ONE('#remove-image').disabled = !this.activeView.card.image;
+        this.altTextInput.value = this.activeView.card.alt || "";
     }
 
     setType(type) {
@@ -930,24 +939,33 @@ async function loaded() {
         const noScreens = ALL('.screen').map(e => e.hidden).reduce((a, b) => a && b);
         if (!noScreens) return;
 
-        if (event.key === 'e') {
+        if (event.altKey) {
+            if (event.key === 'e') {
+                domino.editFocusedCell();
+            } else if (event.key === 's') {
+                const view = domino.cellToView.get(domino.focusedCell);
+                if (view)
+                    say((view.card.alt || "") + '.\n' + view.text.innerText);
+            }
+
             killEvent(event);
-            domino.editFocusedCell();
+            return;
         }
 
         const [q, r] = domino.focusedCell;
-        if (event.key === 'ArrowLeft')  domino.focusCell([q - 1, r + 1]);
-        if (event.key === 'ArrowRight') domino.focusCell([q + 1, r - 1]);
+        if (event.key === 'ArrowLeft')  domino.focusCell(event.shiftKey ? [q - 1, r + 0] : [q - 1, r + 1]);
+        if (event.key === 'ArrowRight') domino.focusCell(event.shiftKey ? [q + 1, r + 0] : [q + 1, r - 1]);
         if (event.key === 'ArrowUp')    domino.focusCell([q + 0, r - 1]);
         if (event.key === 'ArrowDown')  domino.focusCell([q + 0, r + 1]);
 
-        if (event.key === ' ') domino.toggleZoom();
+        if (event.code === 'KeyQ')  domino.focusCell([q - 1, r + 0]);
+        if (event.code === 'KeyW')  domino.focusCell([q + 0, r - 1]);
+        if (event.code === 'KeyE')  domino.focusCell([q + 1, r - 1]);
+        if (event.code === 'KeyA')  domino.focusCell([q - 1, r + 1]);
+        if (event.code === 'KeyS')  domino.focusCell([q + 0, r + 1]);
+        if (event.code === 'KeyD')  domino.focusCell([q + 1, r + 0]);
 
-        if (event.key === 's') {
-            const view = domino.cellToView.get(domino.focusedCell);
-            if (view)
-                say(view.text.innerText);
-        }
+        if (event.key === ' ') domino.toggleZoom();
     });
 
     window.addEventListener('wheel', event => {

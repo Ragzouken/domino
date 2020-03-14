@@ -35,20 +35,20 @@ html
                     a.blank
                     a.blank
                     a.blank
-            #cardbar-template.card-edit-bar.icon-bar(hidden)
+            #cardbar-template.card-edit-bar.icon-bar(hidden, data-locked-visibility="hidden")
                 button#edit-card(title="edit this card") 📝
                 button#link-card(hidden, title="link this card", draggable="true") 🔗
         #pan-screen
             main#scene(data-export-clear)
         #coords(draggable="true") #0,0
-        #toolbar.icon-bar
-            div#open-about(title="information about this tool") ❓
-            div#zoom(title="switch zoom level") 🔎
-            div#center(title="jump to center") 🏠
-            div#add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card") 🗃️
-            div#fullscreen(title="toggle fullscreen", hidden) 💢
-            div#unlocked(title="prevent accidental editing") 🔓
-            div#locked(title="enable editing", hidden) 🔒
+        #toolbar.icon-bar(data-block-clicks)
+            #open-about(title="information about this tool") ❓
+            #zoom(title="switch zoom level") 🔎
+            #center(title="jump to center") 🏠
+            #add-delete-icon(hidden, draggable="true", title="drag a new card from here or a drop an unwanted card", data-locked-visibility="hidden") 🗃️
+            #fullscreen(title="toggle fullscreen", hidden) 💢
+            #unlocked(title="prevent accidental editing", data-locked-visibility="hidden") 🔓
+            #locked(title="enable editing", data-locked-visibility="shown") 🔒
         #pan-blocker(hidden)
         #display-screen.screen(hidden, data-click-to-hide)
             iframe#display-frame(data-block-clicks, allow="autoplay")
@@ -68,17 +68,20 @@ html
                         input(id=`editor-icon-command-${row}`, type="text").icon-command
                 .editor-page(hidden, data-page="style", data-tab-set="card")
                     #type-select.button-list(data-export-clear)
-                    .button-list    
-                        button#remove-image remove image
+                    .button-list
                         button#upload-image upload image
+                    .button-list
+                        input#alt-text(type="text", placeholder="alt text")
+                        button#remove-image remove image
                         input#upload-image-input(type="file", accept="image/*", hidden)
         #menu-screen.screen(hidden, data-click-to-hide, data-export-hide)
             .full-panel(data-block-clicks)
                 .tab-bar(data-tab)
                     div(data-close-parent-screen) ◀ 
-                    div(data-tab="board", data-tab-set="menu").selected BOARD
+                    div(data-tab="howto", data-tab-set="menu").selected HOWTO
+                    div(data-tab="board", data-tab-set="menu", data-locked-visibility="hidden") BOARD
                     div(data-tab="about", data-tab-set="menu") ABOUT
-                .tab-page(data-page="board", data-tab-set="menu")
+                .tab-page(hidden, data-page="board", data-tab-set="menu")
                     h3 board title
                     input#board-title
                     h3 actions
@@ -89,6 +92,8 @@ html
                     input#import-file(type="file", accept=".html", hidden)
                     h3 style
                     textarea#style-input
+                .tab-page(data-page="howto", data-tab-set="menu")
+                    include:markdown-it(html) howto.md
                 .tab-page(hidden, data-page="about", data-tab-set="menu")
                     #version
                         | version—

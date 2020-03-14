@@ -63,6 +63,9 @@ button, a, [data-click-to-hide], [data-tab], [data-close-parent-screen] { cursor
 .card * { margin: 0; }
 
 td { padding: .5em; }
+p { margin-block-start: .75em; margin-block-end: .75em; }
+h2 { margin-block-end: .5em; }
+h2:first-child { margin-block-start: 0; }
 
 .button-list {
     display: flex;

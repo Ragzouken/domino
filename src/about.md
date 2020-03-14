@@ -1,5 +1,4 @@
-# domino
-## about
+## about domino
 domino is a tool for collaging fragmented thoughts into a larger idea. 
 it's essentially a tool for making a particular kind of mindmap and sharing it
 as a page on your website or itch.io.

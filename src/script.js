@@ -475,6 +475,7 @@ class Domino {
         const onDown = event => {
             this.pan = {
                 scenePosition: this.pointerEventToGridPixel(event),
+                pointerId: event.pointerId,
             };
             this.scene.classList.add('skip-transition');
             panBlocker.hidden = false;

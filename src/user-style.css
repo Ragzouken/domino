@@ -21,6 +21,7 @@
 
 .card.has-image {
     background-repeat: no-repeat;
+    background-position: center;
     /* white text with black outline */
     color: white;
     text-shadow: 

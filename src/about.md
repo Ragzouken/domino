@@ -38,9 +38,6 @@ dialogue when exporting.
 
 **Cyreal** created [Lora][8] which is the font domino uses.
 
-**Wouter de Bruijn** created [an image of dominoes][10] which is cropped and 
-recolored under [CC BY-NC-SA][11] to make domino's twitter card image.
-
 [me]: https://twitter.com/ragzouken
 [domino]: https://kool.tools/domino/
 [source]: https://github.com/Ragzouken/domino
@@ -54,5 +51,3 @@ recolored under [CC BY-NC-SA][11] to make domino's twitter card image.
 [7]: https://twinery.org/
 [8]: https://fonts.google.com/specimen/Lora
 [9]: https://zenzoa.itch.io/mosi
-[10]: https://www.flickr.com/photos/26646199@N05/14459204810
-[11]: https://creativecommons.org/licenses/by-nc-sa/2.0/

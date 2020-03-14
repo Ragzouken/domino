@@ -37,10 +37,11 @@ html
                     a.blank
             #cardbar-template.card-edit-bar.icon-bar(hidden)
                 button#edit-card(title="edit this card") 📝
+                button#link-card(hidden, title="link this card", draggable="true") 🔗
         #pan-screen
             main#scene(data-export-clear)
         #coords(draggable="true") #0,0
-        #toolbar.icon-bar(data-block-clicks)
+        #toolbar.icon-bar
             div#open-about(title="information about this tool") ❓
             div#zoom(title="switch zoom level") 🔎
             div#center(title="jump to center") 🏠
@@ -51,8 +52,6 @@ html
         #pan-blocker(hidden)
         #display-screen.screen(hidden, data-click-to-hide)
             iframe#display-frame(data-block-clicks, allow="autoplay")
-        #display-image-screen.screen(hidden, data-click-to-hide)
-            image#display-image
         #editor-screen.screen(hidden, data-click-to-hide)
             #editor-preview
             #editor-section(data-block-clicks)

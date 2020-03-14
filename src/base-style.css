@@ -272,7 +272,7 @@ textarea, input[type="text"] {
     position: absolute;
     
     display: grid;
-    column-gap: .5em;
+    gap: .5em;
     margin: 0;
 }
 
@@ -302,6 +302,20 @@ textarea, input[type="text"] {
     transform: translate(50%, -50%);
 
     font-size: 1.25em;
+}
+
+.card-edit-bar > * {
+    grid-row: auto;
+    grid-column: 1;
+
+    background: rgb(240, 240, 240);
+    border: 1px solid black;
+    border-radius: 100%;
+    cursor: pointer;
+}
+
+#link-card {
+    cursor: copy;
 }
 
 .card-icon-bar > * {

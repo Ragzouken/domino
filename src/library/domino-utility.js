@@ -45,10 +45,10 @@ async function dataURLFromFile(file) {
 
 function filesFromDataTransfer(dataTransfer) {
     const clipboardFiles = 
-        Array.from(dataTransfer.items)
+        Array.from(dataTransfer.items || [])
         .filter(item => item.kind === 'file')
         .map(item => item.getAsFile());
-    return clipboardFiles.concat(...dataTransfer.files);
+    return clipboardFiles.concat(...(dataTransfer.files || []));
 }
 
 function elementFromDataTransfer(dataTransfer) {

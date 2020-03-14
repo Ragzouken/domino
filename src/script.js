@@ -35,7 +35,7 @@ function parseFakedown(text) {
 }
 
 let pageSetters = new Map();
-const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart', 'wheel'];
+const clicks = ['pointerdown', 'pointerup', 'click', 'touchstart', 'wheel', 'dblclick'];
 function setupClassHooks() {
     ALL('[data-block-clicks]').forEach(element => {
         for (let name of clicks)
@@ -199,15 +199,6 @@ class Domino {
         frame.style.height = h;
     }
 
-    displayImage(url) {
-        ONE('#display-image').src = url;
-        ONE('#display-image-screen').hidden = false;
-        ONE('#display-image').onerror = () => {
-            ONE('#display-image-screen').hidden = true;
-            window.open(url);
-        };
-    }
-
     async runCommand(command) {
         if (command.startsWith('#')) {
             location.href = command;
@@ -217,9 +208,6 @@ class Domino {
             domino.focusCell(getCoordsFromHash());
         } else if (command.startsWith('open:')) {
             window.open(command.slice(5));
-        } else if (command.startsWith('image:')) {
-            const src = command.slice(6);
-            this.displayImage(src);
         } else if (command.startsWith('display:')) {
             const src = command.slice(8);
             this.display(src);
@@ -390,7 +378,7 @@ class Domino {
     setData(data) {
         this.clear();
         for (let card of data.cards)
-            this.addCard(card);
+            this.addCard(card).skipTransition();
     }
 
     getData() {
@@ -423,10 +411,12 @@ class Domino {
         addListener(this.unlockedButton, 'click', () => this.setUnlocked(false));
 
         const cardEditButton = ONE('#edit-card', this.cardbar);
+        const cardLinkButton = ONE('#link-card', this.cardbar);
         const importFile = ONE('#import-file');
         const screen = ONE('#pan-screen');
 
         const onClickedCell = (event) => {
+            if (this.pan) return;
             if (event.button && event.button === 2) 
                 return;
             killEvent(event);
@@ -459,8 +449,6 @@ class Domino {
         addListener('#import',      'click', () => importFile.click());
         addListener('#export',      'click', () => exportProject());
         addListener('#fullscreen',  'click', () => toggleFullscreen());
-
-        addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
         const panBlocker = ONE('#pan-blocker');
 
@@ -532,9 +520,16 @@ class Domino {
         // dragging and dropping listeners
         setElementDragoverDropEffect(screen, 'copy');
         setElementDragoverDropEffect(this.editorScreen.root, 'none');
-        setElementDragoverDropEffect(this.addDeleteCardIcon, 'move');
+        setElementDragoverDropEffect(cardLinkButton, 'move');
+
+        const onDragFromLinkCard = (event) => {
+            const cell = this.selectedCardView.card.cell;
+            event.dataTransfer.setData('text/uri-list', 'jump:' + coordsToKey(cell));
+            event.stopPropagation();
+        }
 
         const onDragFromNewCard = (event) => {
+            event.stopPropagation();
             event.dataTransfer.setData('text/plain', 'new card');
         }
 
@@ -545,6 +540,11 @@ class Domino {
             const view = this.cellToView.get(JSON.parse(originJson));
             this.removeCard(view);
         }
+        
+        setElementDragoverDropEffect(this.addDeleteCardIcon, 'move');
+        addListener(this.addDeleteCardIcon, 'dragstart', onDragFromNewCard);
+        addListener(this.addDeleteCardIcon, 'drop',      onDroppedOnDelete);
+        addListener(this.addDeleteCardIcon, 'pointerdown', event => event.stopPropagation());
 
         const onDroppedOnCell = async (event) => {
             killEvent(event);
@@ -555,27 +555,31 @@ class Domino {
             const image = await dataTransferToImage(event.dataTransfer);
             const urilist = dt.getData('text/uri-list');
 
+            let view;
+
             if (image) {
-                this.putImageInCell(dropCell, image);
+                view = this.putImageInCell(dropCell, image);
             } else if (amMovingCard) {
                 const originJson = dt.getData('card-origin-cell');
                 const originCell = JSON.parse(originJson);
-                this.swapCells(originCell, dropCell);
+                view = this.swapCells(originCell, dropCell);
             } else if (urilist) {
                 const uris = urilist.split('\n').filter(uri => !uri.startsWith('#'));
                 const commands = uris.map(uri => uri.startsWith('jump:') ? uri : 'open:' + uri);
                 const icons = commands.map(command => { return {icon: '🔗', command}; });
-                this.putIconsInCell(dropCell, ...icons);
+                view = this.putIconsInCell(dropCell, ...icons);
             } else {
                 const text = dt.getData('text') || dt.getData('text/plain');
                 if (text)
-                    this.putTextInCell(dropCell, text);
+                view = this.putTextInCell(dropCell, text);
             }
+
+            if (view)
+                this.selectCardView(view);
         }
 
-        addListener(this.addDeleteCardIcon, 'dragstart', onDragFromNewCard);
+        addListener(cardLinkButton, 'dragstart', onDragFromLinkCard);
         addListener(this.editorScreen.root, 'drop', killEvent);
-        addListener(this.addDeleteCardIcon, 'drop', onDroppedOnDelete);
         addListener(screen,                 'drop', onDroppedOnCell);
 
         addListener('#coords', 'pointerdown', e => e.stopPropagation());
@@ -658,6 +662,7 @@ class Domino {
         if (image.originURL)
             this.putIconsInCell(cell, {icon: '🔗', command: 'open:' + image.originURL});
         view.refresh();
+        return view;
     }
 
     putIconsInCell(cell, ...rows) {
@@ -669,14 +674,15 @@ class Domino {
             if (view.card.icons[i].icon === '' && rows.length > 0)
                 view.card.icons[i] = rows.shift();
         }
-
         view.refresh();
+        return view;
     }
 
     putTextInCell(cell, text) {
         const view = this.getOrSpawnCard(cell);
         view.card.text += text;
         view.refresh();
+        return view;
     }
 
     toggleZoom() {
@@ -808,6 +814,7 @@ class CardView {
 
         Array.from(this.icons.children).forEach((icon, i) => {
             addListener(icon, 'pointerdown', e => e.stopPropagation());
+            addListener(icon, 'dblclick', e => e.stopPropagation());
             addListener(icon, 'click', e => { 
                 killEvent(e); 
                 domino.runCommand(this.card.icons[i].command)
@@ -831,6 +838,12 @@ class CardView {
 
     set transition(value) {
         this.root.classList.toggle('skip-transition', !value);
+    }
+
+    skipTransition() {
+        this.transition = false;
+        reflow(this.root);
+        this.transition = true;
     }
 
     triggerSpawnAnimation() {
@@ -879,6 +892,9 @@ async function loaded() {
 
     window.addEventListener('resize', updateDocumentVariables);
     updateDocumentVariables();
+
+    // no doubleclick on mobile
+    DragDropTouch._DBLCLICK = 0;
 
     // center the currently selected cell
     const jumpFromHash = () => domino.focusCell(getCoordsFromHash());

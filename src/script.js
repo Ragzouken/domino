@@ -921,6 +921,8 @@ async function loaded() {
     window.addEventListener('paste', async event => {
         if (!domino.unlocked) return;
 
+        console.log(event.clipboardData);
+
         const image = await dataTransferToImage(event.clipboardData);
 
         if (image && domino.selectedCardView) {

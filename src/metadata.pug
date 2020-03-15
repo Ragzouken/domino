@@ -2,8 +2,14 @@
 - var image = "https://kool.tools/domino/twitter-card.png";
 - var imageAlt = "low fidelity image of many dominoes connected";
 - var type = "website";
+- var icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAXUlEQVQ4jWNkQANfHl77jy6GDHjktRiR+SgcQpqxGcKETcGRY+sZjhxbj5M/ElxACmBB5uByJj4w8F7AawC+0IeBQeYFYmIBXQ0LIQWEACO6wI7lrXjDwSOyGkUPAKUpOzwONiPPAAAAAElFTkSuQmCC";
+
+meta(charset="utf-8")
+meta(name="viewport", content="width=device-width, initial-scale=1")
 
 meta(name="twitter:card", value="summary")
 meta(name="twitter:title", value!=title, id="twitter-title")
 meta(name="twitter:image", value!=image)
 meta(name="twitter:image:alt", value!=imageAlt)
+
+link(rel="icon" type="image/png" href!=icon)

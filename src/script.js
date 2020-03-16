@@ -378,7 +378,10 @@ class Domino {
     setData(data) {
         this.clear();
         for (let card of data.cards)
-            this.addCard(card).skipTransition();
+            this.addCard(card).transition = false;
+        reflow(this.scene);
+        for (let view of this.cellToView.store.values())
+            view.transition = true;
     }
 
     getData() {
@@ -432,7 +435,7 @@ class Domino {
         const twitterTitle = ONE('#twitter-title');
         boardTitle.addEventListener('input', () => {
             title.innerHTML = boardTitle.value;
-            twitterTitle.value = boardTitle.value;
+            twitterTitle.setAttribute('value', boardTitle.value);
         });
         boardTitle.value = title.innerHTML;
 
@@ -551,7 +554,6 @@ class Domino {
             const dropCell = this.pointerEventToCell(event);
             const dt = event.dataTransfer;
 
-            const amMovingCard = dt.types.includes('card/move');
             const image = await dataTransferToImage(event.dataTransfer);
             const urilist = dt.getData('text/uri-list');
 
@@ -559,7 +561,14 @@ class Domino {
 
             if (image) {
                 view = this.putImageInCell(dropCell, image);
-            } else if (amMovingCard) {
+            } else if (dt.types.includes('card/copy')) {
+                const originJson = dt.getData('card-origin-cell');
+                const originCell = JSON.parse(originJson);
+                const original = this.cellToView.get(originCell).card;
+                const copy = JSON.parse(JSON.stringify(original));
+                copy.cell = dropCell;
+                this.spawnCard(copy);
+            } else if (dt.types.includes('card/move')) {
                 const originJson = dt.getData('card-origin-cell');
                 const originCell = JSON.parse(originJson);
                 view = this.swapCells(originCell, dropCell);
@@ -652,7 +661,7 @@ class Domino {
         event.stopPropagation();
         event.dataTransfer.setData('card-origin-cell', JSON.stringify(view.cell));
         event.dataTransfer.setData('text/plain', view.card.text);
-        event.dataTransfer.setData('card/move', '');
+        event.dataTransfer.setData(event.ctrlKey ? 'card/copy' : 'card/move', '');
 
         const [x, y] = getElementCenter(view.root);
         event.dataTransfer.setDragImage(view.root, x, y);
@@ -830,7 +839,7 @@ class CardView {
             });
         });
 
-        this.refresh();
+        this.updateContent();
     }
 
     get cell() { return this.card.cell; }
@@ -872,7 +881,7 @@ class CardView {
         this.root.style.transform = `${position} ${scaling}`;
     }
 
-    refresh() {
+    updateContent() {
         for (let type of domino.editorScreen.types)
             this.root.classList.toggle(`domino-card-${type}`, this.card.type === type);
 
@@ -887,7 +896,10 @@ class CardView {
             button.classList.toggle('blank', row.icon === '');
             button.classList.toggle('cosmetic', row.command === '');
         });
-
+    }
+    
+    refresh() {
+        this.updateContent();
         this.updateTransform();
     }
 }
@@ -920,9 +932,6 @@ async function loaded() {
     // image pasting
     window.addEventListener('paste', async event => {
         if (!domino.unlocked) return;
-
-        console.log(event.clipboardData);
-
         const image = await dataTransferToImage(event.clipboardData);
 
         if (image && domino.selectedCardView) {

@@ -37,11 +37,6 @@
 }
 
 /* custom card styles */
-.domino-card-heading { 
-    background-color: #F3E9C7;
-    align-items: center;
-}
-
 .domino-card-basic-red   { 
     background-color: #FDE9C6; 
 }
@@ -52,6 +47,11 @@
 
 .domino-card-basic-blue  { 
     background-color: #F2EED2; 
+}
+
+.domino-card-heading { 
+    background-color: #F3E9C7;
+    align-items: center;
 }
 
 /* border from http://todrobbins.com/broider-gallery/ */

@@ -14,11 +14,12 @@ the 🔓 icon on the toolbar, and made your own changes.
 
 | | |
 | --- | --- |
-| **arrows** | move between cards  |
-| **QWEASD** | move between cards  |
-| **escape** | exit window         |
-| **alt+s**  | speak selected card |
-| **alt+e**  | edit selected card  |
+| **arrows**    | move between cards  |
+| **QWEASD**    | move between cards  |
+| **escape**    | exit window         |
+| **alt+s**     | speak selected card |
+| **alt+e**     | edit selected card  |
+| **ctrl+drag** | make copy of card   |
 
 
 [1]: https://kool.tools/domino/

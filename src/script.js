@@ -189,6 +189,12 @@ class Domino {
         this.selectedCardView = undefined;
     }
 
+    play(url) {
+        if (this.audio) this.audio.pause();
+        this.audio = new Audio(url)
+        this.audio.play();
+    }
+
     display(url, size=[800, 600]) {
         const frame = ONE('#display-frame');
         const [w, h] = size;
@@ -211,6 +217,8 @@ class Domino {
         } else if (command.startsWith('display:')) {
             const src = command.slice(8);
             this.display(src);
+        } else if (command.startsWith('play:')) {
+            this.play(command.slice(5));
         } else if (command.startsWith('import:')) {
             const src = command.slice(7);
             const html = await htmlFromUrl(src);
@@ -261,8 +269,10 @@ class Domino {
     refreshHash() {
         const [q, r] = this.grid.pixelToCell(this.focus);
         this.focusedCell = [q, r];
-        location.hash = coordsToKey([q, r]);
         this.coords.innerHTML = `#${q},${r}`;
+
+        if (this.pan) return;
+        history.pushState({}, "", `#${q},${r}`)
     }
 
     focusCell(cell) {
@@ -363,7 +373,6 @@ class Domino {
         this.deselect();
         this.scene.innerHTML = "";
         this.cellToView.store.clear();
-        this.focusCell([0, 0]);
     }
 
     setFromHtml(html) {
@@ -376,12 +385,17 @@ class Domino {
     }
 
     setData(data) {
+        ONE('#load-screen').hidden = false;
         this.clear();
-        for (let card of data.cards)
-            this.addCard(card).transition = false;
-        reflow(this.scene);
-        for (let view of this.cellToView.store.values())
-            view.transition = true;
+        data.cards.sort((a, b) => sqrdist(a.cell, this.focusedCell) - sqrdist(b.cell, this.focusedCell));
+        const loadCard = card => this.addCard(card).transition = false;
+        chunkedForeach(data.cards, 30, loadCard)
+        .then(() => sleep(1))
+        .then(() => {
+            for (let view of this.cellToView.store.values())
+                view.transition = true;
+            ONE('#load-screen').hidden = true;
+        });
     }
 
     getData() {
@@ -405,6 +419,7 @@ class Domino {
 
         this.cardbar = cloneTemplateElement('#cardbar-template');
         this.cardbar.id = 'cardbar';
+        this.cardbar.hidden = false;
         this.addDeleteCardIcon = ONE('#add-delete-icon');
         this.aboutScreen = ONE('#menu-screen');
         this.lockedButton = ONE('#locked');
@@ -483,6 +498,7 @@ class Domino {
             this.pan = undefined;
             this.scene.classList.remove('skip-transition');
             event.stopPropagation();
+            this.refreshHash();
         };
 
         panBlocker.addEventListener('pointerup', onDonePanning);
@@ -635,9 +651,10 @@ class Domino {
     selectCardView(view) {
         this.selectedCardView = view;
 
-        if (view)
+        if (view) {
             view.root.appendChild(this.cardbar);
-        else if (this.cardbar.parentElement)
+            this.cardbar.hidden = !this.unlocked
+        } else if (this.cardbar.parentElement)
             this.cardbar.parentElement.removeChild(this.cardbar);
     }
 
@@ -925,9 +942,9 @@ async function loaded() {
     // load data from embeded #data script tag
     const coords = getCoordsFromHash();
     const data = getElementJsonData('#data');
-    domino.setData(data);
     domino.setUnlocked(false);
     domino.focusCellNoTransition(coords);
+    domino.setData(data);
 
     // image pasting
     window.addEventListener('paste', async event => {
@@ -981,6 +998,10 @@ async function loaded() {
 
     window.addEventListener('wheel', event => {
         if (event.deltaY > 0) domino.scale = .5;
-        if (event.deltaY < 0) domino.scale = 1;
+        if (event.deltaY < 0 && domino.scale === .5) {
+            domino.deselect();
+            domino.focusCell(domino.pointerEventToCell(event));
+            domino.scale = 1;
+        }
     });
 }

@@ -12,6 +12,11 @@ const getElementJsonData = (element) => JSON.parse(queryToElement(element).inner
 const reflow = element => void(element.offsetHeight);
 const coordsToKey = (coords) => coords.join(',');
 
+const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+const sqr = a => a[0] * a[0] + a[1] * a[1];
+const sqrdist = (a, b) => sqr(sub(a, b));
+
 function say(text) {
     const utter = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(utter);
@@ -119,6 +124,25 @@ function cloneTemplateElement(query) {
 
 function addListener(query, type, listener) {
     queryToElement(query).addEventListener(type, listener);
+}
+
+function chunkedForeach(array, interval, callback) {
+    return new Promise((resolve, reject) => {
+        let deadline = performance.now() + interval;
+        let index = 0;
+
+        const doChunk = () => {
+            for (; index < array.length && performance.now() < deadline; ++index)
+                callback(array[index]);
+            deadline = performance.now() + interval;
+            if (index < array.length)
+                window.requestAnimationFrame(doChunk);
+            else
+                resolve()
+        };
+
+        window.requestAnimationFrame(doChunk);
+    });
 }
 
 class CoordStore {

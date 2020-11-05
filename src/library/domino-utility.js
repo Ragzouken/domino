@@ -192,3 +192,8 @@ class HexGrid {
         return [rx, ry];
     }
 }
+
+function listen(element, type, listener) {
+    element.addEventListener(type, listener);
+    return () => element.removeEventListener(type, listener);
+}

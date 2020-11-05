@@ -160,14 +160,20 @@ async function dataTransferToImage(dt) {
     }
 }
 
-function exportProject() {
+function projectToHTML() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
     ALL('[data-export-clear]', clone).forEach(element => element.innerHTML = '');
     ALL('[data-export-hide]', clone).forEach(element => element.hidden = true);
-    const blob = new Blob([clone.outerHTML], {type: "text/html"});
+    const html = clone.outerHTML;
     const title = ONE('title').innerHTML;
     const name = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    return { html, name };
+}
+
+function exportProject() {
+    const { html, name } = projectToHTML();
+    const blob = new Blob([html], {type: "text/html"});
     saveAs(blob, `${name}.html`);
 }
 
@@ -1003,5 +1009,49 @@ async function loaded() {
             domino.focusCell(domino.pointerEventToCell(event));
             domino.scale = 1;
         }
+    });
+
+    // neocities publish
+    const startButton = document.querySelector("#neocities-start");
+    const openButton = document.querySelector("#neocities-open");
+
+    startButton.addEventListener("click", async () => {
+        console.log("HELLO")
+        openButton.hidden = false;
+        openButton.disabled = true;
+
+        const ready = new Promise((resolve, reject) => {
+            const remove = listen(window, "message", (event) => {
+                if (event.origin !== "https://kool.tools") return;
+                remove();
+                resolve();
+            });
+        });
+
+        const success = new Promise((resolve, reject) => {
+            const remove = listen(window, "message", (event) => {
+                if (event.origin !== "https://kool.tools") return;
+
+                if (event.data.error) {
+                    remove();
+                    reject(event.data.error);
+                } else if (event.data.url) {
+                    remove();
+                    resolve(event.data.url);
+                }
+            });
+        });
+
+        const popup = window.open(
+            "https://kool.tools/neocities-publisher/index.html", 
+            "neocities publisher",
+            "left=10,top=10,width=320,height=320");
+        const { name, html } = projectToHTML();
+        await ready;
+        popup.postMessage({ name, html }, "https://kool.tools");
+        const url = await success;
+        popup.close();
+        openButton.disabled = false;
+        openButton.onclick = () => window.open(url);
     });
 }

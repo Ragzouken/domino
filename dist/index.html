@@ -680,6 +680,11 @@ class HexGrid {
     }
 }
 
+function listen(element, type, listener) {
+    element.addEventListener(type, listener);
+    return () => element.removeEventListener(type, listener);
+}
+
     </script>
     <script>'use strict';
 
@@ -843,14 +848,20 @@ async function dataTransferToImage(dt) {
     }
 }
 
-function exportProject() {
+function projectToHTML() {
     setElementJsonData('#data', domino.getData());
     const clone = document.documentElement.cloneNode(true);
     ALL('[data-export-clear]', clone).forEach(element => element.innerHTML = '');
     ALL('[data-export-hide]', clone).forEach(element => element.hidden = true);
-    const blob = new Blob([clone.outerHTML], {type: "text/html"});
+    const html = clone.outerHTML;
     const title = ONE('title').innerHTML;
     const name = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    return { html, name };
+}
+
+function exportProject() {
+    const { html, name } = projectToHTML();
+    const blob = new Blob([html], {type: "text/html"});
     saveAs(blob, `${name}.html`);
 }
 
@@ -1687,6 +1698,50 @@ async function loaded() {
             domino.scale = 1;
         }
     });
+
+    // neocities publish
+    const startButton = document.querySelector("#neocities-start");
+    const openButton = document.querySelector("#neocities-open");
+
+    startButton.addEventListener("click", async () => {
+        console.log("HELLO")
+        openButton.hidden = false;
+        openButton.disabled = true;
+
+        const ready = new Promise((resolve, reject) => {
+            const remove = listen(window, "message", (event) => {
+                if (event.origin !== "https://kool.tools") return;
+                remove();
+                resolve();
+            });
+        });
+
+        const success = new Promise((resolve, reject) => {
+            const remove = listen(window, "message", (event) => {
+                if (event.origin !== "https://kool.tools") return;
+
+                if (event.data.error) {
+                    remove();
+                    reject(event.data.error);
+                } else if (event.data.url) {
+                    remove();
+                    resolve(event.data.url);
+                }
+            });
+        });
+
+        const popup = window.open(
+            "https://kool.tools/neocities-publisher/index.html", 
+            "neocities publisher",
+            "left=10,top=10,width=320,height=320");
+        const { name, html } = projectToHTML();
+        await ready;
+        popup.postMessage({ name, html }, "https://kool.tools");
+        const url = await success;
+        popup.close();
+        openButton.disabled = false;
+        openButton.onclick = () => window.open(url);
+    });
 }
 
     </script>
@@ -1769,6 +1824,8 @@ async function loaded() {
           <div class="button-list">
             <button id="import" title="import a domino project">📂 import from html</button>
             <button id="export" title="export as html">📦 export to html</button>
+            <button id="neocities-start" title="begin neocities publish">😻 publish to neocities</button>
+            <button id="neocities-open" hidden data-export-hide title="open published neocities">👀 open neocities page</button>
             <button id="reset" title="remove all cards">❌ remove all cards</button>
           </div>
           <input id="import-file" type="file" accept=".html" hidden>
@@ -1823,7 +1880,7 @@ the 🔓 icon on the toolbar, and made your own changes.</p>
         </div>
         <div class="tab-page" hidden data-page="about" data-tab-set="menu">
           <div id="version">
-            version—beta-7 (2020-3-17)</div><h2>about domino</h2>
+            version—beta-7 (11/5/2020)</div><h2>about domino</h2>
 <p>domino is a tool for collaging fragmented thoughts into a larger idea.
 it's essentially a tool for making a particular kind of mindmap and sharing it
 as a page on your website or itch.io.</p>
